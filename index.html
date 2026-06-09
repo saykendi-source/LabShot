@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LabShot - Web Photobox</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero-panel">
+      <div class="brand-row">
+        <div class="logo-mark">TI</div>
+        <div>
+          <p class="eyebrow">Portable Web Photobox</p>
+          <h1>LabShot</h1>
+        </div>
+      </div>
+
+      <div class="camera-card">
+        <video id="cameraPreview" autoplay playsinline muted></video>
+        <canvas id="shotCanvas" class="hidden"></canvas>
+        <div id="emptyCamera" class="empty-camera">
+          <span>📷</span>
+          <strong>Kamera belum aktif</strong>
+          <small>Klik tombol “Aktifkan Kamera” untuk mulai.</small>
+        </div>
+        <div id="countdown" class="countdown hidden">3</div>
+        <div id="flash" class="flash hidden"></div>
+      </div>
+
+      <div class="primary-actions">
+        <button id="startCameraBtn" class="btn btn-secondary">Aktifkan Kamera</button>
+        <button id="startSessionBtn" class="btn btn-primary" disabled>Mulai Foto</button>
+        <button id="retakeBtn" class="btn btn-ghost" disabled>Ulangi</button>
+      </div>
+    </section>
+
+    <aside class="control-panel">
+      <div class="panel-header">
+        <p class="eyebrow">Pengaturan Sesi</p>
+        <h2>Mode Foto</h2>
+      </div>
+
+      <label class="field">
+        <span>Nama Event</span>
+        <input id="eventName" type="text" value="TI UMY Photobox" maxlength="36" />
+      </label>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Layout</span>
+          <select id="layoutMode">
+            <option value="1">Single Photo</option>
+            <option value="3">Photo Strip 3 Foto</option>
+            <option value="4" selected>Photo Strip 4 Foto</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Countdown</span>
+          <select id="countdownSeconds">
+            <option value="3" selected>3 detik</option>
+            <option value="5">5 detik</option>
+            <option value="7">7 detik</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid-2">
+        <label class="field">
+          <span>Frame</span>
+          <select id="frameTheme">
+            <option value="classic" selected>Classic</option>
+            <option value="cfd">CFD Street</option>
+            <option value="capstone">Capstone</option>
+            <option value="wisuda">Wisuda</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Filter</span>
+          <select id="filterMode">
+            <option value="none" selected>Normal</option>
+            <option value="bw">Black & White</option>
+            <option value="warm">Warm</option>
+            <option value="bright">Bright</option>
+            <option value="vintage">Vintage</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Upload Frame PNG Opsional</span>
+        <input id="customFrame" type="file" accept="image/png,image/webp,image/jpeg" />
+        <small>Frame custom akan ditempel di atas hasil akhir.</small>
+      </label>
+
+      <section class="result-card">
+        <div class="result-header">
+          <div>
+            <p class="eyebrow">Hasil Foto</p>
+            <h2>Preview</h2>
+          </div>
+          <span id="shotCounter" class="pill">0 foto</span>
+        </div>
+
+        <img id="finalPreview" class="final-preview hidden" alt="Preview hasil photobox" />
+        <div id="emptyResult" class="empty-result">Hasil foto akan muncul di sini.</div>
+
+        <div class="download-row">
+          <a id="downloadBtn" class="btn btn-primary disabled" download="labshot-photobox.png">Download</a>
+          <button id="shareBtn" class="btn btn-secondary" disabled>Bagikan</button>
+        </div>
+
+        <div class="qr-wrap">
+          <div id="qrCode" class="qr-code"></div>
+          <small id="qrNote">QR akan aktif setelah foto dibuat. Untuk download lintas perangkat, tambahkan backend/storage pada versi berikutnya.</small>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer-note">
+    Jalankan melalui HTTPS/GitHub Pages atau localhost agar browser mengizinkan akses kamera.
+  </footer>
+</body>
+</html>
