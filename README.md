@@ -65,3 +65,9 @@ Versi ini masih statis, sehingga hasil foto hanya tersimpan di browser pengguna.
 - Memperbaiki masalah hasil foto tidak muncul di dalam bingkai.
 - Frame bawaan digambar sebagai latar, lalu foto dimasukkan ke area kosong frame.
 - Output tetap Story Instagram 1080 x 1920.
+
+
+## Update v3
+- Frame bawaan sudah dibuat transparan pada area kosong.
+- Foto sekarang dirender di belakang frame agar terlihat menyatu, bukan sekadar ditempel.
+- Ditambahkan efek inset/shadow halus agar foto terasa masuk ke bingkai.
