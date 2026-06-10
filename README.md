@@ -59,3 +59,22 @@ assets/
 ## Catatan
 
 QR Code masih bersifat link lokal browser. Untuk QR publik yang bisa di-scan HP, perlu tambahan backend/storage (Firebase Storage, Supabase, dsb.).
+
+
+## Perbaikan v7
+
+- Menambahkan template scrapbook dari referensi ke folder `assets/frames/`.
+- Menambahkan pilihan frame:
+  - Auto Scrapbook
+  - Birthday Collage
+  - Birthday Camera
+  - Memories Box
+  - Memories Simple
+- Mode Auto Scrapbook otomatis menyesuaikan:
+  - 1 foto → Memories Simple
+  - 2 foto → Memories Simple
+  - 3 foto → Birthday Collage
+  - 4 foto → Memories Box
+- Foto tidak lagi dibuat seperti ditempel di atas frame.
+- Foto dirender sebagai layer penuh di belakang template, lalu muncul melalui transparent window.
+- Output tetap Story Instagram 1080 × 1920 px.

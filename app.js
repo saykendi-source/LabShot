@@ -1,6 +1,9 @@
 /* ─────────────────────────────────────────────
-   LabShot v6  –  app.js
-   Koordinat slot diukur dari piksel aktual PNG.
+   LabShot v7 – app.js
+   Perbaikan utama:
+   - Foto dirender di layer belakang frame, bukan ditempel di atas.
+   - Template scrapbook memakai transparent window.
+   - Layout otomatis untuk 1, 2, 3, dan 4 foto.
 ───────────────────────────────────────────── */
 
 const els = {
@@ -37,24 +40,140 @@ const els = {
 const STORY_W = 1080;
 const STORY_H = 1920;
 
-const builtInFrames = {
-  classic:  'assets/frames/classic-story.png',
-  cfd:      'assets/frames/cfd-story.png',
-  capstone: 'assets/frames/capstone-story.png',
-  wisuda:   'assets/frames/wisuda-story.png',
+/*
+  Semua frame harus berada di assets/frames.
+  Window foto pada template scrapbook sudah dibuat transparan di file PNG-nya.
+*/
+const FRAME_CONFIGS = {
+  classic: {
+    label: 'Classic',
+    path: 'assets/frames/classic-story.png',
+    baseSlot: { x: 168, y: 220, w: 744, h: 1088, radius: 22 },
+  },
+  cfd: {
+    label: 'CFD Street',
+    path: 'assets/frames/cfd-story.png',
+    baseSlot: { x: 72, y: 180, w: 936, h: 1170, radius: 10 },
+  },
+  capstone: {
+    label: 'Capstone',
+    path: 'assets/frames/capstone-story.png',
+    baseSlot: { x: 84, y: 152, w: 912, h: 1388, radius: 8 },
+  },
+  wisuda: {
+    label: 'Wisuda',
+    path: 'assets/frames/wisuda-story.png',
+    baseSlot: { x: 74, y: 240, w: 932, h: 1175, radius: 14 },
+  },
+
+  // Template dari referensi scrapbook user
+  birthdayCollage: {
+    label: 'Birthday Collage',
+    path: 'assets/frames/birthday-collage.png',
+    slotsByCount: {
+      1: [{ x: 590, y: 525, w: 315, h: 425 }],
+      2: [
+        { x: 122, y: 1015, w: 350, h: 410 },
+        { x: 612, y: 1185, w: 340, h: 420 },
+      ],
+      3: [
+        { x: 590, y: 525, w: 315, h: 425 },
+        { x: 122, y: 1015, w: 350, h: 410 },
+        { x: 612, y: 1185, w: 340, h: 420 },
+      ],
+      4: [
+        { x: 590, y: 525, w: 315, h: 210 },
+        { x: 590, y: 740, w: 315, h: 210 },
+        { x: 122, y: 1015, w: 350, h: 410 },
+        { x: 612, y: 1185, w: 340, h: 420 },
+      ],
+    },
+  },
+
+  birthdayCamera: {
+    label: 'Birthday Camera',
+    path: 'assets/frames/birthday-camera.png',
+    slotsByCount: {
+      1: [{ x: 472, y: 585, w: 355, h: 248, radius: 12, angle: 10 }],
+      2: [
+        { x: 104, y: 1015, w: 375, h: 370 },
+        { x: 610, y: 1240, w: 350, h: 390 },
+      ],
+      3: [
+        { x: 472, y: 585, w: 355, h: 248, radius: 12, angle: 10 },
+        { x: 104, y: 1015, w: 375, h: 370 },
+        { x: 610, y: 1240, w: 350, h: 390 },
+      ],
+      4: [
+        { x: 472, y: 585, w: 170, h: 248, radius: 10, angle: 10 },
+        { x: 653, y: 585, w: 174, h: 248, radius: 10, angle: 10 },
+        { x: 104, y: 1015, w: 375, h: 370 },
+        { x: 610, y: 1240, w: 350, h: 390 },
+      ],
+    },
+  },
+
+  memoriesBox: {
+    label: 'Memories Box',
+    path: 'assets/frames/memories-box.png',
+    slotsByCount: {
+      1: [{ x: 55, y: 515, w: 530, h: 335 }],
+      2: [
+        { x: 55, y: 515, w: 530, h: 335 },
+        { x: 405, y: 1535, w: 620, h: 280 },
+      ],
+      3: [
+        { x: 55, y: 515, w: 530, h: 335 },
+        { x: 625, y: 730, w: 310, h: 455, angle: 6 },
+        { x: 405, y: 1535, w: 620, h: 280 },
+      ],
+      4: [
+        { x: 55, y: 515, w: 530, h: 335 },
+        { x: 625, y: 730, w: 310, h: 455, angle: 6 },
+        { x: 108, y: 960, w: 410, h: 405, angle: -8 },
+        { x: 405, y: 1535, w: 620, h: 280 },
+      ],
+    },
+  },
+
+  memoriesSimple: {
+    label: 'Memories Simple',
+    path: 'assets/frames/memories-simple.png',
+    slotsByCount: {
+      1: [{ x: 248, y: 1055, w: 770, h: 460, angle: 2 }],
+      2: [
+        { x: 74, y: 542, w: 525, h: 345 },
+        { x: 248, y: 1055, w: 770, h: 460, angle: 2 },
+      ],
+      3: [
+        { x: 74, y: 542, w: 250, h: 345 },
+        { x: 338, y: 542, w: 260, h: 345 },
+        { x: 248, y: 1055, w: 770, h: 460, angle: 2 },
+      ],
+      4: [
+        { x: 74, y: 542, w: 250, h: 345 },
+        { x: 338, y: 542, w: 260, h: 345 },
+        { x: 248, y: 1055, w: 380, h: 460, angle: 2 },
+        { x: 638, y: 1055, w: 380, h: 460, angle: 2 },
+      ],
+    },
+  },
 };
 
 /*
-  Koordinat diukur dengan analisis piksel pada resolusi 1080×1920.
-  x,y = pojok kiri-atas area foto (piksel terakhir NON-hitam sebelum area hitam)
-  w,h = lebar dan tinggi area hitam (slot foto)
+  Mode Auto Scrapbook:
+  - 1 foto  → Memories Simple
+  - 2 foto  → Memories Simple
+  - 3 foto  → Birthday Collage
+  - 4 foto  → Memories Box
 */
-const frameSlots = {
-  classic:  { x: 168, y: 220, w: 744,  h: 1088, radius: 22 },
-  cfd:      { x: 72,  y: 180, w: 936,  h: 1170, radius: 10 },
-  capstone: { x: 84,  y: 152, w: 912,  h: 1388, radius: 8  },
-  wisuda:   { x: 74,  y: 240, w: 932,  h: 1175, radius: 14 },
-};
+function resolveFrameKey(photoCount) {
+  const selected = els.frameTheme.value;
+  if (selected !== 'scrapbookAuto') return selected;
+  if (photoCount <= 2) return 'memoriesSimple';
+  if (photoCount === 3) return 'birthdayCollage';
+  return 'memoriesBox';
+}
 
 let stream          = null;
 let capturedPhotos  = [];
@@ -90,8 +209,9 @@ function playShutter() {
     ensureAudio();
     const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * 0.07), audioCtx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++)
+    for (let i = 0; i < d.length; i++) {
       d[i] = (Math.random()*2-1) * Math.exp(-i / (d.length * 0.25));
+    }
     const s = audioCtx.createBufferSource();
     s.buffer = buf;
     const g = audioCtx.createGain(); g.gain.value = 0.55;
@@ -259,14 +379,33 @@ function updatePhotoGrid(photos) {
 
 /* ── Canvas helpers ───────────────────────────────────── */
 function roundedRect(ctx, x, y, w, h, r) {
-  r = Math.min(r, w/2, h/2);
+  r = Math.min(r || 0, w/2, h/2);
   ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y,   x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x,   y+h, r);
-  ctx.arcTo(x,   y+h, x,   y,   r);
-  ctx.arcTo(x,   y,   x+w, y,   r);
+  if (r <= 0) {
+    ctx.rect(x, y, w, h);
+  } else {
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y,   x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x,   y+h, r);
+    ctx.arcTo(x,   y+h, x,   y,   r);
+    ctx.arcTo(x,   y,   x+w, y,   r);
+  }
   ctx.closePath();
+}
+
+function withSlotTransform(ctx, slot, cb) {
+  const angle = (slot.angle || 0) * Math.PI / 180;
+  const cx = slot.x + slot.w / 2;
+  const cy = slot.y + slot.h / 2;
+  ctx.save();
+  if (angle) {
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    cb(-slot.w / 2, -slot.h / 2, slot.w, slot.h);
+  } else {
+    cb(slot.x, slot.y, slot.w, slot.h);
+  }
+  ctx.restore();
 }
 
 /* object-cover: fill the slot, crop from center */
@@ -281,6 +420,21 @@ function drawImageCover(ctx, img, x, y, w, h, r = 0) {
   ctx.restore();
 }
 
+function drawImageContain(ctx, img, x, y, w, h, r = 0) {
+  const scale = Math.min(w / img.width, h / img.height);
+  const dw = img.width * scale;
+  const dh = img.height * scale;
+  const dx = x + (w - dw) / 2;
+  const dy = y + (h - dh) / 2;
+
+  ctx.save();
+  if (r > 0) { roundedRect(ctx, x, y, w, h, r); ctx.clip(); }
+  ctx.fillStyle = '#111';
+  ctx.fillRect(x, y, w, h);
+  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.restore();
+}
+
 function loadImage(src) {
   return new Promise((res, rej) => {
     const i = new Image();
@@ -291,63 +445,109 @@ function loadImage(src) {
   });
 }
 
-async function getActiveFrameImage() {
+async function getFrameImage(frameKey) {
   if (customFrameImage) return customFrameImage;
-  const t = els.frameTheme.value;
-  if (!frameImageCache[t]) frameImageCache[t] = await loadImage(builtInFrames[t]);
-  return frameImageCache[t];
+  const config = FRAME_CONFIGS[frameKey];
+  if (!config?.path) return null;
+  if (!frameImageCache[frameKey]) frameImageCache[frameKey] = await loadImage(config.path);
+  return frameImageCache[frameKey];
 }
 
-/* Subtle inset shadow so photo looks "inside" the frame */
+/* Full background, supaya hasil jepretan terasa berada di belakang template */
+function drawFullBleedPhotoBackground(ctx, img) {
+  ctx.save();
+  ctx.filter = 'blur(14px) brightness(.72) saturate(1.05)';
+  drawImageCover(ctx, img, -24, -24, STORY_W + 48, STORY_H + 48, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,.18)';
+  ctx.fillRect(0, 0, STORY_W, STORY_H);
+  ctx.restore();
+}
+
+/* Subtle inset shadow so photo looks inside the frame */
 function addDepth(ctx, x, y, w, h, r) {
   ctx.save();
   roundedRect(ctx, x, y, w, h, r);
   ctx.clip();
+
   const g = ctx.createLinearGradient(x, y, x, y+h);
-  g.addColorStop(0,    'rgba(0,0,0,.12)');
-  g.addColorStop(0.05, 'rgba(0,0,0,0)');
-  g.addColorStop(0.95, 'rgba(0,0,0,0)');
-  g.addColorStop(1,    'rgba(0,0,0,.10)');
+  g.addColorStop(0,    'rgba(0,0,0,.16)');
+  g.addColorStop(0.06, 'rgba(0,0,0,0)');
+  g.addColorStop(0.94, 'rgba(0,0,0,0)');
+  g.addColorStop(1,    'rgba(0,0,0,.12)');
   ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+
+  const gx = ctx.createLinearGradient(x, y, x+w, y);
+  gx.addColorStop(0,    'rgba(0,0,0,.10)');
+  gx.addColorStop(0.04, 'rgba(0,0,0,0)');
+  gx.addColorStop(0.96, 'rgba(0,0,0,0)');
+  gx.addColorStop(1,    'rgba(0,0,0,.08)');
+  ctx.fillStyle = gx; ctx.fillRect(x, y, w, h);
   ctx.restore();
+
   ctx.save();
-  ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 2;
-  roundedRect(ctx, x+1, y+1, w-2, h-2, r); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.12)';
+  ctx.lineWidth = 2;
+  roundedRect(ctx, x+1, y+1, w-2, h-2, r);
+  ctx.stroke();
   ctx.restore();
 }
 
-function drawPhotosIntoSlot(ctx, images, slot) {
-  const { x, y, w, h, radius: r } = slot;
-  const n = images.length;
+function splitBaseSlot(slot, count) {
+  const { x, y, w, h, radius = 0 } = slot;
+  if (count === 1) return [{ x, y, w, h, radius }];
 
-  if (n === 1) {
-    drawImageCover(ctx, images[0], x, y, w, h, r);
-    addDepth(ctx, x, y, w, h, r);
-    return;
-  }
+  const gap = count <= 2 ? 18 : count === 3 ? 15 : 12;
+  const pH = Math.floor((h - gap * (count - 1)) / count);
+  return Array.from({ length: count }, (_, i) => ({
+    x,
+    y: y + i * (pH + gap),
+    w,
+    h: pH,
+    radius: Math.max(4, radius - 4),
+  }));
+}
 
-  const gap   = n <= 2 ? 16 : n === 3 ? 14 : 12;
-  const pH    = Math.floor((h - gap*(n-1)) / n);
-  const subR  = Math.max(6, r - 4);
+function getSlotsForFrame(frameKey, count) {
+  const config = FRAME_CONFIGS[frameKey];
+  if (!config) return [];
+  if (config.slotsByCount?.[count]) return config.slotsByCount[count];
+  if (config.baseSlot) return splitBaseSlot(config.baseSlot, count);
+  return [];
+}
 
-  images.forEach((img, i) => {
-    const py = y + i*(pH + gap);
-    drawImageCover(ctx, img, x, py, w, pH, subR);
-    addDepth(ctx, x, py, w, pH, subR);
+/*
+  Foto ditempatkan DI BELAKANG frame:
+  - Untuk scrapbook: sesuai transparent window masing-masing template.
+  - Untuk frame standar: split otomatis 1/2/3/4 di baseSlot.
+*/
+function drawPhotosBehindFrame(ctx, images, slots) {
+  slots.forEach((slot, i) => {
+    const img = images[i % images.length];
+    const r = slot.radius || 0;
+
+    withSlotTransform(ctx, slot, (x, y, w, h) => {
+      // Cover agar ruang penuh terisi foto, bukan seperti gambar kecil ditempel.
+      drawImageCover(ctx, img, x, y, w, h, r);
+      addDepth(ctx, x, y, w, h, r);
+    });
   });
 }
 
-/* Background fill behind photos (visible only outside slot area) */
-function fillBase(ctx, theme) {
-  const bg = {
-    classic:  ['#f5f5f5','#ececec'],
-    cfd:      ['#ffffff','#fef9f0'],
-    capstone: ['#e8f4ff','#dff0fa'],
-    wisuda:   ['#111111','#1c1c1c'],
-  }[theme] || ['#f5f5f5','#ececec'];
-  const g = ctx.createLinearGradient(0,0,0,STORY_H);
-  g.addColorStop(0, bg[0]); g.addColorStop(1, bg[1]);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, STORY_W, STORY_H);
+/* Background fill behind photos */
+function fillBase(ctx, frameKey) {
+  const g = ctx.createLinearGradient(0, 0, 0, STORY_H);
+  if (['wisuda'].includes(frameKey)) {
+    g.addColorStop(0, '#111111');
+    g.addColorStop(1, '#1c1c1c');
+  } else {
+    g.addColorStop(0, '#f8fafc');
+    g.addColorStop(1, '#ececec');
+  }
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, STORY_W, STORY_H);
 }
 
 /* ── Render final image ───────────────────────────────── */
@@ -355,24 +555,28 @@ async function renderFinalImage() {
   if (!capturedPhotos.length) return;
 
   const images  = await Promise.all(capturedPhotos.map(loadImage));
+  const total   = images.length;
+  const frameKey = resolveFrameKey(total);
+  const slots   = getSlotsForFrame(frameKey, total);
+
   const canvas  = document.createElement('canvas');
   canvas.width  = STORY_W;
   canvas.height = STORY_H;
   const ctx     = canvas.getContext('2d');
-  const theme   = els.frameTheme.value;
-  const slot    = frameSlots[theme] || frameSlots.classic;
 
-  /* 1 ─ base background */
-  fillBase(ctx, theme);
+  /*
+    1. Base
+    2. Full-bleed foto pertama sebagai background bawah template
+    3. Foto utama di slot transparan
+    4. Frame overlay paling atas
+  */
+  fillBase(ctx, frameKey);
+  drawFullBleedPhotoBackground(ctx, images[0]);
+  drawPhotosBehindFrame(ctx, images, slots);
 
-  /* 2 ─ photos IN the slot (UNDER the frame overlay) */
-  drawPhotosIntoSlot(ctx, images, slot);
-
-  /* 3 ─ frame overlay on top */
-  const frame = await getActiveFrameImage();
+  const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
 
-  /* publish */
   const dataUrl = canvas.toDataURL('image/png');
   els.finalPreview.src = dataUrl;
   els.finalPreview.classList.remove('hidden');
@@ -386,7 +590,7 @@ async function renderFinalImage() {
     .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
   els.downloadBtn.href     = finalObjectUrl;
-  els.downloadBtn.download = `${safeEvent}-${Date.now()}.png`;
+  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.png`;
   els.downloadBtn.classList.remove('disabled');
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
@@ -398,7 +602,7 @@ function renderQRCode(val) {
   els.qrCode.innerHTML = '';
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
   new QRCode(els.qrCode, { text: val, width: 102, height: 102, correctLevel: QRCode.CorrectLevel.M });
-  els.qrNote.textContent = 'Output: Story IG 1080×1920. QR = link lokal browser.';
+  els.qrNote.textContent = 'Output: Story IG 1080×1920. Foto dirender full di layer belakang template.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */
@@ -434,7 +638,11 @@ async function sharePhoto() {
 /* ── Custom frame upload ──────────────────────────────── */
 function handleCustomFrameUpload(e) {
   const file = e.target.files?.[0];
-  if (!file) { customFrameImage = null; if (capturedPhotos.length) renderFinalImage(); return; }
+  if (!file) {
+    customFrameImage = null;
+    if (capturedPhotos.length) renderFinalImage();
+    return;
+  }
   const reader = new FileReader();
   reader.onload = async () => {
     customFrameImage = await loadImage(reader.result);
