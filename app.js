@@ -66,6 +66,31 @@ const FRAME_CONFIGS = {
     baseSlot: { x: 74, y: 240, w: 932, h: 1175, radius: 14 },
   },
 
+  yogyakartaCity: {
+    label: 'Yogyakarta City Series',
+    path: 'assets/frames/yogyakarta-city-series.png',
+    slotsByCount: {
+      1: [
+        { x: 58, y: 742, w: 656, h: 608 }
+      ],
+      2: [
+        { x: 58, y: 742, w: 656, h: 608 },
+        { x: 55, y: 1399, w: 268, h: 223 }
+      ],
+      3: [
+        { x: 58, y: 742, w: 656, h: 296 },
+        { x: 58, y: 1054, w: 656, h: 296 },
+        { x: 55, y: 1399, w: 268, h: 223 }
+      ],
+      4: [
+        { x: 58, y: 742, w: 656, h: 189 },
+        { x: 58, y: 951, w: 656, h: 189 },
+        { x: 58, y: 1160, w: 656, h: 189 },
+        { x: 55, y: 1399, w: 268, h: 223 }
+      ],
+    },
+  },
+
   // Template dari referensi scrapbook user
   birthdayCollage: {
     label: 'Birthday Collage',

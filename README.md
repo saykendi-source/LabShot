@@ -78,3 +78,15 @@ QR Code masih bersifat link lokal browser. Untuk QR publik yang bisa di-scan HP,
 - Foto tidak lagi dibuat seperti ditempel di atas frame.
 - Foto dirender sebagai layer penuh di belakang template, lalu muncul melalui transparent window.
 - Output tetap Story Instagram 1080 × 1920 px.
+
+
+## Update v8 – Yogyakarta City Series
+
+- Menambahkan template baru `Yogyakarta City Series` ke folder `assets/frames/`.
+- Template ini diambil dari desain yang Anda kirim, lalu area foto diubah menjadi transparent window.
+- Posisi foto disesuaikan agar natural:
+  - 1 foto: area besar utama
+  - 2 foto: area besar + area kecil bawah
+  - 3 foto: area besar dibagi 2 strip + area kecil bawah
+  - 4 foto: area besar dibagi 3 strip + area kecil bawah
+- Template ini dijadikan pilihan default pada dropdown Frame.
