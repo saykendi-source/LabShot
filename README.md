@@ -59,3 +59,9 @@ Versi ini masih statis, sehingga hasil foto hanya tersimpan di browser pengguna.
 - Foto otomatis masuk ke dalam frame bawaan
 - Output sudah mengikuti ukuran Story Instagram (1080 x 1920)
 - Empat frame bawaan ada di folder `assets/frames/`
+
+
+## Update v2
+- Memperbaiki masalah hasil foto tidak muncul di dalam bingkai.
+- Frame bawaan digambar sebagai latar, lalu foto dimasukkan ke area kosong frame.
+- Output tetap Story Instagram 1080 x 1920.

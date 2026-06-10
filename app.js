@@ -33,10 +33,12 @@ const builtInFrames = {
 };
 
 const frameSlots = {
-  classic: { x: 124, y: 166, w: 832, h: 1278, radius: 42 },
-  cfd: { x: 56, y: 150, w: 968, h: 1402, radius: 26 },
-  capstone: { x: 62, y: 122, w: 956, h: 1510, radius: 20 },
-  wisuda: { x: 82, y: 378, w: 916, h: 1136, radius: 24 },
+  // Area foto aman di dalam frame Story IG 1080 x 1920.
+  // Dibuat lebih kecil supaya foto tidak menutup teks, logo, dan ornamen frame.
+  classic: { x: 174, y: 226, w: 732, h: 1064, radius: 34 },
+  cfd: { x: 82, y: 330, w: 916, h: 1032, radius: 22 },
+  capstone: { x: 88, y: 176, w: 904, h: 1332, radius: 18 },
+  wisuda: { x: 112, y: 410, w: 856, h: 900, radius: 22 },
 };
 
 let stream = null;
@@ -234,11 +236,19 @@ async function renderFinalImage() {
   canvas.height = STORY_H;
 
   fillBase(ctx, theme);
-  drawPhotosIntoSlot(ctx, images, slot);
 
   const frameImage = await getActiveFrameImage();
-  if (frameImage) {
+
+  if (customFrameImage) {
+    // Untuk frame custom PNG transparan: foto digambar dulu, frame ditempel di atas.
+    drawPhotosIntoSlot(ctx, images, slot);
     ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+  } else {
+    // Frame bawaan dari generator masih memiliki pola checkerboard sebagai gambar.
+    // Karena itu frame digambar lebih dulu, lalu foto dimasukkan tepat di area kosongnya.
+    // Ini memperbaiki masalah foto tertutup oleh frame.
+    ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+    drawPhotosIntoSlot(ctx, images, slot);
   }
 
   const dataUrl = canvas.toDataURL('image/png');
