@@ -71,3 +71,9 @@ Versi ini masih statis, sehingga hasil foto hanya tersimpan di browser pengguna.
 - Frame bawaan sudah dibuat transparan pada area kosong.
 - Foto sekarang dirender di belakang frame agar terlihat menyatu, bukan sekadar ditempel.
 - Ditambahkan efek inset/shadow halus agar foto terasa masuk ke bingkai.
+
+
+## Update v4
+- Efek foto ditempel diperbaiki dengan panel/mat di dalam bingkai.
+- Foto diberi inset, shadow, dan edge halus agar terlihat masuk ke frame.
+- Komposisi opening diperhalus untuk hasil lebih natural.
