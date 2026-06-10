@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LabShot - Web Photobox</title>
+  <title>LabShot – Web Photobox</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
   <script src="app.js" defer></script>
@@ -11,55 +11,65 @@
 <body>
   <main class="app-shell">
 
-    <!-- ══ LEFT: Camera ══ -->
+    <!-- ════════ LEFT PANEL ════════ -->
     <section class="hero-panel">
+
       <div class="brand-row">
         <div class="logo-mark">TI</div>
         <div>
-          <p class="eyebrow">Portable Web Photobox • Story IG</p>
+          <p class="eyebrow">Portable Web Photobox · Story IG</p>
           <h1>LabShot</h1>
         </div>
       </div>
 
+      <!-- Camera preview -->
       <div class="camera-card">
         <video id="cameraPreview" autoplay playsinline muted></video>
         <canvas id="shotCanvas" class="hidden"></canvas>
+
         <div id="emptyCamera" class="empty-camera">
           <span>📷</span>
           <strong>Kamera belum aktif</strong>
-          <small>Klik tombol "Aktifkan Kamera" untuk mulai.</small>
+          <small>Klik "Aktifkan Kamera" untuk memulai.</small>
         </div>
+
         <div id="countdown" class="countdown hidden">3</div>
         <div id="flash" class="flash hidden"></div>
-
-        <!-- live filter badge -->
-        <div class="filter-badge" id="filterBadge"></div>
       </div>
 
-      <!-- Thumbnail strip of captured shots -->
+      <!-- Progress bar -->
+      <div class="progress-wrap">
+        <div id="progressBar" class="progress-fill"></div>
+      </div>
+      <p id="statusText" class="status-text">Kamera belum aktif.</p>
+
+      <!-- Thumbnail strip -->
       <div id="photoGrid" class="photo-grid hidden"></div>
 
+      <!-- Action buttons -->
       <div class="primary-actions">
-        <button id="startCameraBtn" class="btn btn-secondary">Aktifkan Kamera</button>
+        <button id="startCameraBtn"  class="btn btn-secondary">📷 Aktifkan Kamera</button>
         <button id="startSessionBtn" class="btn btn-primary" disabled>▶ Mulai Foto</button>
-        <button id="retakeBtn" class="btn btn-ghost" disabled>↺ Ulangi</button>
+        <button id="retakeBtn"       class="btn btn-ghost"   disabled>↺ Ulangi</button>
       </div>
-    </section>
 
-    <!-- ══ RIGHT: Controls + Result ══ -->
+    </section><!-- /hero-panel -->
+
+    <!-- ════════ RIGHT PANEL ════════ -->
     <aside class="control-panel">
+
       <div class="panel-header">
         <p class="eyebrow">Pengaturan Sesi</p>
         <h2>Mode Foto</h2>
       </div>
 
-      <!-- Event name -->
+      <!-- Nama event -->
       <label class="field">
         <span>Nama Event</span>
         <input id="eventName" type="text" value="TI UMY Photobox" maxlength="40" />
       </label>
 
-      <!-- Layout + countdown -->
+      <!-- Layout + Countdown -->
       <div class="grid-2">
         <label class="field">
           <span>Layout</span>
@@ -81,7 +91,7 @@
         </label>
       </div>
 
-      <!-- Frame + filter -->
+      <!-- Frame + Filter -->
       <div class="grid-2">
         <label class="field">
           <span>Frame</span>
@@ -95,8 +105,8 @@
         <label class="field">
           <span>Filter</span>
           <select id="filterMode">
-            <option value="none" selected>Normal</option>
-            <option value="bw">Black &amp; White</option>
+            <option value="none"    selected>Normal</option>
+            <option value="bw">B&amp;W</option>
             <option value="warm">Warm</option>
             <option value="bright">Bright</option>
             <option value="vintage">Vintage</option>
@@ -105,13 +115,13 @@
         </label>
       </div>
 
-      <!-- Camera select (hidden until multiple cameras detected) -->
-      <label class="field" id="cameraSelectWrap">
+      <!-- Pilih kamera (auto-show if multiple) -->
+      <label class="field hidden" id="cameraSelectWrap">
         <span>Pilih Kamera</span>
         <select id="cameraSelect"></select>
       </label>
 
-      <!-- Toggles row -->
+      <!-- Toggles -->
       <div class="toggle-row">
         <label class="toggle-label">
           <input type="checkbox" id="mirrorToggle" checked />
@@ -125,14 +135,14 @@
         </label>
       </div>
 
-      <!-- Custom frame upload -->
+      <!-- Custom frame -->
       <label class="field">
-        <span>Upload Frame Kustom (PNG opsional)</span>
+        <span>Upload Frame Kustom (opsional)</span>
         <input id="customFrame" type="file" accept="image/png,image/webp,image/jpeg" />
-        <small>Frame bawaan sudah otomatis aktif. Upload jika ingin pakai frame sendiri.</small>
+        <small>Frame bawaan sudah otomatis aktif. Upload PNG kustom jika diperlukan.</small>
       </label>
 
-      <!-- ══ Result card ══ -->
+      <!-- ════ Result ════ -->
       <section class="result-card">
         <div class="result-header">
           <div>
@@ -146,7 +156,7 @@
         <div id="emptyResult" class="empty-result">Hasil foto akan muncul di sini.</div>
 
         <div class="download-row">
-          <a id="downloadBtn" class="btn btn-primary disabled" download="labshot-photobox.png">⬇ Download</a>
+          <a id="downloadBtn" class="btn btn-primary disabled" download="labshot.png">⬇ Download</a>
           <button id="shareBtn" class="btn btn-secondary" disabled>↗ Bagikan</button>
         </div>
 
@@ -155,11 +165,12 @@
           <small id="qrNote">QR aktif setelah foto dibuat.</small>
         </div>
       </section>
-    </aside>
+
+    </aside><!-- /control-panel -->
   </main>
 
   <footer class="footer-note">
-    Jalankan via HTTPS / GitHub Pages / localhost agar kamera bisa diakses browser.
+    Jalankan via HTTPS · GitHub Pages · atau localhost agar kamera dapat diakses browser.
   </footer>
 </body>
 </html>
