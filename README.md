@@ -1,79 +1,61 @@
-# LabShot - Web Photobox MVP
+# LabShot - Web Photobox
 
-Versi awal aplikasi photobox berbasis web untuk layar LCD dan kamera/webcam di lab.
+Aplikasi photobox berbasis web untuk layar LCD dan kamera/webcam di lab.  
+Output: Story Instagram **1080 × 1920 px**, foto tertanam rapi di dalam bingkai.
 
 ## Fitur
 
-- Akses kamera melalui browser
-- Countdown otomatis
-- Layout Single Photo, Photo Strip 3 foto, dan Photo Strip 4 foto
-- Frame bawaan: Classic, CFD Street, Capstone, Wisuda
-- Filter sederhana: Normal, Black & White, Warm, Bright, Vintage
-- Upload frame PNG opsional
-- Preview hasil foto
-- Download hasil dalam format PNG
-- Tombol bagikan jika browser mendukung Web Share API
-- QR demo untuk link lokal browser
+- Akses kamera melalui browser (HTTPS / localhost)
+- Pilih kamera jika ada lebih dari satu perangkat
+- Toggle mirror & suara countdown (beep + shutter)
+- Live filter preview di viewfinder
+- Layout: Single / Strip 2 / Strip 3 / Strip 4 foto
+- Frame bawaan: Classic · CFD Street · Capstone · Wisuda
+- Filter: Normal · B&W · Warm · Bright · Vintage · Cool
+- Upload frame PNG kustom
+- Thumbnail strip foto yang sudah diambil
+- Download PNG + tombol Bagikan (Web Share API)
+- QR Code lokal browser
 
-## Cara menjalankan di komputer lokal
-
-1. Ekstrak file ZIP.
-2. Buka folder project.
-3. Jalankan dengan server lokal, misalnya:
+## Cara menjalankan
 
 ```bash
 python -m http.server 8000
+# buka http://localhost:8000
 ```
 
-4. Buka browser:
+Atau upload ke GitHub Pages (Settings → Pages → branch main / root).
 
-```text
-http://localhost:8000
+## Struktur folder
+
+```
+index.html
+style.css
+app.js
+README.md
+assets/
+  frames/
+    classic-story.png
+    cfd-story.png
+    capstone-story.png
+    wisuda-story.png
 ```
 
-Kamera dapat berjalan di `localhost` atau website HTTPS seperti GitHub Pages.
+## Perbaikan & peningkatan (v5)
 
-## Cara upload ke GitHub Pages
+- **Koordinat slot foto diperbaiki** berdasarkan analisis piksel aktual tiap frame PNG
+- Foto kini benar-benar masuk ke dalam area hitam bingkai (bukan ditempel di atas)
+- Ditambahkan layout Strip 2 Foto
+- Ditambahkan filter Cool
+- Toggle mirror & suara
+- Live filter preview di viewfinder sebelum foto diambil
+- Thumbnail strip foto yang baru diambil
+- Pilihan kamera otomatis muncul jika ada lebih dari 1 kamera
+- Countdown dengan animasi pop + beep audio
+- Suara shutter saat foto diambil
+- Tombol kamera berubah warna saat aktif
+- UI lebih rapi & responsif
 
-1. Buat repository baru, misalnya `labshot-photobox`.
-2. Upload semua file: `index.html`, `style.css`, `app.js`, dan `README.md`.
-3. Buka Settings → Pages.
-4. Pilih branch `main`, folder `/root`.
-5. Buka link GitHub Pages yang muncul.
+## Catatan
 
-## Catatan penting
-
-Versi ini masih statis, sehingga hasil foto hanya tersimpan di browser pengguna. QR Code masih bersifat demo dari link lokal browser. Agar QR bisa discan HP dan langsung mengunduh foto, versi berikutnya perlu backend/storage, misalnya Firebase Storage, Supabase Storage, Google Drive API, atau server lokal Node.js.
-
-## Rekomendasi versi berikutnya
-
-- Backend Node.js untuk upload foto
-- Storage foto per event
-- Admin panel untuk ganti frame/event
-- Gallery privat per sesi
-- QR download publik
-- Statistik jumlah foto per event
-
-
-## Update terbaru
-- Foto otomatis masuk ke dalam frame bawaan
-- Output sudah mengikuti ukuran Story Instagram (1080 x 1920)
-- Empat frame bawaan ada di folder `assets/frames/`
-
-
-## Update v2
-- Memperbaiki masalah hasil foto tidak muncul di dalam bingkai.
-- Frame bawaan digambar sebagai latar, lalu foto dimasukkan ke area kosong frame.
-- Output tetap Story Instagram 1080 x 1920.
-
-
-## Update v3
-- Frame bawaan sudah dibuat transparan pada area kosong.
-- Foto sekarang dirender di belakang frame agar terlihat menyatu, bukan sekadar ditempel.
-- Ditambahkan efek inset/shadow halus agar foto terasa masuk ke bingkai.
-
-
-## Update v4
-- Efek foto ditempel diperbaiki dengan panel/mat di dalam bingkai.
-- Foto diberi inset, shadow, dan edge halus agar terlihat masuk ke frame.
-- Komposisi opening diperhalus untuk hasil lebih natural.
+QR Code masih bersifat link lokal browser. Untuk QR publik yang bisa di-scan HP, perlu tambahan backend/storage (Firebase Storage, Supabase, dsb.).

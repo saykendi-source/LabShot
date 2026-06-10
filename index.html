@@ -10,6 +10,8 @@
 </head>
 <body>
   <main class="app-shell">
+
+    <!-- ══ LEFT: Camera ══ -->
     <section class="hero-panel">
       <div class="brand-row">
         <div class="logo-mark">TI</div>
@@ -25,50 +27,61 @@
         <div id="emptyCamera" class="empty-camera">
           <span>📷</span>
           <strong>Kamera belum aktif</strong>
-          <small>Klik tombol “Aktifkan Kamera” untuk mulai.</small>
+          <small>Klik tombol "Aktifkan Kamera" untuk mulai.</small>
         </div>
         <div id="countdown" class="countdown hidden">3</div>
         <div id="flash" class="flash hidden"></div>
+
+        <!-- live filter badge -->
+        <div class="filter-badge" id="filterBadge"></div>
       </div>
+
+      <!-- Thumbnail strip of captured shots -->
+      <div id="photoGrid" class="photo-grid hidden"></div>
 
       <div class="primary-actions">
         <button id="startCameraBtn" class="btn btn-secondary">Aktifkan Kamera</button>
-        <button id="startSessionBtn" class="btn btn-primary" disabled>Mulai Foto</button>
-        <button id="retakeBtn" class="btn btn-ghost" disabled>Ulangi</button>
+        <button id="startSessionBtn" class="btn btn-primary" disabled>▶ Mulai Foto</button>
+        <button id="retakeBtn" class="btn btn-ghost" disabled>↺ Ulangi</button>
       </div>
     </section>
 
+    <!-- ══ RIGHT: Controls + Result ══ -->
     <aside class="control-panel">
       <div class="panel-header">
         <p class="eyebrow">Pengaturan Sesi</p>
         <h2>Mode Foto</h2>
       </div>
 
+      <!-- Event name -->
       <label class="field">
         <span>Nama Event</span>
-        <input id="eventName" type="text" value="TI UMY Photobox" maxlength="36" />
+        <input id="eventName" type="text" value="TI UMY Photobox" maxlength="40" />
       </label>
 
+      <!-- Layout + countdown -->
       <div class="grid-2">
         <label class="field">
           <span>Layout</span>
           <select id="layoutMode">
             <option value="1">Single Photo</option>
-            <option value="3">Photo Strip 3 Foto</option>
-            <option value="4" selected>Photo Strip 4 Foto</option>
+            <option value="2">Strip 2 Foto</option>
+            <option value="3">Strip 3 Foto</option>
+            <option value="4" selected>Strip 4 Foto</option>
           </select>
         </label>
-
         <label class="field">
           <span>Countdown</span>
           <select id="countdownSeconds">
             <option value="3" selected>3 detik</option>
             <option value="5">5 detik</option>
             <option value="7">7 detik</option>
+            <option value="10">10 detik</option>
           </select>
         </label>
       </div>
 
+      <!-- Frame + filter -->
       <div class="grid-2">
         <label class="field">
           <span>Frame</span>
@@ -79,25 +92,47 @@
             <option value="wisuda">Wisuda</option>
           </select>
         </label>
-
         <label class="field">
           <span>Filter</span>
           <select id="filterMode">
             <option value="none" selected>Normal</option>
-            <option value="bw">Black & White</option>
+            <option value="bw">Black &amp; White</option>
             <option value="warm">Warm</option>
             <option value="bright">Bright</option>
             <option value="vintage">Vintage</option>
+            <option value="cool">Cool</option>
           </select>
         </label>
       </div>
 
-      <label class="field">
-        <span>Upload Frame PNG Opsional</span>
-        <input id="customFrame" type="file" accept="image/png,image/webp,image/jpeg" />
-        <small>Frame bawaan sudah otomatis aktif. Foto akan dibuat menyatu ke dalam bingkai dengan efek panel/mat, sehingga tidak terlihat seperti ditempel. Output tetap Story IG 1080 × 1920.</small>
+      <!-- Camera select (hidden until multiple cameras detected) -->
+      <label class="field" id="cameraSelectWrap">
+        <span>Pilih Kamera</span>
+        <select id="cameraSelect"></select>
       </label>
 
+      <!-- Toggles row -->
+      <div class="toggle-row">
+        <label class="toggle-label">
+          <input type="checkbox" id="mirrorToggle" checked />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          Mirror
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="soundToggle" checked />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          Suara
+        </label>
+      </div>
+
+      <!-- Custom frame upload -->
+      <label class="field">
+        <span>Upload Frame Kustom (PNG opsional)</span>
+        <input id="customFrame" type="file" accept="image/png,image/webp,image/jpeg" />
+        <small>Frame bawaan sudah otomatis aktif. Upload jika ingin pakai frame sendiri.</small>
+      </label>
+
+      <!-- ══ Result card ══ -->
       <section class="result-card">
         <div class="result-header">
           <div>
@@ -111,20 +146,20 @@
         <div id="emptyResult" class="empty-result">Hasil foto akan muncul di sini.</div>
 
         <div class="download-row">
-          <a id="downloadBtn" class="btn btn-primary disabled" download="labshot-photobox.png">Download</a>
-          <button id="shareBtn" class="btn btn-secondary" disabled>Bagikan</button>
+          <a id="downloadBtn" class="btn btn-primary disabled" download="labshot-photobox.png">⬇ Download</a>
+          <button id="shareBtn" class="btn btn-secondary" disabled>↗ Bagikan</button>
         </div>
 
         <div class="qr-wrap">
           <div id="qrCode" class="qr-code"></div>
-          <small id="qrNote">QR akan aktif setelah foto dibuat. Untuk download lintas perangkat, tambahkan backend/storage pada versi berikutnya.</small>
+          <small id="qrNote">QR aktif setelah foto dibuat.</small>
         </div>
       </section>
     </aside>
   </main>
 
   <footer class="footer-note">
-    Jalankan melalui HTTPS/GitHub Pages atau localhost agar browser mengizinkan akses kamera.
+    Jalankan via HTTPS / GitHub Pages / localhost agar kamera bisa diakses browser.
   </footer>
 </body>
 </html>
