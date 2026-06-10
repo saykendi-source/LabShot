@@ -65,98 +65,27 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/wisuda-story.png',
     baseSlot: { x: 74, y: 240, w: 932, h: 1175, radius: 14 },
   },
-
   yogyakartaCity: {
     label: 'Yogyakarta City Series',
     path: 'assets/frames/yogyakarta-city-series.png',
     slotsByCount: {
       1: [
-        { x: 58, y: 742, w: 656, h: 608 }
+        { x: 78, y: 558, w: 602, h: 905, radius: 10 }
       ],
       2: [
-        { x: 58, y: 742, w: 656, h: 608 },
-        { x: 55, y: 1399, w: 268, h: 223 }
+        { x: 78, y: 558, w: 602, h: 442, radius: 10 },
+        { x: 78, y: 1021, w: 602, h: 442, radius: 10 }
       ],
       3: [
-        { x: 58, y: 742, w: 656, h: 296 },
-        { x: 58, y: 1054, w: 656, h: 296 },
-        { x: 55, y: 1399, w: 268, h: 223 }
+        { x: 78, y: 558, w: 602, h: 289, radius: 10 },
+        { x: 78, y: 866, w: 602, h: 289, radius: 10 },
+        { x: 78, y: 1174, w: 602, h: 289, radius: 10 }
       ],
       4: [
-        { x: 58, y: 742, w: 656, h: 189 },
-        { x: 58, y: 951, w: 656, h: 189 },
-        { x: 58, y: 1160, w: 656, h: 189 },
-        { x: 55, y: 1399, w: 268, h: 223 }
-      ],
-    },
-  },
-
-  // Template dari referensi scrapbook user
-  birthdayCollage: {
-    label: 'Birthday Collage',
-    path: 'assets/frames/birthday-collage.png',
-    slotsByCount: {
-      1: [{ x: 590, y: 525, w: 315, h: 425 }],
-      2: [
-        { x: 122, y: 1015, w: 350, h: 410 },
-        { x: 612, y: 1185, w: 340, h: 420 },
-      ],
-      3: [
-        { x: 590, y: 525, w: 315, h: 425 },
-        { x: 122, y: 1015, w: 350, h: 410 },
-        { x: 612, y: 1185, w: 340, h: 420 },
-      ],
-      4: [
-        { x: 590, y: 525, w: 315, h: 210 },
-        { x: 590, y: 740, w: 315, h: 210 },
-        { x: 122, y: 1015, w: 350, h: 410 },
-        { x: 612, y: 1185, w: 340, h: 420 },
-      ],
-    },
-  },
-
-  birthdayCamera: {
-    label: 'Birthday Camera',
-    path: 'assets/frames/birthday-camera.png',
-    slotsByCount: {
-      1: [{ x: 472, y: 585, w: 355, h: 248, radius: 12, angle: 10 }],
-      2: [
-        { x: 104, y: 1015, w: 375, h: 370 },
-        { x: 610, y: 1240, w: 350, h: 390 },
-      ],
-      3: [
-        { x: 472, y: 585, w: 355, h: 248, radius: 12, angle: 10 },
-        { x: 104, y: 1015, w: 375, h: 370 },
-        { x: 610, y: 1240, w: 350, h: 390 },
-      ],
-      4: [
-        { x: 472, y: 585, w: 170, h: 248, radius: 10, angle: 10 },
-        { x: 653, y: 585, w: 174, h: 248, radius: 10, angle: 10 },
-        { x: 104, y: 1015, w: 375, h: 370 },
-        { x: 610, y: 1240, w: 350, h: 390 },
-      ],
-    },
-  },
-
-  memoriesBox: {
-    label: 'Memories Box',
-    path: 'assets/frames/memories-box.png',
-    slotsByCount: {
-      1: [{ x: 55, y: 515, w: 530, h: 335 }],
-      2: [
-        { x: 55, y: 515, w: 530, h: 335 },
-        { x: 405, y: 1535, w: 620, h: 280 },
-      ],
-      3: [
-        { x: 55, y: 515, w: 530, h: 335 },
-        { x: 625, y: 730, w: 310, h: 455, angle: 6 },
-        { x: 405, y: 1535, w: 620, h: 280 },
-      ],
-      4: [
-        { x: 55, y: 515, w: 530, h: 335 },
-        { x: 625, y: 730, w: 310, h: 455, angle: 6 },
-        { x: 108, y: 960, w: 410, h: 405, angle: -8 },
-        { x: 405, y: 1535, w: 620, h: 280 },
+        { x: 78, y: 558, w: 602, h: 211, radius: 10 },
+        { x: 78, y: 790, w: 602, h: 211, radius: 10 },
+        { x: 78, y: 1022, w: 602, h: 211, radius: 10 },
+        { x: 78, y: 1254, w: 602, h: 209, radius: 10 }
       ],
     },
   },

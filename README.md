@@ -90,3 +90,14 @@ QR Code masih bersifat link lokal browser. Untuk QR publik yang bisa di-scan HP,
   - 3 foto: area besar dibagi 2 strip + area kecil bawah
   - 4 foto: area besar dibagi 3 strip + area kecil bawah
 - Template ini dijadikan pilihan default pada dropdown Frame.
+
+
+## Update v9 – Yogyakarta Template Resize
+
+- Template `Yogyakarta City Series` diperbarui mengikuti desain terbaru yang Anda lampirkan.
+- Area foto kini fokus pada 1 window utama besar.
+- Penempatan foto disesuaikan agar natural:
+  - 1 foto: 1 foto penuh pada area utama
+  - 2 foto: 2 strip vertikal dalam area utama
+  - 3 foto: 3 strip vertikal dalam area utama
+  - 4 foto: 4 strip vertikal dalam area utama
