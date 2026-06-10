@@ -22,11 +22,29 @@ const els = {
   qrNote: document.getElementById('qrNote'),
 };
 
+const STORY_W = 1080;
+const STORY_H = 1920;
+
+const builtInFrames = {
+  classic: 'assets/frames/classic-story.png',
+  cfd: 'assets/frames/cfd-story.png',
+  capstone: 'assets/frames/capstone-story.png',
+  wisuda: 'assets/frames/wisuda-story.png',
+};
+
+const frameSlots = {
+  classic: { x: 124, y: 166, w: 832, h: 1278, radius: 42 },
+  cfd: { x: 56, y: 150, w: 968, h: 1402, radius: 26 },
+  capstone: { x: 62, y: 122, w: 956, h: 1510, radius: 20 },
+  wisuda: { x: 82, y: 378, w: 916, h: 1136, radius: 24 },
+};
+
 let stream = null;
 let capturedPhotos = [];
 let finalBlob = null;
 let finalObjectUrl = null;
 let customFrameImage = null;
+const frameImageCache = {};
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -40,8 +58,8 @@ async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
+        width: { ideal: 1080 },
+        height: { ideal: 1920 },
         facingMode: 'user'
       },
       audio: false
@@ -68,8 +86,8 @@ function getFilterValue() {
 function capturePhoto() {
   const video = els.video;
   const canvas = els.shotCanvas;
-  const ratio = video.videoWidth / video.videoHeight || 16 / 9;
-  canvas.width = 1400;
+  const ratio = video.videoWidth / video.videoHeight || 3 / 4;
+  canvas.width = 1080;
   canvas.height = Math.round(canvas.width / ratio);
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -78,7 +96,7 @@ function capturePhoto() {
   ctx.scale(-1, 1);
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   ctx.restore();
-  return canvas.toDataURL('image/jpeg', 0.92);
+  return canvas.toDataURL('image/jpeg', 0.94);
 }
 
 async function runCountdown(seconds) {
@@ -150,77 +168,56 @@ function loadImage(src) {
   });
 }
 
-function drawTheme(ctx, theme, w, h, eventName, photoCount) {
-  ctx.save();
-
-  if (theme === 'classic') {
-    const grd = ctx.createLinearGradient(0, 0, w, h);
-    grd.addColorStop(0, '#f8fafc');
-    grd.addColorStop(1, '#e0f2fe');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, w, h);
+async function getActiveFrameImage() {
+  if (customFrameImage) return customFrameImage;
+  const theme = els.frameTheme.value;
+  if (!frameImageCache[theme]) {
+    frameImageCache[theme] = await loadImage(builtInFrames[theme]);
   }
-  if (theme === 'cfd') {
-    const grd = ctx.createLinearGradient(0, 0, w, h);
-    grd.addColorStop(0, '#fff7ed');
-    grd.addColorStop(1, '#fed7aa');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(251,146,60,.18)';
-    for (let i = -w; i < w * 2; i += 72) {
-      ctx.fillRect(i, h - 130, 42, 130);
-    }
-  }
-  if (theme === 'capstone') {
-    const grd = ctx.createLinearGradient(0, 0, w, h);
-    grd.addColorStop(0, '#ecfeff');
-    grd.addColorStop(1, '#dbeafe');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = 'rgba(14,165,233,.18)';
-    ctx.lineWidth = 2;
-    for (let x = 0; x < w; x += 46) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-    }
-    for (let y = 0; y < h; y += 46) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-    }
-  }
-  if (theme === 'wisuda') {
-    const grd = ctx.createLinearGradient(0, 0, w, h);
-    grd.addColorStop(0, '#111827');
-    grd.addColorStop(1, '#312e81');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(251,191,36,.25)';
-    ctx.beginPath(); ctx.arc(w - 90, 90, 130, 0, Math.PI * 2); ctx.fill();
-  }
-
-  const dark = theme === 'wisuda';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = dark ? '#ffffff' : '#0f172a';
-  ctx.font = '900 48px Inter, Arial, sans-serif';
-  ctx.fillText(eventName || 'LabShot Photobox', w / 2, photoCount === 1 ? 82 : 76);
-
-  ctx.font = '700 22px Inter, Arial, sans-serif';
-  ctx.fillStyle = dark ? 'rgba(255,255,255,.72)' : 'rgba(15,23,42,.58)';
-  const date = new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date());
-  ctx.fillText(date, w / 2, photoCount === 1 ? 118 : 108);
-
-  ctx.restore();
+  return frameImageCache[theme];
 }
 
-function drawFooter(ctx, theme, w, h) {
-  const dark = theme === 'wisuda';
+function fillBase(ctx, theme) {
+  const palettes = {
+    classic: ['#ffffff', '#f8fafc'],
+    cfd: ['#ffffff', '#fff7ed'],
+    capstone: ['#eff6ff', '#ecfeff'],
+    wisuda: ['#ffffff', '#f8fafc'],
+  };
+  const [c1, c2] = palettes[theme] || palettes.classic;
+  const grd = ctx.createLinearGradient(0, 0, STORY_W, STORY_H);
+  grd.addColorStop(0, c1);
+  grd.addColorStop(1, c2);
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, STORY_W, STORY_H);
+}
+
+function drawPhotoBlock(ctx, img, x, y, w, h, radius = 24) {
   ctx.save();
-  ctx.textAlign = 'center';
-  ctx.fillStyle = dark ? '#ffffff' : '#0f172a';
-  ctx.font = '900 30px Inter, Arial, sans-serif';
-  ctx.fillText('LABSHOT', w / 2, h - 68);
-  ctx.font = '700 18px Inter, Arial, sans-serif';
-  ctx.fillStyle = dark ? 'rgba(255,255,255,.70)' : 'rgba(15,23,42,.55)';
-  ctx.fillText('Web Photobox • Prodi TI UMY', w / 2, h - 38);
+  ctx.fillStyle = 'rgba(255,255,255,.96)';
+  roundedRect(ctx, x - 8, y - 8, w + 16, h + 16, radius + 6);
+  ctx.fill();
   ctx.restore();
+  drawImageCover(ctx, img, x, y, w, h, radius);
+}
+
+function drawPhotosIntoSlot(ctx, images, slot) {
+  const total = images.length;
+  if (total === 1) {
+    drawPhotoBlock(ctx, images[0], slot.x, slot.y, slot.w, slot.h, slot.radius);
+    return;
+  }
+
+  const gap = total === 3 ? 22 : 20;
+  const innerPadX = total >= 3 ? 8 : 0;
+  const innerPadY = total >= 3 ? 4 : 0;
+  const photoW = slot.w - innerPadX * 2;
+  const photoH = Math.floor((slot.h - innerPadY * 2 - gap * (total - 1)) / total);
+
+  images.forEach((img, idx) => {
+    const y = slot.y + innerPadY + idx * (photoH + gap);
+    drawPhotoBlock(ctx, img, slot.x + innerPadX, y, photoW, photoH, Math.max(18, slot.radius - 8));
+  });
 }
 
 async function renderFinalImage() {
@@ -231,37 +228,17 @@ async function renderFinalImage() {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const theme = els.frameTheme.value;
-  const eventName = els.eventName.value.trim();
+  const slot = frameSlots[theme] || frameSlots.classic;
 
-  if (total === 1) {
-    canvas.width = 1200;
-    canvas.height = 1450;
-    drawTheme(ctx, theme, canvas.width, canvas.height, eventName, total);
-    drawImageCover(ctx, images[0], 90, 160, 1020, 1020, 46);
-    drawFooter(ctx, theme, canvas.width, canvas.height);
-  } else {
-    canvas.width = 900;
-    canvas.height = total === 3 ? 1580 : 1980;
-    drawTheme(ctx, theme, canvas.width, canvas.height, eventName, total);
-    const margin = 62;
-    const top = 145;
-    const gap = 32;
-    const photoW = canvas.width - margin * 2;
-    const photoH = total === 3 ? 380 : 372;
-    images.forEach((img, idx) => {
-      const y = top + idx * (photoH + gap);
-      ctx.save();
-      ctx.fillStyle = 'rgba(255,255,255,.76)';
-      roundedRect(ctx, margin - 12, y - 12, photoW + 24, photoH + 24, 34);
-      ctx.fill();
-      ctx.restore();
-      drawImageCover(ctx, img, margin, y, photoW, photoH, 28);
-    });
-    drawFooter(ctx, theme, canvas.width, canvas.height);
-  }
+  canvas.width = STORY_W;
+  canvas.height = STORY_H;
 
-  if (customFrameImage) {
-    ctx.drawImage(customFrameImage, 0, 0, canvas.width, canvas.height);
+  fillBase(ctx, theme);
+  drawPhotosIntoSlot(ctx, images, slot);
+
+  const frameImage = await getActiveFrameImage();
+  if (frameImage) {
+    ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
   }
 
   const dataUrl = canvas.toDataURL('image/png');
@@ -273,9 +250,13 @@ async function renderFinalImage() {
   finalBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   finalObjectUrl = URL.createObjectURL(finalBlob);
 
-  const safeEvent = (eventName || 'labshot').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const safeEvent = (els.eventName.value.trim() || 'labshot-story')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
   els.downloadBtn.href = finalObjectUrl;
-  els.downloadBtn.download = `${safeEvent}-${Date.now()}.png`;
+  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.png`;
   els.downloadBtn.classList.remove('disabled');
   els.shareBtn.disabled = false;
   els.retakeBtn.disabled = false;
@@ -292,9 +273,9 @@ function renderQRCode(value) {
       height: 102,
       correctLevel: QRCode.CorrectLevel.M
     });
-    els.qrNote.textContent = 'QR demo dibuat dari link lokal browser. Untuk scan dari HP berbeda, gunakan backend/storage pada versi berikutnya.';
+    els.qrNote.textContent = 'Hasil download sudah memakai format Story IG 1080 × 1920. QR masih berupa link lokal browser.';
   } else {
-    els.qrNote.textContent = 'Library QR belum termuat. Download tetap bisa dilakukan dari tombol Download.';
+    els.qrNote.textContent = 'Hasil download sudah memakai format Story IG 1080 × 1920. Library QR belum termuat.';
   }
 }
 
@@ -310,18 +291,18 @@ function resetResult(clearPhotos = true) {
   els.downloadBtn.classList.add('disabled');
   els.shareBtn.disabled = true;
   els.qrCode.innerHTML = '';
-  els.qrNote.textContent = 'QR akan aktif setelah foto dibuat. Untuk download lintas perangkat, tambahkan backend/storage pada versi berikutnya.';
+  els.qrNote.textContent = 'QR akan aktif setelah foto dibuat. Hasil foto otomatis memakai format Story IG 1080 × 1920.';
   els.shotCounter.textContent = `${capturedPhotos.length} foto`;
 }
 
 async function sharePhoto() {
   if (!finalBlob) return;
-  const file = new File([finalBlob], els.downloadBtn.download || 'labshot.png', { type: 'image/png' });
+  const file = new File([finalBlob], els.downloadBtn.download || 'labshot-story.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
         title: 'LabShot Photobox',
-        text: 'Hasil foto dari LabShot',
+        text: 'Hasil foto Story IG dari LabShot',
         files: [file]
       });
     } catch (err) {
@@ -336,6 +317,7 @@ function handleCustomFrameUpload(event) {
   const file = event.target.files?.[0];
   if (!file) {
     customFrameImage = null;
+    if (capturedPhotos.length) renderFinalImage();
     return;
   }
   const reader = new FileReader();
@@ -354,8 +336,10 @@ els.retakeBtn.addEventListener('click', () => {
 });
 els.shareBtn.addEventListener('click', sharePhoto);
 els.customFrame.addEventListener('change', handleCustomFrameUpload);
-[els.eventName, els.frameTheme, els.filterMode].forEach(el => {
+[els.eventName, els.frameTheme, els.filterMode, els.layoutMode].forEach(el => {
   el.addEventListener('change', () => {
     if (capturedPhotos.length) renderFinalImage();
   });
 });
+
+resetResult(true);

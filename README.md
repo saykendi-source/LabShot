@@ -53,3 +53,9 @@ Versi ini masih statis, sehingga hasil foto hanya tersimpan di browser pengguna.
 - Gallery privat per sesi
 - QR download publik
 - Statistik jumlah foto per event
+
+
+## Update terbaru
+- Foto otomatis masuk ke dalam frame bawaan
+- Output sudah mengikuti ukuran Story Instagram (1080 x 1920)
+- Empat frame bawaan ada di folder `assets/frames/`

@@ -253,3 +253,5 @@ select option { color: #0f172a; }
   .primary-actions .btn, .download-row .btn { flex: 1; }
   .camera-card { min-height: 340px; border-radius: 22px; }
 }
+
+.final-preview { aspect-ratio: 9 / 16; }
