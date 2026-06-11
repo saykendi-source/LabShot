@@ -578,9 +578,10 @@ function fillBase(ctx, frameKey) {
 
 
 function createFirebaseFileName() {
-  const today = new Date().toISOString().slice(0, 10);
-  const safeId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
-  return `labshot/${today}/${Date.now()}-${safeId}.jpg`;
+  const today = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+  const timeId = Date.now().toString(36);
+  const randId = Math.random().toString(36).slice(2, 8);
+  return `labshot/${today}/${timeId}-${randId}.jpg`;
 }
 
 function createPhotoPageUrl(storagePath) {
@@ -666,9 +667,23 @@ async function renderFinalImage() {
 
 function renderQRCode(val) {
   els.qrCode.innerHTML = '';
-  if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
-  new QRCode(els.qrCode, { text: val, width: 102, height: 102, correctLevel: QRCode.CorrectLevel.M });
-  els.qrNote.textContent = 'Output: Story IG 1080×1920. QR muncul instan dan menunggu file Firebase siap.';
+  if (!window.QRCode) {
+    els.qrNote.textContent = 'Library QR belum termuat.';
+    return;
+  }
+
+  // QR diperbesar agar mudah terbaca kamera HP.
+  // Link photo.html cukup panjang, jadi ukuran 102px terlalu padat.
+  new QRCode(els.qrCode, {
+    text: val,
+    width: 230,
+    height: 230,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  els.qrNote.innerHTML = 'Scan QR untuk membuka foto. Jika kamera sulit membaca, dekatkan HP atau klik <a href="' + val + '" target="_blank" rel="noopener">buka link foto</a>.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */

@@ -157,3 +157,12 @@ Perubahan:
 - `photo.html` akan menunggu file tersedia di Firebase Storage, lalu menampilkan tombol download.
 - Proses preview juga dipercepat: aplikasi tidak lagi membuat PNG dataURL untuk preview.
 - Upload memakai JPG kualitas 0.76 ukuran Story IG 1080 × 1920.
+
+
+## Update v15 – QR Lebih Mudah Dibaca
+
+Perubahan:
+- QR diperbesar dari 102px menjadi 230px.
+- Error correction QR dinaikkan ke level H.
+- Path Firebase dipendekkan agar QR tidak terlalu padat.
+- Ditambahkan link cadangan “buka link foto” di bawah QR.
