@@ -122,11 +122,7 @@ const FRAME_CONFIGS = {
   - 4 foto  → Memories Box
 */
 function resolveFrameKey(photoCount) {
-  const selected = els.frameTheme.value;
-  if (selected !== 'scrapbookAuto') return selected;
-  if (photoCount <= 2) return 'memoriesSimple';
-  if (photoCount === 3) return 'birthdayCollage';
-  return 'memoriesBox';
+  return 'yogyakartaCity';
 }
 
 let stream          = null;
@@ -297,8 +293,8 @@ async function startSession() {
   capturedPhotos = [];
   updatePhotoGrid([]);
 
-  const total   = Number(els.layoutMode.value);
-  const seconds = Number(els.countdownSeconds.value);
+  const total   = Number(els.layoutMode?.value || 1);
+  const seconds = Number(els.countdownSeconds?.value || 3);
 
   setProgress(0);
   for (let i = 0; i < total; i++) {
@@ -540,7 +536,7 @@ async function renderFinalImage() {
   finalBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
   finalObjectUrl = URL.createObjectURL(finalBlob);
 
-  const safeEvent = (els.eventName.value.trim() || 'labshot')
+  const safeEvent = ((els.eventName?.value || 'yogyakarta-city-series').trim() || 'yogyakarta-city-series')
     .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
   els.downloadBtn.href     = finalObjectUrl;
@@ -606,20 +602,20 @@ function handleCustomFrameUpload(e) {
 }
 
 /* ── Event wiring ─────────────────────────────────────── */
-els.startCameraBtn .addEventListener('click',  () => startCamera());
-els.startSessionBtn.addEventListener('click',  startSession);
-els.retakeBtn      .addEventListener('click',  () => { resetResult(true); els.retakeBtn.disabled = true; });
-els.shareBtn       .addEventListener('click',  sharePhoto);
-els.customFrame    .addEventListener('change', handleCustomFrameUpload);
+els.startCameraBtn?.addEventListener('click', () => startCamera());
+els.startSessionBtn?.addEventListener('click', startSession);
+els.retakeBtn?.addEventListener('click', () => { resetResult(true); els.retakeBtn.disabled = true; });
+els.shareBtn?.addEventListener('click', sharePhoto);
+if (els.customFrame) els.customFrame.addEventListener('change', handleCustomFrameUpload);
 
-els.mirrorToggle.addEventListener('change', () => { mirrorMode = els.mirrorToggle.checked; applyVideoMirror(); });
-els.soundToggle .addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
-els.cameraSelect.addEventListener('change', () => startCamera(els.cameraSelect.value));
+els.mirrorToggle?.addEventListener('change', () => { mirrorMode = els.mirrorToggle.checked; applyVideoMirror(); });
+els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
+els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
 
-[els.eventName, els.frameTheme, els.layoutMode].forEach(el =>
+[els.eventName, els.frameTheme, els.layoutMode].filter(Boolean).forEach(el =>
   el.addEventListener('change', () => { if (capturedPhotos.length) renderFinalImage(); })
 );
-els.filterMode.addEventListener('change', () => {
+els.filterMode?.addEventListener('change', () => {
   applyLiveFilter();
   if (capturedPhotos.length) renderFinalImage();
 });

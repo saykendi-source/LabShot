@@ -63,33 +63,14 @@
         <h2>Mode Foto</h2>
       </div>
 
-      <!-- Nama event -->
+      <!-- Layout -->
       <label class="field">
-        <span>Nama Event</span>
-        <input id="eventName" type="text" value="TI UMY Photobox" maxlength="40" />
+        <span>Layout</span>
+        <select id="layoutMode">
+          <option value="1" selected>Single (Utama)</option>
+          <option value="2">Strip 2</option>
+        </select>
       </label>
-
-      <!-- Layout + Countdown -->
-      <div class="grid-2">
-        <label class="field">
-          <span>Layout</span>
-          <select id="layoutMode">
-            <option value="1">Single Photo</option>
-            <option value="2">Strip 2 Foto</option>
-            <option value="3">Strip 3 Foto</option>
-            <option value="4" selected>Strip 4 Foto</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Countdown</span>
-          <select id="countdownSeconds">
-            <option value="3" selected>3 detik</option>
-            <option value="5">5 detik</option>
-            <option value="7">7 detik</option>
-            <option value="10">10 detik</option>
-          </select>
-        </label>
-      </div>
 
       <!-- Frame + Filter -->
       <div class="grid-2">
@@ -97,15 +78,6 @@
           <span>Frame</span>
           <select id="frameTheme">
             <option value="yogyakartaCity" selected>Yogyakarta City Series</option>
-            <option value="scrapbookAuto">Auto Scrapbook</option>
-            <option value="birthdayCollage">Birthday Collage</option>
-            <option value="birthdayCamera">Birthday Camera</option>
-            <option value="memoriesBox">Memories Box</option>
-            <option value="memoriesSimple">Memories Simple</option>
-            <option value="classic">Classic</option>
-            <option value="cfd">CFD Street</option>
-            <option value="capstone">Capstone</option>
-            <option value="wisuda">Wisuda</option>
           </select>
         </label>
         <label class="field">
@@ -140,13 +112,6 @@
           Suara
         </label>
       </div>
-
-      <!-- Custom frame -->
-      <label class="field">
-        <span>Upload Frame Kustom (opsional)</span>
-        <input id="customFrame" type="file" accept="image/png,image/webp,image/jpeg" />
-        <small>Template scrapbook sudah dimasukkan ke assets/frames. Template baru “Yogyakarta City Series” juga sudah ditambahkan dan posisi foto diatur agar terlihat natural untuk 1, 2, 3, atau 4 foto.</small>
-      </label>
 
       <!-- ════ Result ════ -->
       <section class="result-card">

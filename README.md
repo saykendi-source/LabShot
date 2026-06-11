@@ -101,3 +101,14 @@ QR Code masih bersifat link lokal browser. Untuk QR publik yang bisa di-scan HP,
   - 2 foto: 2 strip vertikal dalam area utama
   - 3 foto: 3 strip vertikal dalam area utama
   - 4 foto: 4 strip vertikal dalam area utama
+
+
+## Update v10 – Pengaturan Sesi Disederhanakan
+
+- Menghapus field **Nama Event**.
+- Menghapus field **Countdown** dari panel pengaturan (tetap memakai default 3 detik).
+- Menghapus field **Upload Frame Kustom**.
+- Dropdown **Frame** kini hanya menampilkan **Yogyakarta City Series**.
+- Dropdown **Layout** disederhanakan menjadi:
+  - `Single (Utama)`
+  - `Strip 2`
