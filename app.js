@@ -577,10 +577,19 @@ function fillBase(ctx, frameKey) {
 }
 
 
-async function uploadPhotoToFirebase(blob) {
+function createFirebaseFileName() {
   const today = new Date().toISOString().slice(0, 10);
   const safeId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
-  const fileName = `labshot/${today}/${Date.now()}-${safeId}.png`;
+  return `labshot/${today}/${Date.now()}-${safeId}.jpg`;
+}
+
+function createPhotoPageUrl(storagePath) {
+  const url = new URL('photo.html', window.location.href);
+  url.searchParams.set('path', storagePath);
+  return url.toString();
+}
+
+async function uploadPhotoToFirebase(blob, fileName) {
   const photoRef = ref(firebaseStorage, fileName);
 
   await uploadBytes(photoRef, blob, {
@@ -618,16 +627,16 @@ async function renderFinalImage() {
   const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
 
-  const dataUrl = canvas.toDataURL('image/png');
-  els.finalPreview.src = dataUrl;
+  if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
+
+  // Lebih cepat: tidak membuat PNG dataURL lagi.
+  // Preview dan upload memakai JPG ringan ukuran Story IG 1080x1920.
+  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.76));
+  finalObjectUrl = URL.createObjectURL(finalBlob);
+
+  els.finalPreview.src = finalObjectUrl;
   els.finalPreview.classList.remove('hidden');
   els.emptyResult.classList.add('hidden');
-
-  if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
-  // Untuk QR download, gunakan JPEG terkompresi agar upload Firebase jauh lebih cepat.
-  // Ukuran tetap Story IG 1080x1920, tetapi file biasanya jauh lebih kecil daripada PNG.
-  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.86));
-  finalObjectUrl = URL.createObjectURL(finalBlob);
 
   const safeEvent = ((els.eventName?.value || 'yogyakarta-city-series').trim() || 'yogyakarta-city-series')
     .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
@@ -638,23 +647,28 @@ async function renderFinalImage() {
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
 
-  try {
-    els.qrNote.textContent = 'Mengupload versi ringan untuk QR Code...';
-    const publicUrl = await uploadPhotoToFirebase(finalBlob);
-    renderQRCode(publicUrl);
-    els.qrNote.textContent = 'Scan QR untuk membuka dan mengunduh foto. Format: JPG Story IG.';
-  } catch (error) {
-    console.error('Upload Firebase gagal:', error);
-    renderQRCode(finalObjectUrl);
-    els.qrNote.textContent = 'Upload Firebase gagal. QR masih memakai link lokal browser.';
-  }
+  // QR langsung muncul tanpa menunggu upload selesai.
+  // HP akan membuka photo.html, lalu halaman itu menunggu file siap di Firebase.
+  const firebasePath = createFirebaseFileName();
+  const waitingPageUrl = createPhotoPageUrl(firebasePath);
+  renderQRCode(waitingPageUrl);
+  els.qrNote.textContent = 'QR sudah siap. Upload berjalan di background. Scan QR, foto akan muncul setelah file siap.';
+
+  uploadPhotoToFirebase(finalBlob, firebasePath)
+    .then(() => {
+      els.qrNote.textContent = 'Foto sudah siap. Scan QR untuk membuka dan mengunduh foto.';
+    })
+    .catch((error) => {
+      console.error('Upload Firebase gagal:', error);
+      els.qrNote.textContent = 'Upload Firebase gagal. Gunakan tombol Download di layar ini.';
+    });
 }
 
 function renderQRCode(val) {
   els.qrCode.innerHTML = '';
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
   new QRCode(els.qrCode, { text: val, width: 102, height: 102, correctLevel: QRCode.CorrectLevel.M });
-  els.qrNote.textContent = 'Output: Story IG 1080×1920. QR berisi link Firebase jika upload berhasil.';
+  els.qrNote.textContent = 'Output: Story IG 1080×1920. QR muncul instan dan menunggu file Firebase siap.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */

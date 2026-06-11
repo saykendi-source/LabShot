@@ -147,3 +147,13 @@ Perubahan:
 - Upload Firebase jauh lebih cepat dibanding PNG.
 - File download dari QR memakai ekstensi `.jpg`.
 - Kualitas JPEG diset ke `0.86`, cukup aman untuk Story Instagram.
+
+
+## Update v14 – Instant QR
+
+Perubahan:
+- QR Code muncul langsung setelah foto selesai dirender, tanpa menunggu upload Firebase selesai.
+- QR mengarah ke `photo.html?path=...`.
+- `photo.html` akan menunggu file tersedia di Firebase Storage, lalu menampilkan tombol download.
+- Proses preview juga dipercepat: aplikasi tidak lagi membuat PNG dataURL untuk preview.
+- Upload memakai JPG kualitas 0.76 ukuran Story IG 1080 × 1920.
