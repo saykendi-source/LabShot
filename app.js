@@ -1,3 +1,23 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD1XMqV1-_Muy8gDcpPJwGEgJW_Wk1Vvoc",
+  authDomain: "labshot-photobox.firebaseapp.com",
+  projectId: "labshot-photobox",
+  storageBucket: "labshot-photobox.firebasestorage.app",
+  messagingSenderId: "727756970252",
+  appId: "1:727756970252:web:9d3bb740e00cdf4b92d129"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const firebaseStorage = getStorage(firebaseApp);
+
 /* ─────────────────────────────────────────────
    LabShot v7 – app.js
    Perbaikan utama:
@@ -556,6 +576,20 @@ function fillBase(ctx, frameKey) {
   ctx.fillRect(0, 0, STORY_W, STORY_H);
 }
 
+
+async function uploadPhotoToFirebase(blob) {
+  const today = new Date().toISOString().slice(0, 10);
+  const safeId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+  const fileName = `labshot/${today}/${Date.now()}-${safeId}.png`;
+  const photoRef = ref(firebaseStorage, fileName);
+
+  await uploadBytes(photoRef, blob, {
+    contentType: "image/png"
+  });
+
+  return await getDownloadURL(photoRef);
+}
+
 /* ── Render final image ───────────────────────────────── */
 async function renderFinalImage() {
   if (!capturedPhotos.length) return;
@@ -601,14 +635,23 @@ async function renderFinalImage() {
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
 
-  renderQRCode(finalObjectUrl);
+  try {
+    els.qrNote.textContent = 'Mengupload foto untuk QR Code...';
+    const publicUrl = await uploadPhotoToFirebase(finalBlob);
+    renderQRCode(publicUrl);
+    els.qrNote.textContent = 'Scan QR untuk membuka dan mengunduh foto.';
+  } catch (error) {
+    console.error('Upload Firebase gagal:', error);
+    renderQRCode(finalObjectUrl);
+    els.qrNote.textContent = 'Upload Firebase gagal. QR masih memakai link lokal browser.';
+  }
 }
 
 function renderQRCode(val) {
   els.qrCode.innerHTML = '';
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
   new QRCode(els.qrCode, { text: val, width: 102, height: 102, correctLevel: QRCode.CorrectLevel.M });
-  els.qrNote.textContent = 'Output: Story IG 1080×1920. Foto dirender full di layer belakang template.';
+  els.qrNote.textContent = 'Output: Story IG 1080×1920. QR berisi link Firebase jika upload berhasil.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */

@@ -126,3 +126,15 @@ Pilihan frame kini bertambah menjadi:
 Semua template baru sudah ditambahkan ke folder `assets/frames/` dan disiapkan untuk 2 layout:
 - `Single (Utama)`
 - `Strip 2`
+
+
+## Update v12 – Firebase Storage QR Download
+
+Perubahan:
+- `index.html` sekarang memanggil `app.js` sebagai module.
+- `app.js` sudah memakai Firebase Web SDK.
+- Setelah hasil foto dibuat, file PNG di-upload ke Firebase Storage.
+- QR Code berisi URL Firebase Storage, sehingga bisa dibuka dari HP.
+- Jika upload gagal, QR fallback ke link lokal browser.
+
+Pastikan Storage Rules mengizinkan upload ke folder `labshot/`.
