@@ -584,7 +584,8 @@ async function uploadPhotoToFirebase(blob) {
   const photoRef = ref(firebaseStorage, fileName);
 
   await uploadBytes(photoRef, blob, {
-    contentType: "image/png"
+    contentType: blob.type || "image/jpeg",
+    cacheControl: "public,max-age=31536000"
   });
 
   return await getDownloadURL(photoRef);
@@ -623,23 +624,25 @@ async function renderFinalImage() {
   els.emptyResult.classList.add('hidden');
 
   if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
-  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  // Untuk QR download, gunakan JPEG terkompresi agar upload Firebase jauh lebih cepat.
+  // Ukuran tetap Story IG 1080x1920, tetapi file biasanya jauh lebih kecil daripada PNG.
+  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.86));
   finalObjectUrl = URL.createObjectURL(finalBlob);
 
   const safeEvent = ((els.eventName?.value || 'yogyakarta-city-series').trim() || 'yogyakarta-city-series')
     .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
   els.downloadBtn.href     = finalObjectUrl;
-  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.png`;
+  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.jpg`;
   els.downloadBtn.classList.remove('disabled');
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
 
   try {
-    els.qrNote.textContent = 'Mengupload foto untuk QR Code...';
+    els.qrNote.textContent = 'Mengupload versi ringan untuk QR Code...';
     const publicUrl = await uploadPhotoToFirebase(finalBlob);
     renderQRCode(publicUrl);
-    els.qrNote.textContent = 'Scan QR untuk membuka dan mengunduh foto.';
+    els.qrNote.textContent = 'Scan QR untuk membuka dan mengunduh foto. Format: JPG Story IG.';
   } catch (error) {
     console.error('Upload Firebase gagal:', error);
     renderQRCode(finalObjectUrl);
@@ -675,7 +678,7 @@ function resetResult(clearPhotos = true) {
 /* ── Share ────────────────────────────────────────────── */
 async function sharePhoto() {
   if (!finalBlob) return;
-  const file = new File([finalBlob], els.downloadBtn.download || 'labshot.png', { type:'image/png' });
+  const file = new File([finalBlob], els.downloadBtn.download || 'labshot.jpg', { type:'image/jpeg' });
   if (navigator.canShare?.({ files:[file] })) {
     try { await navigator.share({ title:'LabShot Photobox', files:[file] }); }
     catch(e) { console.warn(e); }

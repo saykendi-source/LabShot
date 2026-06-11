@@ -138,3 +138,12 @@ Perubahan:
 - Jika upload gagal, QR fallback ke link lokal browser.
 
 Pastikan Storage Rules mengizinkan upload ke folder `labshot/`.
+
+
+## Update v13 – Fast QR Upload
+
+Perubahan:
+- Hasil QR sekarang di-upload sebagai **JPG terkompresi** dengan ukuran tetap Story IG 1080 × 1920.
+- Upload Firebase jauh lebih cepat dibanding PNG.
+- File download dari QR memakai ekstensi `.jpg`.
+- Kualitas JPEG diset ke `0.86`, cukup aman untuk Story Instagram.
