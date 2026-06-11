@@ -59,6 +59,8 @@ const els = {
 
 const STORY_W = 1080;
 const STORY_H = 1920;
+const QR_UPLOAD_W = 900;
+const QR_UPLOAD_H = 1600;
 
 /*
   Semua frame harus berada di assets/frames.
@@ -577,6 +579,17 @@ function fillBase(ctx, frameKey) {
 }
 
 
+
+async function createQrUploadBlobFromCanvas(sourceCanvas) {
+  const uploadCanvas = document.createElement('canvas');
+  uploadCanvas.width = QR_UPLOAD_W;
+  uploadCanvas.height = QR_UPLOAD_H;
+  const uploadCtx = uploadCanvas.getContext('2d');
+  uploadCtx.drawImage(sourceCanvas, 0, 0, QR_UPLOAD_W, QR_UPLOAD_H);
+
+  return await new Promise(resolve => uploadCanvas.toBlob(resolve, 'image/jpeg', 0.68));
+}
+
 function createFirebaseFileName() {
   const today = new Date().toISOString().slice(0, 10).replaceAll('-', '');
   const timeId = Date.now().toString(36);
@@ -630,9 +643,8 @@ async function renderFinalImage() {
 
   if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
 
-  // Lebih cepat: tidak membuat PNG dataURL lagi.
-  // Preview dan upload memakai JPG ringan ukuran Story IG 1080x1920.
-  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.76));
+  // Preview layar dan download lokal tetap memakai kualitas tinggi Story IG 1080x1920.
+  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.86));
   finalObjectUrl = URL.createObjectURL(finalBlob);
 
   els.finalPreview.src = finalObjectUrl;
@@ -648,14 +660,17 @@ async function renderFinalImage() {
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
 
+  // Untuk QR: upload versi yang lebih ringan agar lebih cepat muncul setelah discan.
+  const qrUploadBlob = await createQrUploadBlobFromCanvas(canvas);
+
   // QR langsung muncul tanpa menunggu upload selesai.
   // HP akan membuka photo.html, lalu halaman itu menunggu file siap di Firebase.
   const firebasePath = createFirebaseFileName();
   const waitingPageUrl = createPhotoPageUrl(firebasePath);
   renderQRCode(waitingPageUrl);
-  els.qrNote.textContent = 'QR sudah siap. Upload berjalan di background. Scan QR, foto akan muncul setelah file siap.';
+  els.qrNote.textContent = 'QR sudah siap. Upload versi ringan (900×1600 JPG) berjalan di background.';
 
-  uploadPhotoToFirebase(finalBlob, firebasePath)
+  uploadPhotoToFirebase(qrUploadBlob, firebasePath)
     .then(() => {
       els.qrNote.textContent = 'Foto sudah siap. Scan QR untuk membuka dan mengunduh foto.';
     })
@@ -683,7 +698,7 @@ function renderQRCode(val) {
     correctLevel: QRCode.CorrectLevel.H
   });
 
-  els.qrNote.innerHTML = 'Scan QR untuk membuka foto. Jika kamera sulit membaca, dekatkan HP atau klik <a href="' + val + '" target="_blank" rel="noopener">buka link foto</a>.';
+  els.qrNote.innerHTML = 'Scan QR untuk membuka foto. File QR memakai versi ringan 900×1600 agar lebih cepat. Jika kamera sulit membaca, dekatkan HP atau klik <a href="' + val + '" target="_blank" rel="noopener">buka link foto</a>.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */

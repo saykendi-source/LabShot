@@ -166,3 +166,12 @@ Perubahan:
 - Error correction QR dinaikkan ke level H.
 - Path Firebase dipendekkan agar QR tidak terlalu padat.
 - Ditambahkan link cadangan “buka link foto” di bawah QR.
+
+
+## Update v16 – Upload QR Lebih Cepat
+
+Perubahan:
+- Preview layar dan tombol download lokal tetap memakai ukuran Story IG `1080 × 1920`.
+- File untuk QR sekarang dibuat terpisah dengan ukuran `900 × 1600`.
+- Upload QR memakai JPG kualitas `0.68` agar lebih ringan dan lebih cepat muncul setelah scan.
+- Download langsung dari layar tetap memakai versi lokal kualitas lebih tinggi.
