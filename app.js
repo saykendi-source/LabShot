@@ -90,6 +90,62 @@ const FRAME_CONFIGS = {
     },
   },
 
+  tiUmyCampus: {
+    label: 'TI UMY Campus Series',
+    path: 'assets/frames/ti-umy-campus.png',
+    slotsByCount: {
+      1: [
+        { x: 56, y: 497, w: 967, h: 361, radius: 10 }
+      ],
+      2: [
+        { x: 56, y: 497, w: 967, h: 172, radius: 10 },
+        { x: 56, y: 686, w: 967, h: 172, radius: 10 }
+      ]
+    },
+  },
+
+  tiUmyShowcase: {
+    label: 'TI UMY Showcase',
+    path: 'assets/frames/ti-umy-showcase.png',
+    slotsByCount: {
+      1: [
+        { x: 474, y: 476, w: 531, h: 686, radius: 10 }
+      ],
+      2: [
+        { x: 474, y: 476, w: 531, h: 333, radius: 10 },
+        { x: 474, y: 829, w: 531, h: 333, radius: 10 }
+      ]
+    },
+  },
+
+  umyCampusSeries: {
+    label: 'UMY Campus Series',
+    path: 'assets/frames/umy-campus-series.png',
+    slotsByCount: {
+      1: [
+        { x: 44, y: 563, w: 991, h: 492, radius: 10 }
+      ],
+      2: [
+        { x: 44, y: 563, w: 991, h: 238, radius: 10 },
+        { x: 44, y: 817, w: 991, h: 238, radius: 10 }
+      ]
+    },
+  },
+
+  umyCitySeries: {
+    label: 'UMY City Series',
+    path: 'assets/frames/umy-city-series.png',
+    slotsByCount: {
+      1: [
+        { x: 41, y: 621, w: 668, h: 872, radius: 8 }
+      ],
+      2: [
+        { x: 41, y: 621, w: 668, h: 425, radius: 8 },
+        { x: 41, y: 1068, w: 668, h: 425, radius: 8 }
+      ]
+    },
+  },
+
   memoriesSimple: {
     label: 'Memories Simple',
     path: 'assets/frames/memories-simple.png',
@@ -122,7 +178,7 @@ const FRAME_CONFIGS = {
   - 4 foto  → Memories Box
 */
 function resolveFrameKey(photoCount) {
-  return 'yogyakartaCity';
+  return els.frameTheme?.value || 'yogyakartaCity';
 }
 
 let stream          = null;

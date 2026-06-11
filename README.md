@@ -112,3 +112,17 @@ QR Code masih bersifat link lokal browser. Untuk QR publik yang bisa di-scan HP,
 - Dropdown **Layout** disederhanakan menjadi:
   - `Single (Utama)`
   - `Strip 2`
+
+
+## Update v11 – Tambahan 4 Template Frame
+
+Pilihan frame kini bertambah menjadi:
+- Yogyakarta City Series
+- TI UMY Campus Series
+- TI UMY Showcase
+- UMY Campus Series
+- UMY City Series
+
+Semua template baru sudah ditambahkan ke folder `assets/frames/` dan disiapkan untuk 2 layout:
+- `Single (Utama)`
+- `Strip 2`
