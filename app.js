@@ -1,23 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD1XMqV1-_Muy8gDcpPJwGEgJW_Wk1Vvoc",
-  authDomain: "labshot-photobox.firebaseapp.com",
-  projectId: "labshot-photobox",
-  storageBucket: "labshot-photobox.firebasestorage.app",
-  messagingSenderId: "727756970252",
-  appId: "1:727756970252:web:9d3bb740e00cdf4b92d129"
-};
-
-const firebaseApp = initializeApp(firebaseConfig);
-const firebaseStorage = getStorage(firebaseApp);
-
 /* ─────────────────────────────────────────────
    LabShot v7 – app.js
    Perbaikan utama:
@@ -59,8 +39,12 @@ const els = {
 
 const STORY_W = 1080;
 const STORY_H = 1920;
-const QR_UPLOAD_W = 900;
-const QR_UPLOAD_H = 1600;
+
+// Google Drive Gallery Upload
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec";
+const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1HLXr6Y-mX1EqveyV-KPtAQp-5Pt0e6GJ";
+const DRIVE_UPLOAD_W = 720;
+const DRIVE_UPLOAD_H = 1280;
 
 /*
   Semua frame harus berada di assets/frames.
@@ -579,39 +563,51 @@ function fillBase(ctx, frameKey) {
 }
 
 
-
-async function createQrUploadBlobFromCanvas(sourceCanvas) {
+async function createDriveUploadBlobFromCanvas(sourceCanvas) {
   const uploadCanvas = document.createElement('canvas');
-  uploadCanvas.width = QR_UPLOAD_W;
-  uploadCanvas.height = QR_UPLOAD_H;
+  uploadCanvas.width = DRIVE_UPLOAD_W;
+  uploadCanvas.height = DRIVE_UPLOAD_H;
   const uploadCtx = uploadCanvas.getContext('2d');
-  uploadCtx.drawImage(sourceCanvas, 0, 0, QR_UPLOAD_W, QR_UPLOAD_H);
-
-  return await new Promise(resolve => uploadCanvas.toBlob(resolve, 'image/jpeg', 0.68));
+  uploadCtx.drawImage(sourceCanvas, 0, 0, DRIVE_UPLOAD_W, DRIVE_UPLOAD_H);
+  return await new Promise(resolve => uploadCanvas.toBlob(resolve, 'image/jpeg', 0.62));
 }
 
-function createFirebaseFileName() {
-  const today = new Date().toISOString().slice(0, 10).replaceAll('-', '');
-  const timeId = Date.now().toString(36);
-  const randId = Math.random().toString(36).slice(2, 8);
-  return `labshot/${today}/${timeId}-${randId}.jpg`;
-}
-
-function createPhotoPageUrl(storagePath) {
-  const url = new URL('photo.html', window.location.href);
-  url.searchParams.set('path', storagePath);
-  return url.toString();
-}
-
-async function uploadPhotoToFirebase(blob, fileName) {
-  const photoRef = ref(firebaseStorage, fileName);
-
-  await uploadBytes(photoRef, blob, {
-    contentType: blob.type || "image/jpeg",
-    cacheControl: "public,max-age=31536000"
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      resolve(result.split(',')[1] || result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
+}
 
-  return await getDownloadURL(photoRef);
+function makeDriveFileName() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mi = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const rand = Math.random().toString(36).slice(2, 6);
+  return `labshot-${yyyy}-${mm}-${dd}-${hh}-${mi}-${ss}-${rand}.jpg`;
+}
+
+async function uploadPhotoToGoogleDrive(blob) {
+  const imageBase64 = await blobToBase64(blob);
+  const payload = {
+    imageBase64,
+    fileName: makeDriveFileName()
+  };
+
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify(payload)
+  });
 }
 
 /* ── Render final image ───────────────────────────────── */
@@ -641,64 +637,45 @@ async function renderFinalImage() {
   const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
 
-  if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
-
-  // Preview layar dan download lokal tetap memakai kualitas tinggi Story IG 1080x1920.
-  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.86));
-  finalObjectUrl = URL.createObjectURL(finalBlob);
-
-  els.finalPreview.src = finalObjectUrl;
+  const dataUrl = canvas.toDataURL('image/png');
+  els.finalPreview.src = dataUrl;
   els.finalPreview.classList.remove('hidden');
   els.emptyResult.classList.add('hidden');
+
+  if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
+  finalBlob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+  finalObjectUrl = URL.createObjectURL(finalBlob);
 
   const safeEvent = ((els.eventName?.value || 'yogyakarta-city-series').trim() || 'yogyakarta-city-series')
     .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
   els.downloadBtn.href     = finalObjectUrl;
-  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.jpg`;
+  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.png`;
   els.downloadBtn.classList.remove('disabled');
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
 
-  // Untuk QR: upload versi yang lebih ringan agar lebih cepat muncul setelah discan.
-  const qrUploadBlob = await createQrUploadBlobFromCanvas(canvas);
+  // QR sekarang selalu menuju folder Google Drive event.
+  renderQRCode(DRIVE_FOLDER_URL);
+  els.qrNote.textContent = 'Scan QR untuk membuka galeri Google Drive. Foto akan muncul beberapa saat setelah upload selesai.';
 
-  // QR langsung muncul tanpa menunggu upload selesai.
-  // HP akan membuka photo.html, lalu halaman itu menunggu file siap di Firebase.
-  const firebasePath = createFirebaseFileName();
-  const waitingPageUrl = createPhotoPageUrl(firebasePath);
-  renderQRCode(waitingPageUrl);
-  els.qrNote.textContent = 'QR sudah siap. Upload versi ringan (900×1600 JPG) berjalan di background.';
-
-  uploadPhotoToFirebase(qrUploadBlob, firebasePath)
+  // Upload berjalan di background agar antrean photobox tidak tertahan.
+  const driveUploadBlob = await createDriveUploadBlobFromCanvas(canvas);
+  uploadPhotoToGoogleDrive(driveUploadBlob)
     .then(() => {
-      els.qrNote.textContent = 'Foto sudah siap. Scan QR untuk membuka dan mengunduh foto.';
+      els.qrNote.textContent = 'Foto sudah dikirim ke galeri Google Drive. Scan QR untuk membuka galeri.';
     })
     .catch((error) => {
-      console.error('Upload Firebase gagal:', error);
-      els.qrNote.textContent = 'Upload Firebase gagal. Gunakan tombol Download di layar ini.';
+      console.error('Upload Google Drive gagal:', error);
+      els.qrNote.textContent = 'Upload Google Drive gagal. Gunakan tombol Download di layar ini.';
     });
 }
 
 function renderQRCode(val) {
   els.qrCode.innerHTML = '';
-  if (!window.QRCode) {
-    els.qrNote.textContent = 'Library QR belum termuat.';
-    return;
-  }
-
-  // QR diperbesar agar mudah terbaca kamera HP.
-  // Link photo.html cukup panjang, jadi ukuran 102px terlalu padat.
-  new QRCode(els.qrCode, {
-    text: val,
-    width: 230,
-    height: 230,
-    colorDark: '#000000',
-    colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H
-  });
-
-  els.qrNote.innerHTML = 'Scan QR untuk membuka foto. File QR memakai versi ringan 900×1600 agar lebih cepat. Jika kamera sulit membaca, dekatkan HP atau klik <a href="' + val + '" target="_blank" rel="noopener">buka link foto</a>.';
+  if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
+  new QRCode(els.qrCode, { text: val, width: 102, height: 102, correctLevel: QRCode.CorrectLevel.M });
+  els.qrNote.textContent = 'Output: Story IG 1080×1920. Foto dirender full di layer belakang template.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */
@@ -713,7 +690,7 @@ function resetResult(clearPhotos = true) {
   els.downloadBtn.classList.add('disabled');
   els.shareBtn.disabled = true;
   els.qrCode.innerHTML  = '';
-  els.qrNote.textContent = 'QR aktif setelah foto dibuat.';
+  els.qrNote.textContent = 'QR galeri Google Drive aktif setelah foto dibuat.';
   els.shotCounter.textContent = `${capturedPhotos.length} foto`;
   setProgress(0);
   setStatus(stream ? 'Kamera aktif. Siap memotret!' : 'Kamera belum aktif.');
@@ -722,7 +699,7 @@ function resetResult(clearPhotos = true) {
 /* ── Share ────────────────────────────────────────────── */
 async function sharePhoto() {
   if (!finalBlob) return;
-  const file = new File([finalBlob], els.downloadBtn.download || 'labshot.jpg', { type:'image/jpeg' });
+  const file = new File([finalBlob], els.downloadBtn.download || 'labshot.png', { type:'image/png' });
   if (navigator.canShare?.({ files:[file] })) {
     try { await navigator.share({ title:'LabShot Photobox', files:[file] }); }
     catch(e) { console.warn(e); }

@@ -128,50 +128,20 @@ Semua template baru sudah ditambahkan ke folder `assets/frames/` dan disiapkan u
 - `Strip 2`
 
 
-## Update v12 – Firebase Storage QR Download
+## Update v17 – Google Drive Gallery
 
 Perubahan:
-- `index.html` sekarang memanggil `app.js` sebagai module.
-- `app.js` sudah memakai Firebase Web SDK.
-- Setelah hasil foto dibuat, file PNG di-upload ke Firebase Storage.
-- QR Code berisi URL Firebase Storage, sehingga bisa dibuka dari HP.
-- Jika upload gagal, QR fallback ke link lokal browser.
+- Firebase Storage diganti dengan Google Drive Gallery.
+- QR Code sekarang menuju folder Google Drive event:
+  https://drive.google.com/drive/folders/1HLXr6Y-mX1EqveyV-KPtAQp-5Pt0e6GJ
+- Foto di-upload ke Google Drive lewat Apps Script Web App:
+  https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec
+- Upload berjalan di background agar antrean photobox tidak tertahan.
+- File yang di-upload ke Drive dibuat ringan: 720 × 1280 JPG kualitas 0.62.
+- Tombol Download di layar tetap memakai hasil lokal kualitas lebih tinggi.
 
-Pastikan Storage Rules mengizinkan upload ke folder `labshot/`.
-
-
-## Update v13 – Fast QR Upload
-
-Perubahan:
-- Hasil QR sekarang di-upload sebagai **JPG terkompresi** dengan ukuran tetap Story IG 1080 × 1920.
-- Upload Firebase jauh lebih cepat dibanding PNG.
-- File download dari QR memakai ekstensi `.jpg`.
-- Kualitas JPEG diset ke `0.86`, cukup aman untuk Story Instagram.
-
-
-## Update v14 – Instant QR
-
-Perubahan:
-- QR Code muncul langsung setelah foto selesai dirender, tanpa menunggu upload Firebase selesai.
-- QR mengarah ke `photo.html?path=...`.
-- `photo.html` akan menunggu file tersedia di Firebase Storage, lalu menampilkan tombol download.
-- Proses preview juga dipercepat: aplikasi tidak lagi membuat PNG dataURL untuk preview.
-- Upload memakai JPG kualitas 0.76 ukuran Story IG 1080 × 1920.
-
-
-## Update v15 – QR Lebih Mudah Dibaca
-
-Perubahan:
-- QR diperbesar dari 102px menjadi 230px.
-- Error correction QR dinaikkan ke level H.
-- Path Firebase dipendekkan agar QR tidak terlalu padat.
-- Ditambahkan link cadangan “buka link foto” di bawah QR.
-
-
-## Update v16 – Upload QR Lebih Cepat
-
-Perubahan:
-- Preview layar dan tombol download lokal tetap memakai ukuran Story IG `1080 × 1920`.
-- File untuk QR sekarang dibuat terpisah dengan ukuran `900 × 1600`.
-- Upload QR memakai JPG kualitas `0.68` agar lebih ringan dan lebih cepat muncul setelah scan.
-- Download langsung dari layar tetap memakai versi lokal kualitas lebih tinggi.
+Catatan:
+- Pastikan folder Google Drive diatur `Anyone with the link → Viewer`.
+- Pastikan Apps Script Web App sudah dideploy dengan:
+  Execute as: Me
+  Who has access: Anyone
