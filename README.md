@@ -145,3 +145,11 @@ Catatan:
 - Pastikan Apps Script Web App sudah dideploy dengan:
   Execute as: Me
   Who has access: Anyone
+
+
+## Update v18 – Camera Fix
+
+Perubahan:
+- Inisialisasi tombol kamera dibuat lebih aman dengan `DOMContentLoaded`.
+- `startCamera()` sekarang menampilkan error lebih jelas jika izin kamera ditolak, kamera tidak ditemukan, atau halaman tidak HTTPS.
+- Ditambahkan `await video.play()` setelah stream aktif.

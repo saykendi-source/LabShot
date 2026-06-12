@@ -271,30 +271,53 @@ async function enumerateCameras() {
 }
 
 async function startCamera(deviceId = null) {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus('Browser tidak mendukung akses kamera atau halaman belum HTTPS.');
+    alert('Browser tidak mendukung akses kamera. Buka melalui HTTPS/GitHub Pages atau localhost.');
+    return;
+  }
+
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
   setStatus('Menghubungkan kamera…');
+
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width:  { ideal: 1920 },
-        height: { ideal: 1080 },
-        ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'user' }),
-      },
+    const constraints = {
+      video: deviceId
+        ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+        : { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
       audio: false,
-    });
+    };
+
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+
     els.video.srcObject = stream;
-    els.emptyCamera.classList.add('hidden');
-    els.startSessionBtn.disabled = false;
-    els.startCameraBtn.textContent = '✓ Kamera Aktif';
-    els.startCameraBtn.classList.add('btn-active');
+    await els.video.play();
+
+    els.emptyCamera?.classList.add('hidden');
+    if (els.startSessionBtn) els.startSessionBtn.disabled = false;
+    if (els.startCameraBtn) {
+      els.startCameraBtn.textContent = '✓ Kamera Aktif';
+      els.startCameraBtn.classList.add('btn-active');
+    }
+
     setStatus('Kamera aktif. Siap memotret!');
     applyVideoMirror();
     applyLiveFilter();
     await enumerateCameras();
+
   } catch(err) {
-    setStatus('Gagal mengakses kamera.');
-    alert('Kamera tidak bisa diakses. Pastikan browser berjalan di HTTPS/localhost dan izin kamera diberikan.');
-    console.error(err);
+    console.error('Camera error:', err);
+    const msg = err?.name === 'NotAllowedError'
+      ? 'Izin kamera ditolak. Klik ikon kamera/gembok di address bar lalu izinkan kamera.'
+      : err?.name === 'NotFoundError'
+        ? 'Kamera tidak ditemukan. Pastikan webcam terpasang dan tidak sedang dipakai aplikasi lain.'
+        : 'Kamera tidak bisa diakses. Pastikan halaman dibuka via HTTPS/localhost dan izin kamera diberikan.';
+    setStatus(msg);
+    alert(msg);
   }
 }
 
@@ -725,24 +748,38 @@ function handleCustomFrameUpload(e) {
 }
 
 /* ── Event wiring ─────────────────────────────────────── */
-els.startCameraBtn?.addEventListener('click', () => startCamera());
-els.startSessionBtn?.addEventListener('click', startSession);
-els.retakeBtn?.addEventListener('click', () => { resetResult(true); els.retakeBtn.disabled = true; });
-els.shareBtn?.addEventListener('click', sharePhoto);
-if (els.customFrame) els.customFrame.addEventListener('change', handleCustomFrameUpload);
+function initLabShot() {
+  if (!els.startCameraBtn || !els.video) {
+    console.error('Elemen utama kamera tidak ditemukan. Pastikan index.html dan app.js berasal dari versi yang sama.');
+    return;
+  }
 
-els.mirrorToggle?.addEventListener('change', () => { mirrorMode = els.mirrorToggle.checked; applyVideoMirror(); });
-els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
-els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
+  els.startCameraBtn.addEventListener('click', () => startCamera());
+  els.startSessionBtn?.addEventListener('click', startSession);
+  els.retakeBtn?.addEventListener('click', () => { resetResult(true); els.retakeBtn.disabled = true; });
+  els.shareBtn?.addEventListener('click', sharePhoto);
+  els.customFrame?.addEventListener('change', handleCustomFrameUpload);
 
-[els.eventName, els.frameTheme, els.layoutMode].filter(Boolean).forEach(el =>
-  el.addEventListener('change', () => { if (capturedPhotos.length) renderFinalImage(); })
-);
-els.filterMode?.addEventListener('change', () => {
-  applyLiveFilter();
-  if (capturedPhotos.length) renderFinalImage();
-});
+  els.mirrorToggle?.addEventListener('change', () => { mirrorMode = els.mirrorToggle.checked; applyVideoMirror(); });
+  els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
+  els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
 
-/* ── Init ─────────────────────────────────────────────── */
-applyVideoMirror();
-resetResult(true);
+  [els.eventName, els.frameTheme, els.layoutMode].filter(Boolean).forEach(el =>
+    el.addEventListener('change', () => { if (capturedPhotos.length) renderFinalImage(); })
+  );
+
+  els.filterMode?.addEventListener('change', () => {
+    applyLiveFilter();
+    if (capturedPhotos.length) renderFinalImage();
+  });
+
+  applyVideoMirror();
+  resetResult(true);
+  setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLabShot);
+} else {
+  initLabShot();
+}
