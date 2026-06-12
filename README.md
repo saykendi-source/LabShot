@@ -286,3 +286,18 @@ Perubahan:
   - `memories-box.png`
   - `memories-simple.png`
 - Konfigurasi `memoriesSimple` dihapus dari app.js karena tidak lagi digunakan.
+
+
+## Update v27 – Foto Langsung Tampil Setelah Scan QR
+
+Perubahan:
+- `apps-script/Code.gs` diperbarui.
+- Saat QR discan dan foto sudah tersedia, foto langsung tampil di halaman.
+- Tidak perlu klik tombol “Buka Gambar” terlebih dahulu.
+- Gambar disisipkan langsung sebagai base64 data URL di halaman HTML.
+- Tombol “Download Foto” tetap tersedia.
+- Jika browser HP tertentu tidak mendukung tombol download data URL, pengunjung bisa tekan dan tahan gambar lalu simpan gambar.
+
+Penting:
+- Paste ulang `apps-script/Code.gs` ke Google Apps Script.
+- Deploy ulang Web App sebagai `New version`.
