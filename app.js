@@ -272,6 +272,8 @@ let stream          = null;
 let capturedPhotos  = [];
 let finalBlob       = null;
 let finalObjectUrl  = null;
+let currentShareUrl = '';
+let currentUploadFileName = '';
 let customFrameImage= null;
 let mirrorMode      = true;
 let soundEnabled    = true;
@@ -705,11 +707,18 @@ function makeDriveFileName() {
   return `labshot-${yyyy}-${mm}-${dd}-${hh}-${mi}-${ss}-${rand}.jpg`;
 }
 
-async function uploadPhotoToGoogleDrive(blob) {
+function makePhotoPageUrl(fileName) {
+  const url = new URL(APPS_SCRIPT_URL);
+  url.searchParams.set('mode', 'view');
+  url.searchParams.set('name', fileName);
+  return url.toString();
+}
+
+async function uploadPhotoToGoogleDrive(blob, fileName) {
   const imageBase64 = await blobToBase64(blob);
   const payload = {
     imageBase64,
-    fileName: makeDriveFileName()
+    fileName
   };
 
   await fetch(APPS_SCRIPT_URL, {
@@ -766,27 +775,30 @@ async function renderFinalImage() {
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
 
-  // QR sekarang selalu menuju folder Google Drive event.
-  renderQRCode(DRIVE_FOLDER_URL);
-  els.qrNote.textContent = 'Scan QR untuk membuka galeri Google Drive. Foto akan muncul beberapa saat setelah upload selesai.';
+  currentUploadFileName = makeDriveFileName();
+  currentShareUrl = makePhotoPageUrl(currentUploadFileName);
+
+  // QR sekarang unik untuk setiap sesi/foto, jadi pengunjung tidak melihat foto lain.
+  renderQRCode(currentShareUrl);
+  els.qrNote.textContent = 'Scan QR untuk membuka halaman foto khusus sesi ini. Jika foto belum siap, halaman akan menunggu otomatis.';
 
   // Upload berjalan di background agar antrean photobox tidak tertahan.
   const driveUploadBlob = await createDriveUploadBlobFromCanvas(canvas);
-  uploadPhotoToGoogleDrive(driveUploadBlob)
+  uploadPhotoToGoogleDrive(driveUploadBlob, currentUploadFileName)
     .then(() => {
-      els.qrNote.textContent = 'Foto sudah dikirim ke galeri Google Drive. Scan QR untuk membuka galeri.';
+      els.qrNote.textContent = 'Foto sesi ini sedang/selesai dikirim. Scan QR untuk membuka hanya foto Anda.';
     })
     .catch((error) => {
       console.error('Upload Google Drive gagal:', error);
-      els.qrNote.textContent = 'Upload Google Drive gagal. Gunakan tombol Download di layar ini.';
+      els.qrNote.textContent = 'Upload gagal. Gunakan tombol Download di layar ini.';
     });
 }
 
 function renderQRCode(val) {
   els.qrCode.innerHTML = '';
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
-  new QRCode(els.qrCode, { text: val, width: 102, height: 102, correctLevel: QRCode.CorrectLevel.M });
-  els.qrNote.textContent = 'Output: Story IG 1080×1920. Foto dirender full di layer belakang template.';
+  new QRCode(els.qrCode, { text: val, width: 116, height: 116, correctLevel: QRCode.CorrectLevel.H });
+  els.qrNote.textContent = 'Scan QR untuk membuka halaman foto khusus sesi ini.';
 }
 
 /* ── Reset ────────────────────────────────────────────── */
@@ -801,7 +813,7 @@ function resetResult(clearPhotos = true) {
   els.downloadBtn.classList.add('disabled');
   els.shareBtn.disabled = true;
   els.qrCode.innerHTML  = '';
-  els.qrNote.textContent = 'QR galeri Google Drive aktif setelah foto dibuat.';
+  els.qrNote.textContent = 'QR foto pribadi aktif setelah hasil dibuat.';
   els.shotCounter.textContent = `${capturedPhotos.length} foto`;
   setProgress(0);
   setStatus(stream ? 'Kamera aktif. Siap memotret!' : 'Kamera belum aktif.');

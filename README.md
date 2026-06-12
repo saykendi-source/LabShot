@@ -185,3 +185,29 @@ Perubahan:
   sekarang sudah dibuat transparan.
 - Foto yang dirender di belakang template kini bisa terlihat.
 - Border foto tetap disisakan agar hasil lebih natural.
+
+
+## Update v22 – Private QR per Foto + Perbaikan 3 Template
+
+Perubahan utama:
+- QR sekarang unik untuk setiap hasil foto, bukan lagi ke folder Drive.
+- Pengunjung yang scan QR hanya melihat foto miliknya sendiri.
+- Halaman QR akan menunggu otomatis jika upload belum selesai.
+- 3 template terbaru diperbaiki lagi agar area foto benar-benar transparan:
+  - TI UMY Friendship
+  - Daily Quote
+  - IT Future
+
+File tambahan:
+- `apps-script/Code.gs` → paste ke Google Apps Script Anda, lalu deploy ulang sebagai Web App.
+
+Setelah mengganti Apps Script:
+1. Buka Apps Script.
+2. Hapus isi lama, paste `apps-script/Code.gs`.
+3. Simpan.
+4. Deploy → Manage deployments → Edit.
+5. Pilih New version → Deploy.
+6. Pastikan:
+   - Execute as: Me
+   - Who has access: Anyone
+7. Gunakan URL Web App yang sama / terbaru di aplikasi.
