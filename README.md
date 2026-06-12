@@ -258,3 +258,13 @@ Jika QR hasil scan masih menampilkan teks “LabShot Drive aktif”, artinya sal
 2. Apps Script sudah diganti tetapi belum Deploy → New version.
 3. GitHub Pages masih membaca app.js lama karena cache. Tekan Ctrl+F5.
 4. QR yang discan berasal dari hasil foto lama sebelum update.
+
+
+## Update v25 – Perbaikan Preview Frame
+
+Perubahan:
+- Preview frame sekarang memiliki `src` default, jadi tidak kosong saat halaman pertama dibuka.
+- Ditambahkan fallback script di `index.html` agar preview tetap berubah saat frame dipilih meskipun cache app.js terlambat update.
+- Preview frame memakai cache-buster `?v=25`.
+- Jika preview gagal, pesan error akan menunjukkan bahwa folder `assets/frames` belum ikut di-upload.
+- QR diperbesar lagi menjadi 250px.

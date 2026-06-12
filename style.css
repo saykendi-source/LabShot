@@ -630,3 +630,22 @@ select option {
   color: var(--primary);
   font-weight: 800;
 }
+
+
+/* v25 preview fix */
+.frame-preview-img {
+  min-height: 160px;
+}
+.frame-preview-img[src=""],
+.frame-preview-img:not([src]) {
+  min-height: 160px;
+}
+.qr-code {
+  width: 284px !important;
+  min-height: 284px !important;
+}
+.qr-code canvas,
+.qr-code img {
+  width: 250px !important;
+  height: 250px !important;
+}

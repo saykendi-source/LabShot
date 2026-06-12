@@ -263,7 +263,7 @@ function getAutoPhotoCount(frameKey) {
 
 function updateFrameAutoInfo() {
   const frameKey = resolveFrameKey();
-  const config = FRAME_CONFIGS[frameKey];
+  const config = FRAME_CONFIGS[frameKey] || FRAME_CONFIGS.yogyakartaCity;
   const total = getAutoPhotoCount(frameKey);
   const label = config?.label || 'Frame';
 
@@ -283,8 +283,11 @@ function updateFrameAutoInfo() {
     els.framePreviewNote.textContent = `Frame ini otomatis mengambil ${total} foto. Pilih filter, lalu klik Mulai Foto.`;
   }
   if (els.framePreviewImg && config?.path) {
-    // Tambahkan cache-buster ringan agar template terbaru tidak tertahan cache browser.
-    els.framePreviewImg.src = `${config.path}?v=24`;
+    els.framePreviewImg.onerror = () => {
+      els.framePreviewImg.alt = 'Preview frame gagal dimuat. Pastikan folder assets/frames ikut di-upload.';
+      console.warn('Preview frame gagal dimuat:', config.path);
+    };
+    els.framePreviewImg.src = `${config.path}?v=25`;
   }
   if (els.shotCounter && !capturedPhotos.length) {
     els.shotCounter.textContent = `${total} foto`;
@@ -832,8 +835,8 @@ function renderQRCode(val) {
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
   new QRCode(els.qrCode, {
     text: val,
-    width: 230,
-    height: 230,
+    width: 250,
+    height: 250,
     colorDark: '#111827',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
@@ -913,8 +916,8 @@ function initLabShot() {
   );
 
   els.frameTheme?.addEventListener('change', () => {
-    syncLayoutOptions();
-    if (capturedPhotos.length) renderFinalImage();
+    updateFrameAutoInfo();
+    resetResult(true);
   });
 
   els.filterMode?.addEventListener('change', () => {
@@ -923,9 +926,11 @@ function initLabShot() {
   });
 
   applyVideoMirror();
+  updateFrameAutoInfo();
   resetResult(true);
-  syncLayoutOptions();
+  updateFrameAutoInfo();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
+  console.log('LabShot v25 loaded. Frame preview aktif.');
 }
 
 if (document.readyState === 'loading') {

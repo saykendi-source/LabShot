@@ -105,7 +105,7 @@
           </div>
           <span id="framePreviewCount" class="pill">1 foto</span>
         </div>
-        <img id="framePreviewImg" class="frame-preview-img" alt="Preview frame yang dipilih" />
+        <img id="framePreviewImg" class="frame-preview-img" src="assets/frames/yogyakarta-city-series.png?v=25" alt="Preview frame yang dipilih" />
         <small id="framePreviewNote">Pilih frame dan filter terlebih dahulu, lalu klik Mulai Foto.</small>
       </section>
 
@@ -159,5 +159,48 @@
   <footer class="footer-note">
     Jalankan via HTTPS · GitHub Pages · atau localhost agar kamera dapat diakses browser.
   </footer>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      const frameSelect = document.getElementById('frameTheme');
+      const img = document.getElementById('framePreviewImg');
+      const title = document.getElementById('framePreviewTitle');
+      const count = document.getElementById('framePreviewCount');
+      const note = document.getElementById('framePreviewNote');
+      const autoCount = document.getElementById('frameAutoCount');
+      const autoHint = document.getElementById('frameAutoHint');
+
+      const fallbackFrames = {
+        yogyakartaCity: { label: 'Yogyakarta City Series', path: 'assets/frames/yogyakarta-city-series.png', count: 1 },
+        tiUmyCampus: { label: 'TI UMY Campus Series', path: 'assets/frames/ti-umy-campus.png', count: 1 },
+        tiUmyShowcase: { label: 'TI UMY Showcase', path: 'assets/frames/ti-umy-showcase.png', count: 1 },
+        umyCampusSeries: { label: 'UMY Campus Series', path: 'assets/frames/umy-campus-series.png', count: 1 },
+        umyCitySeries: { label: 'UMY City Series', path: 'assets/frames/umy-city-series.png', count: 1 },
+        friendshipBonds: { label: 'TI UMY Friendship', path: 'assets/frames/friendship-bonds-v23.png', count: 3 },
+        dailyQuote: { label: 'Daily Quote', path: 'assets/frames/daily-quote-v23.png', count: 2 },
+        itFuture: { label: 'IT Future', path: 'assets/frames/it-future-v23.png', count: 3 }
+      };
+
+      function updateFallbackPreview() {
+        if (!frameSelect) return;
+        const data = fallbackFrames[frameSelect.value] || fallbackFrames.yogyakartaCity;
+        if (img) {
+          img.onerror = function () {
+            this.alt = 'Preview frame gagal dimuat. Pastikan folder assets/frames ikut di-upload.';
+          };
+          img.src = data.path + '?v=25';
+        }
+        if (title) title.textContent = data.label;
+        if (count) count.textContent = data.count + ' foto';
+        if (autoCount) autoCount.textContent = data.count + ' foto otomatis';
+        if (note) note.textContent = 'Frame ini otomatis mengambil ' + data.count + ' foto. Pilih filter, lalu klik Mulai Foto.';
+        if (autoHint) autoHint.textContent = data.label + ' akan mengambil ' + data.count + ' foto secara otomatis.';
+      }
+
+      frameSelect?.addEventListener('change', updateFallbackPreview);
+      updateFallbackPreview();
+    });
+  </script>
+
 </body>
 </html>
