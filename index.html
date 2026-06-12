@@ -63,9 +63,9 @@
         <h2>Mode Foto</h2>
       </div>
       <div class="auto-layout-note">
-        <span class="auto-layout-title">Jumlah Foto</span>
+        <span class="auto-layout-title">Jumlah Take Foto</span>
         <strong id="frameAutoCount">1 foto otomatis</strong>
-        <small id="frameAutoHint">Jumlah jepretan mengikuti frame yang dipilih.</small>
+        <small id="frameAutoHint">Jumlah take foto otomatis mengikuti frame yang dipilih.</small>
       </div>
 
       <!-- Frame + Filter -->
@@ -95,6 +95,19 @@
           </select>
         </label>
       </div>
+
+      <!-- Preview frame otomatis -->
+      <section class="frame-preview-card">
+        <div class="frame-preview-info">
+          <div>
+            <p class="eyebrow">Preview Frame</p>
+            <h2 id="framePreviewTitle">Yogyakarta City Series</h2>
+          </div>
+          <span id="framePreviewCount" class="pill">1 foto</span>
+        </div>
+        <img id="framePreviewImg" class="frame-preview-img" alt="Preview frame yang dipilih" />
+        <small id="framePreviewNote">Pilih frame dan filter terlebih dahulu, lalu klik Mulai Foto.</small>
+      </section>
 
       <!-- Pilih kamera (auto-show if multiple) -->
       <label class="field hidden" id="cameraSelectWrap">

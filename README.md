@@ -239,3 +239,22 @@ Catatan frame otomatis saat ini:
 Penting:
 - Paste ulang file `apps-script/Code.gs` ke Google Apps Script.
 - Deploy ulang Web App setelah mengganti Code.gs.
+
+
+## Update v24 – Alur Frame Dulu + Preview Frame + QR Lebih Besar
+
+Perubahan:
+- Posisi panel ditukar: pengaturan sesi ada di kiri, pengambilan foto ada di kanan.
+- Pilihan layout tetap dihapus.
+- Saat memilih frame, aplikasi langsung menampilkan:
+  - preview frame
+  - jumlah take foto otomatis sesuai frame
+  - instruksi singkat sebelum mulai foto
+- QR diperbesar menjadi 230px dan ditambah link cadangan “buka link foto”.
+- QR tetap privat per sesi dan memakai parameter `?n=nama-file.jpg`.
+
+Jika QR hasil scan masih menampilkan teks “LabShot Drive aktif”, artinya salah satu dari ini:
+1. Google Apps Script belum diganti dengan `apps-script/Code.gs` versi terbaru.
+2. Apps Script sudah diganti tetapi belum Deploy → New version.
+3. GitHub Pages masih membaca app.js lama karena cache. Tekan Ctrl+F5.
+4. QR yang discan berasal dari hasil foto lama sebelum update.
