@@ -74,6 +74,7 @@ const FRAME_CONFIGS = {
   yogyakartaCity: {
     label: 'Yogyakarta City Series',
     path: 'assets/frames/yogyakarta-city-series.png',
+    defaultCount: 1,
     slotsByCount: {
       1: [
         { x: 78, y: 558, w: 602, h: 905, radius: 10 }
@@ -99,6 +100,7 @@ const FRAME_CONFIGS = {
   tiUmyCampus: {
     label: 'TI UMY Campus Series',
     path: 'assets/frames/ti-umy-campus.png',
+    defaultCount: 1,
     slotsByCount: {
       1: [
         { x: 56, y: 497, w: 967, h: 361, radius: 10 }
@@ -113,6 +115,7 @@ const FRAME_CONFIGS = {
   tiUmyShowcase: {
     label: 'TI UMY Showcase',
     path: 'assets/frames/ti-umy-showcase.png',
+    defaultCount: 1,
     slotsByCount: {
       1: [
         { x: 474, y: 476, w: 531, h: 686, radius: 10 }
@@ -127,6 +130,7 @@ const FRAME_CONFIGS = {
   umyCampusSeries: {
     label: 'UMY Campus Series',
     path: 'assets/frames/umy-campus-series.png',
+    defaultCount: 1,
     slotsByCount: {
       1: [
         { x: 44, y: 563, w: 991, h: 492, radius: 10 }
@@ -141,6 +145,7 @@ const FRAME_CONFIGS = {
   umyCitySeries: {
     label: 'UMY City Series',
     path: 'assets/frames/umy-city-series.png',
+    defaultCount: 1,
     slotsByCount: {
       1: [
         { x: 41, y: 621, w: 668, h: 872, radius: 8 }
@@ -156,7 +161,8 @@ const FRAME_CONFIGS = {
 
   friendshipBonds: {
     label: 'TI UMY Friendship',
-    path: 'assets/frames/friendship-bonds.png',
+    path: 'assets/frames/friendship-bonds-v23.png',
+    defaultCount: 3,
     slotsByCount: {
       1: [
         { x: 46, y: 771, w: 642, h: 754, radius: 8 }
@@ -175,7 +181,8 @@ const FRAME_CONFIGS = {
 
   dailyQuote: {
     label: 'Daily Quote',
-    path: 'assets/frames/daily-quote.png',
+    path: 'assets/frames/daily-quote-v23.png',
+    defaultCount: 2,
     slotsByCount: {
       1: [
         { x: 348, y: 721, w: 394, h: 689, radius: 6 }
@@ -189,7 +196,8 @@ const FRAME_CONFIGS = {
 
   itFuture: {
     label: 'IT Future',
-    path: 'assets/frames/it-future.png',
+    path: 'assets/frames/it-future-v23.png',
+    defaultCount: 3,
     slotsByCount: {
       1: [
         { x: 42, y: 699, w: 606, h: 841, radius: 8 }
@@ -241,6 +249,34 @@ function resolveFrameKey(photoCount) {
   return els.frameTheme?.value || 'yogyakartaCity';
 }
 
+
+function getAutoPhotoCount(frameKey) {
+  const config = FRAME_CONFIGS[frameKey];
+  if (!config) return 1;
+  if (Number.isFinite(config.defaultCount)) return config.defaultCount;
+  if (config.slotsByCount) {
+    const counts = Object.keys(config.slotsByCount).map(Number).sort((a, b) => a - b);
+    return counts.includes(1) ? 1 : (counts[0] || 1);
+  }
+  return 1;
+}
+
+function updateFrameAutoInfo() {
+  const frameKey = resolveFrameKey();
+  const config = FRAME_CONFIGS[frameKey];
+  const total = getAutoPhotoCount(frameKey);
+  if (els.frameAutoCount) {
+    els.frameAutoCount.textContent = `${total} foto otomatis`;
+  }
+  if (els.frameAutoHint) {
+    const label = config?.label || 'Frame';
+    els.frameAutoHint.textContent = `${label} akan mengambil ${total} foto secara otomatis.`;
+  }
+  if (els.shotCounter && !capturedPhotos.length) {
+    els.shotCounter.textContent = `${total} foto`;
+  }
+}
+
 function getSupportedLayoutCounts(frameKey) {
   const config = FRAME_CONFIGS[frameKey];
   if (!config) return [1, 2, 3];
@@ -251,21 +287,7 @@ function getSupportedLayoutCounts(frameKey) {
 }
 
 function syncLayoutOptions() {
-  if (!els.layoutMode) return;
-  const frameKey = resolveFrameKey();
-  const supported = getSupportedLayoutCounts(frameKey);
-  const supportedSet = new Set(supported);
-
-  [...els.layoutMode.options].forEach(opt => {
-    const count = Number(opt.value);
-    opt.disabled = !supportedSet.has(count);
-    opt.hidden = false;
-  });
-
-  const current = Number(els.layoutMode.value || 1);
-  if (!supportedSet.has(current)) {
-    els.layoutMode.value = String(supported.includes(1) ? 1 : supported[0]);
-  }
+  updateFrameAutoInfo();
 }
 
 let stream          = null;
@@ -461,7 +483,8 @@ async function startSession() {
   capturedPhotos = [];
   updatePhotoGrid([]);
 
-  const total   = Number(els.layoutMode?.value || 1);
+  const frameKey = resolveFrameKey();
+  const total   = getAutoPhotoCount(frameKey);
   const seconds = Number(els.countdownSeconds?.value || 3);
 
   setProgress(0);
@@ -697,21 +720,18 @@ function blobToBase64(blob) {
 
 function makeDriveFileName() {
   const now = new Date();
-  const yyyy = now.getFullYear();
+  const yy = String(now.getFullYear()).slice(-2);
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
   const hh = String(now.getHours()).padStart(2, '0');
   const mi = String(now.getMinutes()).padStart(2, '0');
   const ss = String(now.getSeconds()).padStart(2, '0');
-  const rand = Math.random().toString(36).slice(2, 6);
-  return `labshot-${yyyy}-${mm}-${dd}-${hh}-${mi}-${ss}-${rand}.jpg`;
+  const rand = Math.random().toString(36).slice(2, 5);
+  return `ls-${yy}${mm}${dd}-${hh}${mi}${ss}-${rand}.jpg`;
 }
 
 function makePhotoPageUrl(fileName) {
-  const url = new URL(APPS_SCRIPT_URL);
-  url.searchParams.set('mode', 'view');
-  url.searchParams.set('name', fileName);
-  return url.toString();
+  return `${APPS_SCRIPT_URL}?n=${encodeURIComponent(fileName)}`;
 }
 
 async function uploadPhotoToGoogleDrive(blob, fileName) {
@@ -733,8 +753,7 @@ async function renderFinalImage() {
   if (!capturedPhotos.length) return;
 
   const loadedImages = await Promise.all(capturedPhotos.map(loadImage));
-  const requestedCount = Number(els.layoutMode?.value || loadedImages.length || 1);
-  const images = loadedImages.slice(0, requestedCount);
+  const images = loadedImages;
   const total = images.length;
   const frameKey = resolveFrameKey(total);
   const slots = getSlotsForFrame(frameKey, total);
@@ -797,7 +816,14 @@ async function renderFinalImage() {
 function renderQRCode(val) {
   els.qrCode.innerHTML = '';
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
-  new QRCode(els.qrCode, { text: val, width: 116, height: 116, correctLevel: QRCode.CorrectLevel.H });
+  new QRCode(els.qrCode, {
+    text: val,
+    width: 158,
+    height: 158,
+    colorDark: '#111827',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
   els.qrNote.textContent = 'Scan QR untuk membuka halaman foto khusus sesi ini.';
 }
 
@@ -814,7 +840,11 @@ function resetResult(clearPhotos = true) {
   els.shareBtn.disabled = true;
   els.qrCode.innerHTML  = '';
   els.qrNote.textContent = 'QR foto pribadi aktif setelah hasil dibuat.';
-  els.shotCounter.textContent = `${capturedPhotos.length} foto`;
+  if (capturedPhotos.length) {
+    els.shotCounter.textContent = `${capturedPhotos.length} foto`;
+  } else {
+    updateFrameAutoInfo();
+  }
   setProgress(0);
   setStatus(stream ? 'Kamera aktif. Siap memotret!' : 'Kamera belum aktif.');
 }

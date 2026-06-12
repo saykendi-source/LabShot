@@ -510,3 +510,45 @@ select option {
 .footer-note {
   color: #64748b;
 }
+
+
+/* ── v23 auto-frame + QR improvements ───────────────── */
+.auto-layout-note {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(15,79,62,.12);
+  background: linear-gradient(135deg, rgba(134,216,197,.16), rgba(191,227,255,.16));
+}
+.auto-layout-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+}
+#frameAutoCount {
+  color: var(--primary);
+  font-size: 16px;
+}
+#frameAutoHint {
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 12px;
+}
+.qr-code {
+  width: 186px;
+  min-height: 186px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(15,79,62,.08);
+}
+.qr-code canvas,
+.qr-code img {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+}

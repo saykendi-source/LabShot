@@ -211,3 +211,31 @@ Setelah mengganti Apps Script:
    - Execute as: Me
    - Who has access: Anyone
 7. Gunakan URL Web App yang sama / terbaru di aplikasi.
+
+
+## Update v23 – Auto Frame Capture + QR Privat + Fix Template
+
+Perubahan:
+- Pilihan layout dihapus.
+- Jumlah jepretan sekarang otomatis mengikuti frame.
+- Frame yang butuh 2/3 foto akan otomatis mengambil 2/3 foto.
+- QR sekarang diarahkan ke halaman foto privat per sesi, bukan ke folder Drive.
+- QR diperbesar dan URL dipersingkat agar lebih mudah dipindai.
+- 3 template terbaru dibust-cache dan diperbaiki kembali:
+  - TI UMY Friendship
+  - Daily Quote
+  - IT Future
+
+Catatan frame otomatis saat ini:
+- Yogyakarta City Series → 1 foto
+- TI UMY Campus Series → 1 foto
+- TI UMY Showcase → 1 foto
+- UMY Campus Series → 1 foto
+- UMY City Series → 1 foto
+- TI UMY Friendship → 3 foto
+- Daily Quote → 2 foto
+- IT Future → 3 foto
+
+Penting:
+- Paste ulang file `apps-script/Code.gs` ke Google Apps Script.
+- Deploy ulang Web App setelah mengganti Code.gs.
