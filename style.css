@@ -649,3 +649,275 @@ select option {
   width: 250px !important;
   height: 250px !important;
 }
+
+
+/* ───────────────────────────────────────────
+   LabShot v26 – Compact 3 Column Layout
+   Pengaturan kiri · Kamera tengah · Hasil kanan
+─────────────────────────────────────────── */
+
+@media (min-width: 981px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    width: min(1780px, calc(100vw - 24px));
+    height: calc(100vh - 24px);
+    min-height: 0;
+    margin: 12px auto;
+    display: grid;
+    grid-template-columns: minmax(380px, 430px) minmax(520px, 1fr) minmax(340px, 410px);
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .control-panel {
+    grid-column: 1;
+    grid-row: 1;
+    max-height: none;
+    height: 100%;
+    overflow: hidden;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hero-panel {
+    grid-column: 2;
+    grid-row: 1;
+    height: 100%;
+    padding: 18px;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .result-panel {
+    grid-column: 3;
+    grid-row: 1;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    padding: 18px;
+    border: 1px solid rgba(15, 79, 62, .12);
+    background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.68));
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    backdrop-filter: blur(18px);
+  }
+
+  .footer-note {
+    display: none;
+  }
+
+  .brand-row {
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 76px;
+    height: 76px;
+    padding: 8px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.78);
+  }
+
+  .logo-mark img {
+    object-fit: contain;
+  }
+
+  h1 {
+    font-size: clamp(38px, 3.4vw, 58px);
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .panel-header {
+    margin-bottom: 4px;
+  }
+
+  .field {
+    margin: 8px 0;
+    gap: 6px;
+  }
+
+  .grid-2 {
+    gap: 10px;
+  }
+
+  input[type="text"],
+  input[type="file"],
+  select {
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
+  .auto-layout-note {
+    margin: 4px 0 8px;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .frame-preview-card {
+    flex: 1;
+    min-height: 0;
+    margin: 8px 0 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .frame-preview-info {
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .frame-preview-img {
+    flex: 1;
+    min-height: 360px;
+    max-height: none;
+    width: 100%;
+    object-fit: contain;
+    border-radius: 18px;
+  }
+
+  .frame-preview-card small {
+    flex-shrink: 0;
+    margin-top: 8px;
+    font-size: 11px;
+  }
+
+  .toggle-row {
+    flex-shrink: 0;
+    margin: 2px 0 0;
+  }
+
+  .camera-card {
+    flex: 1;
+    min-height: 0;
+    border-radius: 28px;
+  }
+
+  .primary-actions {
+    flex-shrink: 0;
+  }
+
+  .primary-actions .btn {
+    flex: 1;
+  }
+
+  .photo-grid {
+    flex-shrink: 0;
+    max-height: 74px;
+  }
+
+  .result-panel .result-card {
+    margin: 0;
+    height: 100%;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.58)),
+      radial-gradient(circle at 20% 10%, rgba(255,201,217,.18), transparent 14rem);
+  }
+
+  .result-panel .result-header {
+    flex-shrink: 0;
+    margin-bottom: 10px;
+  }
+
+  .result-panel .final-preview {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    margin-bottom: 10px;
+    border-radius: 18px;
+  }
+
+  .result-panel .empty-result {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    margin-bottom: 10px;
+  }
+
+  .result-panel .download-row {
+    flex-shrink: 0;
+  }
+
+  .result-panel .download-row .btn {
+    flex: 1;
+  }
+
+  .result-panel .qr-wrap {
+    flex-shrink: 0;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 12px;
+    margin-top: 10px;
+  }
+
+  .result-panel .qr-code {
+    width: 156px !important;
+    min-height: 156px !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .result-panel .qr-code canvas,
+  .result-panel .qr-code img {
+    width: 136px !important;
+    height: 136px !important;
+  }
+
+  .result-panel #qrNote {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}
+
+/* Pastel refinement */
+body {
+  background:
+    radial-gradient(circle at 10% 8%, rgba(191, 227, 255, .75), transparent 24rem),
+    radial-gradient(circle at 90% 12%, rgba(255, 201, 217, .65), transparent 24rem),
+    radial-gradient(circle at 52% 94%, rgba(134, 216, 197, .45), transparent 28rem),
+    linear-gradient(135deg, #fffaf0 0%, #fef3c7 32%, #ecfeff 68%, #fdf2f8 100%);
+}
+
+.control-panel,
+.hero-panel,
+.result-panel {
+  box-shadow: 0 18px 44px rgba(15, 79, 62, .10);
+}
+
+.frame-preview-card,
+.result-card,
+.auto-layout-note {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.60);
+}
+
+@media (max-width: 980px) {
+  .result-panel {
+    border: 1px solid rgba(15, 79, 62, .12);
+    background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.68));
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    backdrop-filter: blur(18px);
+    padding: 14px;
+  }
+
+  .frame-preview-img {
+    max-height: 520px;
+  }
+}

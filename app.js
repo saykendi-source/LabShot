@@ -213,38 +213,9 @@ const FRAME_CONFIGS = {
       ]
     },
   },
-
-  memoriesSimple: {
-    label: 'Memories Simple',
-    path: 'assets/frames/memories-simple.png',
-    slotsByCount: {
-      1: [{ x: 248, y: 1055, w: 770, h: 460, angle: 2 }],
-      2: [
-        { x: 74, y: 542, w: 525, h: 345 },
-        { x: 248, y: 1055, w: 770, h: 460, angle: 2 },
-      ],
-      3: [
-        { x: 74, y: 542, w: 250, h: 345 },
-        { x: 338, y: 542, w: 260, h: 345 },
-        { x: 248, y: 1055, w: 770, h: 460, angle: 2 },
-      ],
-      4: [
-        { x: 74, y: 542, w: 250, h: 345 },
-        { x: 338, y: 542, w: 260, h: 345 },
-        { x: 248, y: 1055, w: 380, h: 460, angle: 2 },
-        { x: 638, y: 1055, w: 380, h: 460, angle: 2 },
-      ],
-    },
-  },
 };
 
-/*
-  Mode Auto Scrapbook:
-  - 1 foto  → Memories Simple
-  - 2 foto  → Memories Simple
-  - 3 foto  → Birthday Collage
-  - 4 foto  → Memories Box
-*/
+/* Frame otomatis mengikuti defaultCount masing-masing template. */
 function resolveFrameKey(photoCount) {
   return els.frameTheme?.value || 'yogyakartaCity';
 }
@@ -930,7 +901,7 @@ function initLabShot() {
   resetResult(true);
   updateFrameAutoInfo();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
-  console.log('LabShot v25 loaded. Frame preview aktif.');
+  console.log('LabShot v26 loaded. Compact layout aktif.');
 }
 
 if (document.readyState === 'loading') {

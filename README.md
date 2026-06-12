@@ -268,3 +268,21 @@ Perubahan:
 - Preview frame memakai cache-buster `?v=25`.
 - Jika preview gagal, pesan error akan menunjukkan bahwa folder `assets/frames` belum ikut di-upload.
 - QR diperbesar lagi menjadi 250px.
+
+
+## Update v26 – Layout Lebih Rapi Tanpa Scroll + Logo Baru
+
+Perubahan:
+- Tampilan desktop dibuat 3 kolom:
+  - kiri: pengaturan frame/filter
+  - tengah: kamera
+  - kanan: hasil foto + QR
+- Dirancang agar tidak perlu scroll ke bawah pada layar desktop.
+- Preview frame diperbesar agar tulisan dalam template lebih terbaca.
+- Logo `assets/logo-ti-umy.png` diganti dengan logo terbaru dari lampiran.
+- Asset frame yang dihapus:
+  - `birthday-collage.png`
+  - `birthday-camera.png`
+  - `memories-box.png`
+  - `memories-simple.png`
+- Konfigurasi `memoriesSimple` dihapus dari app.js karena tidak lagi digunakan.
