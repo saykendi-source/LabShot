@@ -161,3 +161,15 @@ Perubahan:
 - Logo di header diganti menggunakan logo TI UMY dari file lampiran.
 - Tampilan utama diubah dari dark theme menjadi light pastel theme.
 - Panel, tombol, form, kamera, dan kartu hasil dibuat lebih cerah.
+
+
+## Update v20 – Tambahan 3 Template + Layout Strip 3
+
+Perubahan:
+- Menambahkan 3 template baru:
+  - TI UMY Friendship
+  - Daily Quote
+  - IT Future
+- Menambahkan pilihan layout baru: Strip 3.
+- Opsi layout kini akan menyesuaikan dukungan masing-masing template.
+- Jika template tidak mendukung jumlah foto tertentu, pilihan layout itu otomatis dinonaktifkan.

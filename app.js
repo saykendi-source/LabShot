@@ -152,6 +152,60 @@ const FRAME_CONFIGS = {
     },
   },
 
+
+
+  friendshipBonds: {
+    label: 'TI UMY Friendship',
+    path: 'assets/frames/friendship-bonds.png',
+    slotsByCount: {
+      1: [
+        { x: 46, y: 771, w: 642, h: 754, radius: 8 }
+      ],
+      2: [
+        { x: 46, y: 771, w: 642, h: 754, radius: 8 },
+        { x: 732, y: 1563, w: 304, h: 257, radius: 8 }
+      ],
+      3: [
+        { x: 46, y: 771, w: 642, h: 754, radius: 8 },
+        { x: 45, y: 1564, w: 217, h: 256, radius: 8 },
+        { x: 732, y: 1563, w: 304, h: 257, radius: 8 }
+      ]
+    },
+  },
+
+  dailyQuote: {
+    label: 'Daily Quote',
+    path: 'assets/frames/daily-quote.png',
+    slotsByCount: {
+      1: [
+        { x: 348, y: 721, w: 394, h: 689, radius: 6 }
+      ],
+      2: [
+        { x: 348, y: 721, w: 394, h: 689, radius: 6 },
+        { x: 784, y: 1528, w: 211, h: 206, radius: 6 }
+      ]
+    },
+  },
+
+  itFuture: {
+    label: 'IT Future',
+    path: 'assets/frames/it-future.png',
+    slotsByCount: {
+      1: [
+        { x: 42, y: 699, w: 606, h: 841, radius: 8 }
+      ],
+      2: [
+        { x: 42, y: 699, w: 606, h: 841, radius: 8 },
+        { x: 687, y: 1704, w: 352, h: 162, radius: 8 }
+      ],
+      3: [
+        { x: 42, y: 699, w: 606, h: 841, radius: 8 },
+        { x: 39, y: 1579, w: 205, h: 287, radius: 8 },
+        { x: 687, y: 1704, w: 352, h: 162, radius: 8 }
+      ]
+    },
+  },
+
   memoriesSimple: {
     label: 'Memories Simple',
     path: 'assets/frames/memories-simple.png',
@@ -185,6 +239,33 @@ const FRAME_CONFIGS = {
 */
 function resolveFrameKey(photoCount) {
   return els.frameTheme?.value || 'yogyakartaCity';
+}
+
+function getSupportedLayoutCounts(frameKey) {
+  const config = FRAME_CONFIGS[frameKey];
+  if (!config) return [1, 2, 3];
+  if (config.slotsByCount) {
+    return Object.keys(config.slotsByCount).map(Number).sort((a, b) => a - b);
+  }
+  return [1, 2, 3, 4];
+}
+
+function syncLayoutOptions() {
+  if (!els.layoutMode) return;
+  const frameKey = resolveFrameKey();
+  const supported = getSupportedLayoutCounts(frameKey);
+  const supportedSet = new Set(supported);
+
+  [...els.layoutMode.options].forEach(opt => {
+    const count = Number(opt.value);
+    opt.disabled = !supportedSet.has(count);
+    opt.hidden = false;
+  });
+
+  const current = Number(els.layoutMode.value || 1);
+  if (!supportedSet.has(current)) {
+    els.layoutMode.value = String(supported.includes(1) ? 1 : supported[0]);
+  }
 }
 
 let stream          = null;
@@ -549,6 +630,11 @@ function getSlotsForFrame(frameKey, count) {
   const config = FRAME_CONFIGS[frameKey];
   if (!config) return [];
   if (config.slotsByCount?.[count]) return config.slotsByCount[count];
+  if (config.slotsByCount) {
+    const counts = Object.keys(config.slotsByCount).map(Number).sort((a, b) => a - b);
+    const fallback = counts.includes(1) ? 1 : counts[0];
+    return config.slotsByCount[fallback] || [];
+  }
   if (config.baseSlot) return splitBaseSlot(config.baseSlot, count);
   return [];
 }
@@ -637,10 +723,12 @@ async function uploadPhotoToGoogleDrive(blob) {
 async function renderFinalImage() {
   if (!capturedPhotos.length) return;
 
-  const images  = await Promise.all(capturedPhotos.map(loadImage));
-  const total   = images.length;
+  const loadedImages = await Promise.all(capturedPhotos.map(loadImage));
+  const requestedCount = Number(els.layoutMode?.value || loadedImages.length || 1);
+  const images = loadedImages.slice(0, requestedCount);
+  const total = images.length;
   const frameKey = resolveFrameKey(total);
-  const slots   = getSlotsForFrame(frameKey, total);
+  const slots = getSlotsForFrame(frameKey, total);
 
   const canvas  = document.createElement('canvas');
   canvas.width  = STORY_W;
@@ -764,9 +852,14 @@ function initLabShot() {
   els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
   els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
 
-  [els.eventName, els.frameTheme, els.layoutMode].filter(Boolean).forEach(el =>
+  [els.eventName, els.layoutMode].filter(Boolean).forEach(el =>
     el.addEventListener('change', () => { if (capturedPhotos.length) renderFinalImage(); })
   );
+
+  els.frameTheme?.addEventListener('change', () => {
+    syncLayoutOptions();
+    if (capturedPhotos.length) renderFinalImage();
+  });
 
   els.filterMode?.addEventListener('change', () => {
     applyLiveFilter();
@@ -775,6 +868,7 @@ function initLabShot() {
 
   applyVideoMirror();
   resetResult(true);
+  syncLayoutOptions();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
 }
 
