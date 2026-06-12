@@ -153,3 +153,11 @@ Perubahan:
 - Inisialisasi tombol kamera dibuat lebih aman dengan `DOMContentLoaded`.
 - `startCamera()` sekarang menampilkan error lebih jelas jika izin kamera ditolak, kamera tidak ditemukan, atau halaman tidak HTTPS.
 - Ditambahkan `await video.play()` setelah stream aktif.
+
+
+## Update v19 – Logo TI UMY dan Tema Pastel
+
+Perubahan:
+- Logo di header diganti menggunakan logo TI UMY dari file lampiran.
+- Tampilan utama diubah dari dark theme menjadi light pastel theme.
+- Panel, tombol, form, kamera, dan kartu hasil dibuat lebih cerah.
