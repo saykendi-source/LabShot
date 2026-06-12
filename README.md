@@ -173,3 +173,15 @@ Perubahan:
 - Menambahkan pilihan layout baru: Strip 3.
 - Opsi layout kini akan menyesuaikan dukungan masing-masing template.
 - Jika template tidak mendukung jumlah foto tertentu, pilihan layout itu otomatis dinonaktifkan.
+
+
+## Update v21 – Perbaikan 3 Template Terbaru
+
+Perubahan:
+- Area hitam/photo window pada template:
+  - TI UMY Friendship
+  - Daily Quote
+  - IT Future
+  sekarang sudah dibuat transparan.
+- Foto yang dirender di belakang template kini bisa terlihat.
+- Border foto tetap disisakan agar hasil lebih natural.
