@@ -29,6 +29,7 @@ const els = {
   shareBtn:           document.getElementById('shareBtn'),
   shotCounter:        document.getElementById('shotCounter'),
   qrCode:             document.getElementById('qrCode'),
+  qrCodeOuter:        document.getElementById('qrCodeOuter'),
   qrNote:             document.getElementById('qrNote'),
   photoGrid:          document.getElementById('photoGrid'),
   mirrorToggle:       document.getElementById('mirrorToggle'),
@@ -37,6 +38,8 @@ const els = {
   cameraSelectWrap:   document.getElementById('cameraSelectWrap'),
   progressBar:        document.getElementById('progressBar'),
   statusText:         document.getElementById('statusText'),
+  statusToast:        document.getElementById('statusToast'),
+  statusToastText:    document.getElementById('statusToastText'),
   frameAutoCount:     document.getElementById('frameAutoCount'),
   frameAutoHint:      document.getElementById('frameAutoHint'),
   framePreviewTitle:  document.getElementById('framePreviewTitle'),
@@ -50,6 +53,9 @@ const els = {
   retakeSelectedBtn:  document.getElementById('retakeSelectedBtn'),
   finishBtn:          document.getElementById('finishBtn'),
   uploadStatus:       document.getElementById('uploadStatus'),
+  stepProgressChip:   document.getElementById('stepProgressChip'),
+  stepChipLabel:      document.getElementById('stepChipLabel'),
+  stepChipTrack:      document.getElementById('stepChipTrack'),
 };
 
 /* ── Constants ──────────────────────────────────────────── */
@@ -449,12 +455,79 @@ function playShutter() {
   } catch (_) {}
 }
 
+/* ── 3. Toast status system ──────────────────────────────── */
+let _toastTimer = null;
+const TOAST_FLAVOURS = {
+  idle:    { icon: '💤', cls: 'idle' },
+  info:    { icon: 'ℹ️',  cls: 'info' },
+  active:  { icon: '📷', cls: 'active' },
+  success: { icon: '✅', cls: 'success' },
+  warning: { icon: '⚠️', cls: 'warning' },
+  error:   { icon: '🚫', cls: 'error' },
+};
+
+function setStatus(msg, flavour = 'info', autoDismissMs = 0) {
+  // Legacy hidden element (JS compat)
+  if (els.statusText) els.statusText.textContent = msg;
+
+  const toast    = els.statusToast;
+  const textEl   = els.statusToastText;
+  const f        = TOAST_FLAVOURS[flavour] || TOAST_FLAVOURS.info;
+
+  if (!toast || !textEl) return;
+
+  // Detect flavour from emoji prefix if not provided
+  if (flavour === 'info') {
+    if (msg.startsWith('✅') || msg.startsWith('🎉')) flavour = 'success', f.cls = 'success', f.icon = '';
+    else if (msg.startsWith('⚠️') || msg.startsWith('❌')) flavour = 'error', f.cls = 'error', f.icon = '';
+    else if (msg.startsWith('📷') || msg.startsWith('📸') || msg.startsWith('⏳')) flavour = 'active', f.cls = 'active', f.icon = '';
+    else if (msg.startsWith('🔀') || msg.startsWith('🖼')) flavour = 'warning', f.cls = 'warning', f.icon = '';
+  }
+
+  const icon = document.querySelector('#statusToast .toast-icon');
+  if (icon) icon.textContent = f.icon;
+  textEl.textContent = msg.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}][\uFE0F]?\s*/u, '');
+
+  toast.className = `status-toast ${f.cls} show`;
+
+  if (_toastTimer) clearTimeout(_toastTimer);
+  if (autoDismissMs > 0) {
+    _toastTimer = setTimeout(() => {
+      toast.className = `status-toast ${f.cls}`;
+    }, autoDismissMs);
+  }
+}
+
+/* ── 7. Step progress chip ───────────────────────────────── */
+function updateStepChip(current, total) {
+  const chip  = els.stepProgressChip;
+  const label = els.stepChipLabel;
+  const track = els.stepChipTrack;
+  if (!chip || !label || !track) return;
+
+  if (total <= 0) {
+    chip.classList.remove('visible');
+    return;
+  }
+
+  chip.classList.add('visible');
+  label.textContent = `Langkah ${Math.min(current + 1, total)} dari ${total}`;
+
+  track.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const pip = document.createElement('span');
+    pip.className = 'step-chip-pip' + (i < current ? ' done' : i === current ? ' active' : '');
+    track.appendChild(pip);
+  }
+}
+
+function hideStepChip() {
+  if (els.stepProgressChip) els.stepProgressChip.classList.remove('visible');
+}
+
 /* ── Helpers ─────────────────────────────────────────────── */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function setStatus(msg) {
-  if (els.statusText) els.statusText.textContent = msg;
-}
 function setProgress(pct) {
   if (els.progressBar) els.progressBar.style.width = pct + '%';
 }
@@ -490,10 +563,10 @@ async function enumerateCameras() {
 async function startCamera(deviceId = null) {
   if (!navigator.mediaDevices?.getUserMedia) {
     const msg = 'Browser tidak mendukung akses kamera atau halaman belum HTTPS.';
-    setStatus('⚠️ ' + msg); alert(msg); return;
+    setStatus('⚠️ ' + msg, 'error'); alert(msg); return;
   }
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  setStatus('Menghubungkan kamera…');
+  setStatus('Menghubungkan kamera…', 'info');
 
   try {
     const constraints = {
@@ -511,7 +584,7 @@ async function startCamera(deviceId = null) {
       els.startCameraBtn.textContent = '✓ Kamera Aktif';
       els.startCameraBtn.classList.add('btn-active');
     }
-    setStatus('📷 Kamera aktif. Siap memotret!');
+    setStatus('📷 Kamera aktif. Siap memotret!', 'active');
     applyVideoMirror(); applyLiveFilter();
     await enumerateCameras();
     startPreviewLoop();
@@ -596,9 +669,11 @@ async function startSession() {
   const total    = getAutoPhotoCount(frameKey);
 
   setProgress(0); renderFramePreview();
+  updateStepChip(0, total);
 
   for (let i = 0; i < total; i++) {
-    setStatus(`📸 Foto ${i + 1} dari ${total} – bersiap…`);
+    updateStepChip(i, total);
+    setStatus(`📸 Foto ${i + 1} dari ${total} – bersiap…`, 'active');
     await runCountdown(3);
 
     const shot = capturePhoto();
@@ -618,7 +693,8 @@ async function startSession() {
   updatePhotoGrid(capturedPhotos);
   renderFramePreview();
   setProgress(70);
-  setStatus('✅ Foto selesai diambil. Atur urutan/retake jika perlu, lalu klik ✓ Finish & Buat QR.');
+  updateStepChip(total, total); // all done
+  setStatus('✅ Foto selesai diambil. Atur urutan/retake jika perlu, lalu klik ✓ Finish & Buat QR.', 'success');
   setBusy(false);
   refreshReviewControls();
 }
@@ -710,11 +786,11 @@ async function finishPhotoSession() {
   setBusy(true);
   reviewReady = false;
   refreshReviewControls();
-  setStatus('⏳ Membuat hasil akhir dan QR…');
+  setStatus('⏳ Membuat hasil akhir dan QR…', 'active');
   setProgress(80);
   await renderFinalImage();
   setProgress(100);
-  setStatus('🎉 Selesai! Download atau scan QR. Tombol Foto Baru untuk pengunjung berikutnya.');
+  setStatus('🎉 Selesai! Download atau scan QR. Tombol Foto Baru untuk pengunjung berikutnya.', 'success');
   setBusy(false);
   refreshReviewControls();
 }
@@ -864,11 +940,13 @@ async function renderFinalImage() {
 
   renderQRCode(currentShareUrl);
   setUploadStatus('uploading', 'Mengunggah ke Google Drive…');
+  if (els.qrCodeOuter) els.qrCodeOuter.classList.add('uploading');
 
   const driveBlob = await createDriveUploadBlobFromCanvas(canvas);
   uploadPhotoToGoogleDrive(driveBlob, currentUploadFileName)
     .then(() => {
       setUploadStatus('done', 'Foto berhasil diunggah ✓');
+      if (els.qrCodeOuter) els.qrCodeOuter.classList.remove('uploading');
       if (els.qrNote) {
         els.qrNote.innerHTML = `Scan QR untuk foto khusus sesi ini. Atau <a class="qr-note-link" href="${currentShareUrl}" target="_blank" rel="noopener">buka link foto</a>.`;
       }
@@ -876,6 +954,7 @@ async function renderFinalImage() {
     .catch(err => {
       console.error('Drive upload error:', err);
       setUploadStatus('error', 'Upload gagal – gunakan tombol Download.');
+      if (els.qrCodeOuter) els.qrCodeOuter.classList.remove('uploading');
       if (els.qrNote) els.qrNote.textContent = 'Upload gagal. Gunakan tombol Download di layar ini.';
     });
 }
@@ -913,8 +992,10 @@ function resetResult(clearPhotos = true) {
   els.downloadBtn.classList.add('disabled');
   if (els.shareBtn) els.shareBtn.disabled = true;
   if (els.qrCode)   els.qrCode.innerHTML  = '';
+  if (els.qrCodeOuter) els.qrCodeOuter.classList.remove('uploading');
   if (els.qrNote)   els.qrNote.textContent = 'QR foto pribadi aktif setelah hasil dibuat.';
   setUploadStatus('', '');
+  hideStepChip();
 
   if (capturedPhotos.length) {
     if (els.shotCounter) els.shotCounter.textContent = `${capturedPhotos.length} foto`;
@@ -922,7 +1003,7 @@ function resetResult(clearPhotos = true) {
     updateFrameAutoInfo();
   }
   setProgress(0);
-  setStatus(stream ? '📷 Kamera aktif. Siap memotret!' : 'Kamera belum aktif.');
+  setStatus(stream ? '📷 Kamera aktif. Siap memotret!' : 'Kamera belum aktif. Klik Aktifkan Kamera.', stream ? 'active' : 'idle');
   renderFramePreview();
 }
 
@@ -932,9 +1013,9 @@ function sharePhoto() {
   if (stream) {
     startPreviewLoop();
     if (els.startSessionBtn) els.startSessionBtn.disabled = false;
-    setStatus('👋 Siap untuk pengunjung berikutnya. Atur frame dan filter, lalu klik Mulai Foto.');
+    setStatus('👋 Siap untuk pengunjung berikutnya. Atur frame dan filter, lalu klik Mulai Foto.', 'info');
   } else {
-    setStatus('Sesi baru disiapkan. Aktifkan kamera untuk memulai.');
+    setStatus('Sesi baru disiapkan. Aktifkan kamera untuk memulai.', 'idle');
   }
 }
 
@@ -979,12 +1060,48 @@ async function uploadPhotoToGoogleDrive(blob, fileName) {
   });
 }
 
+/* ── Splash screen ───────────────────────────────────────── */
+function openApp() {
+  const splash   = document.getElementById('splashScreen');
+  const appShell = document.getElementById('appShell');
+  if (!splash || !appShell) return;
+
+  splash.classList.add('splash-exit');
+  splash.addEventListener('transitionend', () => {
+    splash.style.display = 'none';
+    splash.setAttribute('aria-hidden', 'true');
+  }, { once: true });
+
+  appShell.classList.remove('hidden');
+  appShell.removeAttribute('aria-hidden');
+
+  // Start preview setelah app shell terlihat
+  setTimeout(() => {
+    updateFrameAutoInfo();
+    renderFramePreview();
+  }, 100);
+}
+
+function showGuide() {
+  const splash   = document.getElementById('splashScreen');
+  const appShell = document.getElementById('appShell');
+  if (!splash || !appShell) return;
+  splash.style.display = '';
+  splash.removeAttribute('aria-hidden');
+  splash.classList.remove('splash-exit');
+  appShell.classList.add('hidden');
+}
+
 /* ── Init ────────────────────────────────────────────────── */
 function initLabShot() {
   if (!els.startCameraBtn || !els.video) {
     console.error('Elemen utama kamera tidak ditemukan. Pastikan index.html dan app.js versi sama.');
     return;
   }
+
+  // Splash screen wiring
+  document.getElementById('splashStartBtn')?.addEventListener('click', openApp);
+  document.getElementById('showGuideBtn')?.addEventListener('click', showGuide);
 
   els.startCameraBtn.addEventListener('click',  () => startCamera());
   els.startSessionBtn?.addEventListener('click', startSession);
@@ -1016,10 +1133,9 @@ function initLabShot() {
   });
 
   applyVideoMirror();
-  updateFrameAutoInfo();
   resetResult(true);
-  setStatus('Kamera belum aktif. Klik Aktifkan Kamera untuk memulai.');
-  console.log('LabShot v33 loaded.');
+  setStatus('Kamera belum aktif. Klik Aktifkan Kamera untuk memulai.', 'idle');
+  console.log('LabShot v34 loaded.');
 }
 
 if (document.readyState === 'loading') {
