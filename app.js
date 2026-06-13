@@ -3,8 +3,8 @@
    Perbaikan utama:
    - Preview frame mengikuti ukuran story IG secara proporsional.
    - Saat kamera aktif, preview live muncul langsung di slot foto.
-   - Untuk frame multi-foto, slot aktif berpindah otomatis:
-     foto 1 → slot 1, foto 2 → slot 2, dan seterusnya.
+   - Setelah semua foto diambil, user bisa menukar urutan, retake foto tertentu,
+     lalu klik Finish untuk membuat hasil akhir dan QR.
 ───────────────────────────────────────────── */
 
 const els = {
@@ -42,6 +42,12 @@ const els = {
   framePreviewCount: document.getElementById('framePreviewCount'),
   framePreviewNote:  document.getElementById('framePreviewNote'),
   framePreviewCanvas:document.getElementById('framePreviewCanvas'),
+  reviewControls:  document.getElementById('reviewControls'),
+  selectedPhotoLabel: document.getElementById('selectedPhotoLabel'),
+  moveLeftBtn:     document.getElementById('moveLeftBtn'),
+  moveRightBtn:    document.getElementById('moveRightBtn'),
+  retakeSelectedBtn: document.getElementById('retakeSelectedBtn'),
+  finishBtn:       document.getElementById('finishBtn'),
 };
 
 const STORY_W = 1080;
@@ -260,6 +266,7 @@ function updateFrameAutoInfo() {
   if (els.shotCounter && !capturedPhotos.length) {
     els.shotCounter.textContent = `${total} foto`;
   }
+  refreshReviewControls();
   renderFramePreview();
 }
 
@@ -288,11 +295,15 @@ let mirrorMode        = true;
 let soundEnabled      = true;
 let sessionRunning    = false;
 let previewTimer      = null;
+let selectedPhotoIndex = -1;
+let retakeSlotIndex    = -1;
+let reviewReady        = false;
 const frameImageCache = {};
 
 
 /* ── Preview helpers ──────────────────────────────────── */
 function getLivePreviewSlotIndex(total) {
+  if (retakeSlotIndex >= 0) return Math.min(retakeSlotIndex, Math.max(0, total - 1));
   return Math.min(capturedPhotoImgs.length, Math.max(0, total - 1));
 }
 
@@ -308,6 +319,8 @@ function drawMediaCover(ctx, media, x, y, w, h, r = 0, opts = {}) {
   const filter = opts.filter || 'none';
 
   ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   if (r > 0) { roundedRect(ctx, x, y, w, h, r); ctx.clip(); }
   ctx.filter = filter;
 
@@ -391,16 +404,21 @@ function startPreviewLoop() {
   if (!stream) return;
   previewTimer = setInterval(() => {
     renderFramePreview();
-  }, 150);
+  }, 90);
 }
 
 async function renderFramePreview() {
   const canvas = els.framePreviewCanvas;
   if (!canvas) return;
 
-  if (canvas.width !== STORY_W || canvas.height !== STORY_H) {
-    canvas.width = STORY_W;
-    canvas.height = STORY_H;
+  // Backing store dibuat lebih besar agar preview tetap tajam saat diperkecil di panel.
+  const PREVIEW_SCALE = 1.5;
+  const targetW = Math.round(STORY_W * PREVIEW_SCALE);
+  const targetH = Math.round(STORY_H * PREVIEW_SCALE);
+
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
   }
 
   const frameKey = resolveFrameKey();
@@ -408,6 +426,9 @@ async function renderFramePreview() {
   const slots = getSlotsForFrame(frameKey, total);
   const ctx = canvas.getContext('2d');
 
+  ctx.setTransform(PREVIEW_SCALE, 0, 0, PREVIEW_SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.clearRect(0, 0, STORY_W, STORY_H);
   fillBase(ctx, frameKey);
 
@@ -425,7 +446,8 @@ async function renderFramePreview() {
 
   slots.forEach((slot, i) => {
     const saved = capturedPhotoImgs[i];
-    if (saved) {
+    const isRetakingThisSlot = retakeSlotIndex === i;
+    if (saved && !isRetakingThisSlot) {
       withSlotTransform(ctx, slot, (x, y, w, h) => {
         drawImageCover(ctx, saved, x, y, w, h, slot.radius || 0);
         addDepth(ctx, x, y, w, h, slot.radius || 0);
@@ -512,6 +534,7 @@ function setBusy(busy) {
   els.startCameraBtn.disabled  = busy;
   els.retakeBtn.disabled       = busy || capturedPhotos.length === 0;
   if (els.cameraSelect) els.cameraSelect.disabled = busy;
+  refreshReviewControls();
 }
 
 /* ── Camera ───────────────────────────────────────────── */
@@ -644,6 +667,9 @@ async function startSession() {
   resetResult(false);
   capturedPhotos = [];
   capturedPhotoImgs = [];
+  selectedPhotoIndex = -1;
+  retakeSlotIndex = -1;
+  reviewReady = false;
   updatePhotoGrid([]);
 
   const frameKey = resolveFrameKey();
@@ -661,6 +687,7 @@ async function startSession() {
     capturedPhotos.push(shot);
     capturedPhotoImgs.push(await loadImage(shot));
 
+    selectedPhotoIndex = i;
     els.shotCounter.textContent = `${capturedPhotos.length}/${total} foto`;
     updatePhotoGrid(capturedPhotos);
     renderFramePreview();
@@ -669,26 +696,150 @@ async function startSession() {
     if (i < total - 1) await sleep(450);
   }
 
-  setStatus('Merender gambar final…');
-  setProgress(80);
-  await renderFinalImage();
+  reviewReady = true;
+  selectedPhotoIndex = 0;
+  updatePhotoGrid(capturedPhotos);
   renderFramePreview();
-  setProgress(100);
-  setStatus('Selesai! Silakan download atau bagikan.');
+  setProgress(70);
+  setStatus('Foto selesai diambil. Atur urutan/retake jika perlu, lalu klik Finish untuk membuat QR.');
   setBusy(false);
+  refreshReviewControls();
 }
 
 /* ── Thumbnail strip ──────────────────────────────────── */
 function updatePhotoGrid(photos) {
   if (!els.photoGrid) return;
   els.photoGrid.innerHTML = '';
+
   photos.forEach((src, i) => {
+    const wrap = document.createElement('button');
+    wrap.type = 'button';
+    wrap.className = `thumb-wrap${i === selectedPhotoIndex ? ' selected' : ''}`;
+    wrap.setAttribute('aria-label', `Pilih foto ${i + 1}`);
+    wrap.addEventListener('click', () => selectPhoto(i));
+
     const img = document.createElement('img');
-    img.src = src; img.alt = `Foto ${i+1}`; img.className = 'thumb-img';
-    els.photoGrid.appendChild(img);
+    img.src = src;
+    img.alt = `Foto ${i + 1}`;
+    img.className = 'thumb-img';
+
+    const badge = document.createElement('span');
+    badge.className = 'thumb-index';
+    badge.textContent = i + 1;
+
+    wrap.appendChild(img);
+    wrap.appendChild(badge);
+    els.photoGrid.appendChild(wrap);
   });
+
   els.photoGrid.classList.toggle('hidden', photos.length === 0);
+  refreshReviewControls();
 }
+
+
+function selectPhoto(index) {
+  if (index < 0 || index >= capturedPhotos.length) {
+    selectedPhotoIndex = capturedPhotos.length ? 0 : -1;
+  } else {
+    selectedPhotoIndex = index;
+  }
+  updatePhotoGrid(capturedPhotos);
+  renderFramePreview();
+}
+
+function refreshReviewControls() {
+  const total = getAutoPhotoCount(resolveFrameKey());
+  const hasPhotos = capturedPhotos.length > 0;
+  const complete = capturedPhotos.length === total;
+  const selected = selectedPhotoIndex >= 0 && selectedPhotoIndex < capturedPhotos.length;
+
+  if (els.reviewControls) {
+    els.reviewControls.classList.toggle('hidden', !hasPhotos);
+  }
+
+  if (els.selectedPhotoLabel) {
+    els.selectedPhotoLabel.textContent = selected
+      ? `Foto terpilih: ${selectedPhotoIndex + 1} dari ${capturedPhotos.length}`
+      : 'Foto terpilih: -';
+  }
+
+  if (els.moveLeftBtn) {
+    els.moveLeftBtn.disabled = !selected || selectedPhotoIndex === 0 || sessionRunning;
+  }
+  if (els.moveRightBtn) {
+    els.moveRightBtn.disabled = !selected || selectedPhotoIndex === capturedPhotos.length - 1 || sessionRunning;
+  }
+  if (els.retakeSelectedBtn) {
+    els.retakeSelectedBtn.disabled = !selected || sessionRunning || !stream;
+  }
+  if (els.finishBtn) {
+    els.finishBtn.disabled = !complete || sessionRunning;
+  }
+}
+
+function swapArrayItems(arr, a, b) {
+  const tmp = arr[a];
+  arr[a] = arr[b];
+  arr[b] = tmp;
+}
+
+function moveSelectedPhoto(direction) {
+  if (selectedPhotoIndex < 0) return;
+  const next = selectedPhotoIndex + direction;
+  if (next < 0 || next >= capturedPhotos.length) return;
+
+  swapArrayItems(capturedPhotos, selectedPhotoIndex, next);
+  swapArrayItems(capturedPhotoImgs, selectedPhotoIndex, next);
+  selectedPhotoIndex = next;
+
+  updatePhotoGrid(capturedPhotos);
+  renderFramePreview();
+  setStatus('Urutan foto diperbarui. Klik Finish jika sudah cocok.');
+}
+
+async function retakeSelectedPhoto() {
+  if (!stream || sessionRunning) return;
+  if (selectedPhotoIndex < 0 || selectedPhotoIndex >= capturedPhotos.length) return;
+
+  ensureAudio();
+  setBusy(true);
+  retakeSlotIndex = selectedPhotoIndex;
+  renderFramePreview();
+
+  const seconds = Number(els.countdownSeconds?.value || 3);
+  setStatus(`Retake foto ${selectedPhotoIndex + 1} – bersiap…`);
+  await runCountdown(seconds);
+
+  const shot = capturePhoto();
+  capturedPhotos[selectedPhotoIndex] = shot;
+  capturedPhotoImgs[selectedPhotoIndex] = await loadImage(shot);
+
+  retakeSlotIndex = -1;
+  updatePhotoGrid(capturedPhotos);
+  renderFramePreview();
+
+  setStatus(`Foto ${selectedPhotoIndex + 1} sudah diganti. Klik Finish jika sudah cocok.`);
+  setBusy(false);
+}
+
+async function finishPhotoSession() {
+  const total = getAutoPhotoCount(resolveFrameKey());
+  if (capturedPhotos.length !== total || sessionRunning) return;
+
+  setBusy(true);
+  reviewReady = false;
+  refreshReviewControls();
+  setStatus('Membuat hasil akhir dan QR…');
+  setProgress(80);
+
+  await renderFinalImage();
+
+  setProgress(100);
+  setStatus('Selesai! QR dan tombol download sudah tersedia.');
+  setBusy(false);
+  refreshReviewControls();
+}
+
 
 /* ── Canvas helpers ───────────────────────────────────── */
 function roundedRect(ctx, x, y, w, h, r) {
@@ -990,8 +1141,8 @@ function renderQRCode(val) {
   if (!window.QRCode) { els.qrNote.textContent = 'Library QR belum termuat.'; return; }
   new QRCode(els.qrCode, {
     text: val,
-    width: 250,
-    height: 250,
+    width: 220,
+    height: 220,
     colorDark: '#111827',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
@@ -1004,6 +1155,9 @@ function resetResult(clearPhotos = true) {
   if (clearPhotos) {
     capturedPhotos = [];
     capturedPhotoImgs = [];
+    selectedPhotoIndex = -1;
+    retakeSlotIndex = -1;
+    reviewReady = false;
     updatePhotoGrid([]);
   }
   if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
@@ -1071,6 +1225,10 @@ function initLabShot() {
     els.retakeBtn.disabled = true;
     startPreviewLoop();
   });
+  els.moveLeftBtn?.addEventListener('click', () => moveSelectedPhoto(-1));
+  els.moveRightBtn?.addEventListener('click', () => moveSelectedPhoto(1));
+  els.retakeSelectedBtn?.addEventListener('click', retakeSelectedPhoto);
+  els.finishBtn?.addEventListener('click', finishPhotoSession);
   els.shareBtn?.addEventListener('click', sharePhoto);
   els.customFrame?.addEventListener('change', handleCustomFrameUpload);
 
@@ -1089,12 +1247,15 @@ function initLabShot() {
   els.frameTheme?.addEventListener('change', () => {
     updateFrameAutoInfo();
     resetResult(true);
+    setStatus(stream ? 'Frame diganti. Preview sudah diperbarui.' : 'Frame diganti. Aktifkan kamera untuk preview live.');
   });
 
   els.filterMode?.addEventListener('change', () => {
     applyLiveFilter();
     renderFramePreview();
-    if (capturedPhotos.length) renderFinalImage();
+    if (capturedPhotos.length) {
+      setStatus('Filter live diperbarui. Untuk hasil akhir, klik Finish lagi setelah cocok.');
+    }
   });
 
   applyVideoMirror();
@@ -1103,7 +1264,7 @@ function initLabShot() {
   updateFrameAutoInfo();
   renderFramePreview();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
-  console.log('LabShot v28 loaded. Live frame preview aktif.');
+  console.log('LabShot v31 loaded. Review foto sebelum Finish aktif.');
 }
 
 if (document.readyState === 'loading') {

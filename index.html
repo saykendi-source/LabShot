@@ -46,6 +46,20 @@
       <!-- Thumbnail strip -->
       <div id="photoGrid" class="photo-grid hidden"></div>
 
+      <!-- Review controls setelah semua foto diambil -->
+      <div id="reviewControls" class="review-controls hidden">
+        <div class="review-info">
+          <strong id="selectedPhotoLabel">Foto terpilih: -</strong>
+          <small>Atur urutan foto, retake foto tertentu, lalu klik Finish untuk membuat hasil akhir dan QR.</small>
+        </div>
+        <div class="review-actions">
+          <button id="moveLeftBtn" class="btn btn-ghost" disabled>← Geser Kiri</button>
+          <button id="moveRightBtn" class="btn btn-ghost" disabled>Geser Kanan →</button>
+          <button id="retakeSelectedBtn" class="btn btn-secondary" disabled>↺ Retake Foto Ini</button>
+          <button id="finishBtn" class="btn btn-primary" disabled>✓ Finish & Buat QR</button>
+        </div>
+      </div>
+
       <!-- Action buttons -->
       <div class="primary-actions">
         <button id="startCameraBtn"  class="btn btn-secondary">📷 Aktifkan Kamera</button>

@@ -323,3 +323,27 @@ Perubahan:
 - Frame preview tidak lagi dipaksa mengisi box dengan rasio tetap.
 - Canvas preview sekarang tampil dengan `height: auto`, sehingga frame tidak terlihat seperti ditarik.
 - Cocok untuk frame yang memiliki proporsi sedikit berbeda.
+
+
+## Update v30 – Kualitas Preview Disamakan + QR Lebih Besar
+
+Perubahan:
+- Preview frame dibuat lebih tajam agar tampilannya lebih dekat dengan kamera utama.
+- Canvas preview memakai backing resolution lebih besar (`1.5x`) supaya hasil live preview tidak tampak kusam.
+- `imageSmoothingQuality` diatur ke `high`.
+- Refresh preview dipercepat dari 150 ms menjadi 90 ms.
+- Preview frame sedikit diperbesar.
+- QR code di panel hasil diperbesar supaya lebih mudah discan.
+
+
+## Update v31 – Review Foto Sebelum Finish
+
+Perubahan:
+- Setelah semua foto diambil, hasil akhir dan QR belum langsung dibuat.
+- Thumbnail di bawah kamera sekarang bisa diklik untuk memilih foto.
+- Foto terpilih bisa:
+  - digeser ke kiri
+  - digeser ke kanan
+  - di-retake tanpa mengulang semua foto
+- Setelah urutan dan hasil foto sudah cocok, klik `Finish & Buat QR`.
+- QR dan hasil akhir baru muncul setelah tombol Finish diklik.
