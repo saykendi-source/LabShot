@@ -5,6 +5,8 @@
    - Saat kamera aktif, preview live muncul langsung di slot foto.
    - Setelah semua foto diambil, user bisa menukar urutan, retake foto tertentu,
      lalu klik Finish untuk membuat hasil akhir dan QR.
+   - Preview frame dan hasil foto mengikuti area yang benar-benar terlihat
+     pada kamera utama, agar framing lebih konsisten.
 ───────────────────────────────────────────── */
 
 const els = {
@@ -307,6 +309,69 @@ function getLivePreviewSlotIndex(total) {
   return Math.min(capturedPhotoImgs.length, Math.max(0, total - 1));
 }
 
+
+function getMainCameraViewportSize() {
+  const videoEl = els.video;
+  const cameraCard = document.querySelector('.camera-card');
+  const viewportW = Math.max(
+    1,
+    Math.round(videoEl?.clientWidth || cameraCard?.clientWidth || 1080)
+  );
+  const viewportH = Math.max(
+    1,
+    Math.round(videoEl?.clientHeight || cameraCard?.clientHeight || 1920)
+  );
+  return { viewportW, viewportH };
+}
+
+function getVisibleVideoSourceRect(media, viewportW = null, viewportH = null) {
+  const srcW = media.videoWidth || media.naturalWidth || media.width || 1;
+  const srcH = media.videoHeight || media.naturalHeight || media.height || 1;
+  const vw = Math.max(1, viewportW || srcW);
+  const vh = Math.max(1, viewportH || srcH);
+
+  // object-fit: cover pada kamera utama
+  const scale = Math.max(vw / srcW, vh / srcH);
+  const visibleSW = vw / scale;
+  const visibleSH = vh / scale;
+  const sx = Math.max(0, (srcW - visibleSW) / 2);
+  const sy = Math.max(0, (srcH - visibleSH) / 2);
+
+  return { sx, sy, sw: visibleSW, sh: visibleSH, srcW, srcH, viewportW: vw, viewportH: vh };
+}
+
+function drawMediaFromMainView(ctx, media, x, y, w, h, r = 0, opts = {}) {
+  const { viewportW, viewportH } = getMainCameraViewportSize();
+  const visible = getVisibleVideoSourceRect(media, viewportW, viewportH);
+
+  // Setelah mengambil area yang benar-benar tampak di kamera utama,
+  // baru disesuaikan ke slot frame dengan cover, sehingga komposisinya lebih konsisten.
+  const scale = Math.max(w / visible.sw, h / visible.sh);
+  const sw = w / scale;
+  const sh = h / scale;
+  const sx = visible.sx + Math.max(0, (visible.sw - sw) / 2);
+  const sy = visible.sy + Math.max(0, (visible.sh - sh) / 2);
+
+  const mirror = !!opts.mirror;
+  const filter = opts.filter || 'none';
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  if (r > 0) { roundedRect(ctx, x, y, w, h, r); ctx.clip(); }
+  ctx.filter = filter;
+
+  if (mirror) {
+    ctx.translate(x + w, y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(media, sx, sy, sw, sh, 0, 0, w, h);
+  } else {
+    ctx.drawImage(media, sx, sy, sw, sh, x, y, w, h);
+  }
+
+  ctx.restore();
+}
+
 function drawMediaCover(ctx, media, x, y, w, h, r = 0, opts = {}) {
   const srcW = media.videoWidth || media.naturalWidth || media.width || 1;
   const srcH = media.videoHeight || media.naturalHeight || media.height || 1;
@@ -454,7 +519,7 @@ async function renderFramePreview() {
       });
     } else if (canShowLive && i === liveIndex) {
       withSlotTransform(ctx, slot, (x, y, w, h) => {
-        drawMediaCover(ctx, els.video, x, y, w, h, slot.radius || 0, {
+        drawMediaFromMainView(ctx, els.video, x, y, w, h, slot.radius || 0, {
           mirror: mirrorMode,
           filter: getFilterValue()
         });
@@ -628,13 +693,23 @@ function applyVideoMirror() { els.video.style.transform = mirrorMode ? 'scaleX(-
 function capturePhoto() {
   const v = els.video;
   const c = els.shotCanvas;
-  c.width  = v.videoWidth  || 1080;
-  c.height = v.videoHeight || 1080;
+  const { viewportW, viewportH } = getMainCameraViewportSize();
+  const visible = getVisibleVideoSourceRect(v, viewportW, viewportH);
+
+  c.width  = Math.max(1, Math.round(visible.sw));
+  c.height = Math.max(1, Math.round(visible.sh));
+
   const ctx = c.getContext('2d');
   ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.filter = getFilterValue();
   if (mirrorMode) { ctx.translate(c.width, 0); ctx.scale(-1, 1); }
-  ctx.drawImage(v, 0, 0, c.width, c.height);
+  ctx.drawImage(
+    v,
+    visible.sx, visible.sy, visible.sw, visible.sh,
+    0, 0, c.width, c.height
+  );
   ctx.restore();
   return c.toDataURL('image/jpeg', 0.96);
 }
@@ -835,7 +910,7 @@ async function finishPhotoSession() {
   await renderFinalImage();
 
   setProgress(100);
-  setStatus('Selesai! QR dan tombol download sudah tersedia.');
+  setStatus('Selesai! QR dan tombol download sudah tersedia. Gunakan tombol Foto Baru untuk pengunjung berikutnya.');
   setBusy(false);
   refreshReviewControls();
 }
@@ -1182,14 +1257,17 @@ function resetResult(clearPhotos = true) {
 }
 
 /* ── Share ────────────────────────────────────────────── */
-async function sharePhoto() {
-  if (!finalBlob) return;
-  const file = new File([finalBlob], els.downloadBtn.download || 'labshot.png', { type:'image/png' });
-  if (navigator.canShare?.({ files:[file] })) {
-    try { await navigator.share({ title:'LabShot Photobox', files:[file] }); }
-    catch(e) { console.warn(e); }
+function sharePhoto() {
+  // Tombol ini diubah menjadi "Foto Baru" untuk pengunjung berikutnya.
+  currentShareUrl = '';
+  currentUploadFileName = '';
+  resetResult(true);
+  if (stream) {
+    startPreviewLoop();
+    els.startSessionBtn.disabled = false;
+    setStatus('Siap untuk pengunjung berikutnya. Atur frame dan filter, lalu klik Mulai Foto.');
   } else {
-    alert('Browser ini belum mendukung fitur bagikan file. Gunakan tombol Download.');
+    setStatus('Sesi baru disiapkan. Aktifkan kamera untuk memulai.');
   }
 }
 
@@ -1264,7 +1342,7 @@ function initLabShot() {
   updateFrameAutoInfo();
   renderFramePreview();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
-  console.log('LabShot v31 loaded. Review foto sebelum Finish aktif.');
+  console.log('LabShot v32 loaded. Preview kamera sinkron + tombol Foto Baru aktif.');
 }
 
 if (document.readyState === 'loading') {

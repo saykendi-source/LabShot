@@ -347,3 +347,16 @@ Perubahan:
   - di-retake tanpa mengulang semua foto
 - Setelah urutan dan hasil foto sudah cocok, klik `Finish & Buat QR`.
 - QR dan hasil akhir baru muncul setelah tombol Finish diklik.
+
+
+## Update v32 – Preview Sinkron dengan Kamera Utama + Tombol Foto Baru
+
+Perubahan:
+- Preview frame live sekarang mengambil area yang benar-benar terlihat pada kamera utama.
+- Foto yang ditangkap juga memakai area tampilan kamera utama, sehingga hasilnya lebih konsisten dengan preview besar.
+- Tombol `Bagikan` diubah menjadi `Foto Baru`.
+- Tombol `Foto Baru` akan:
+  - menghapus hasil sesi sebelumnya
+  - membersihkan thumbnail/review
+  - mempertahankan kamera tetap aktif
+  - menyiapkan sesi untuk orang berikutnya
