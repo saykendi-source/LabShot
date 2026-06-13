@@ -314,3 +314,12 @@ Perubahan:
   - setelah foto 2 diambil, slot 1–2 berisi hasil sebelumnya dan slot 3 tampil LIVE
 - Slot aktif diberi badge `LIVE` agar pengguna mudah memperkirakan framing.
 - Script fallback preview lama di `index.html` dihapus karena sekarang semua preview ditangani langsung oleh `app.js`.
+
+
+## Update v29 – Preview Box Saja yang Disesuaikan
+
+Perubahan:
+- Yang disesuaikan hanya kotak luar preview.
+- Frame preview tidak lagi dipaksa mengisi box dengan rasio tetap.
+- Canvas preview sekarang tampil dengan `height: auto`, sehingga frame tidak terlihat seperti ditarik.
+- Cocok untuk frame yang memiliki proporsi sedikit berbeda.

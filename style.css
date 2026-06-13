@@ -976,3 +976,45 @@ body {
     width:min(100%, 340px);
   }
 }
+
+
+/* ───────────────────────────────────────────
+   v29 – preview box mengikuti kanvas, frame tidak ditarik
+─────────────────────────────────────────── */
+
+.frame-preview-stage{
+  width: min(100%, 320px);
+  max-width: 100%;
+  aspect-ratio: auto !important;
+  height: auto !important;
+  display: block;
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.frame-preview-canvas{
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+  aspect-ratio: auto !important;
+}
+
+@media (min-width: 981px){
+  .frame-preview-card{
+    flex: 0 0 auto;
+    min-height: auto;
+  }
+
+  .frame-preview-stage{
+    width: min(100%, 300px);
+  }
+}
+
+@media (max-width: 980px){
+  .frame-preview-stage{
+    width: min(100%, 300px);
+  }
+}
