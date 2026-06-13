@@ -1,9 +1,10 @@
 /* ─────────────────────────────────────────────
-   LabShot v7 – app.js
+   LabShot v28 – app.js
    Perbaikan utama:
-   - Foto dirender di layer belakang frame, bukan ditempel di atas.
-   - Template scrapbook memakai transparent window.
-   - Layout otomatis untuk 1, 2, 3, dan 4 foto.
+   - Preview frame mengikuti ukuran story IG secara proporsional.
+   - Saat kamera aktif, preview live muncul langsung di slot foto.
+   - Untuk frame multi-foto, slot aktif berpindah otomatis:
+     foto 1 → slot 1, foto 2 → slot 2, dan seterusnya.
 ───────────────────────────────────────────── */
 
 const els = {
@@ -33,8 +34,14 @@ const els = {
   soundToggle:     document.getElementById('soundToggle'),
   cameraSelect:    document.getElementById('cameraSelect'),
   cameraSelectWrap:document.getElementById('cameraSelectWrap'),
-  progressBar:     document.getElementById('progressBar'),
-  statusText:      document.getElementById('statusText'),
+  progressBar:       document.getElementById('progressBar'),
+  statusText:        document.getElementById('statusText'),
+  frameAutoCount:    document.getElementById('frameAutoCount'),
+  frameAutoHint:     document.getElementById('frameAutoHint'),
+  framePreviewTitle: document.getElementById('framePreviewTitle'),
+  framePreviewCount: document.getElementById('framePreviewCount'),
+  framePreviewNote:  document.getElementById('framePreviewNote'),
+  framePreviewCanvas:document.getElementById('framePreviewCanvas'),
 };
 
 const STORY_W = 1080;
@@ -250,19 +257,10 @@ function updateFrameAutoInfo() {
   if (els.framePreviewCount) {
     els.framePreviewCount.textContent = `${total} foto`;
   }
-  if (els.framePreviewNote) {
-    els.framePreviewNote.textContent = `Frame ini otomatis mengambil ${total} foto. Pilih filter, lalu klik Mulai Foto.`;
-  }
-  if (els.framePreviewImg && config?.path) {
-    els.framePreviewImg.onerror = () => {
-      els.framePreviewImg.alt = 'Preview frame gagal dimuat. Pastikan folder assets/frames ikut di-upload.';
-      console.warn('Preview frame gagal dimuat:', config.path);
-    };
-    els.framePreviewImg.src = `${config.path}?v=25`;
-  }
   if (els.shotCounter && !capturedPhotos.length) {
     els.shotCounter.textContent = `${total} foto`;
   }
+  renderFramePreview();
 }
 
 function getSupportedLayoutCounts(frameKey) {
@@ -278,17 +276,190 @@ function syncLayoutOptions() {
   updateFrameAutoInfo();
 }
 
-let stream          = null;
-let capturedPhotos  = [];
-let finalBlob       = null;
-let finalObjectUrl  = null;
-let currentShareUrl = '';
+let stream            = null;
+let capturedPhotos    = [];
+let capturedPhotoImgs = [];
+let finalBlob         = null;
+let finalObjectUrl    = null;
+let currentShareUrl   = '';
 let currentUploadFileName = '';
-let customFrameImage= null;
-let mirrorMode      = true;
-let soundEnabled    = true;
-let sessionRunning  = false;
+let customFrameImage  = null;
+let mirrorMode        = true;
+let soundEnabled      = true;
+let sessionRunning    = false;
+let previewTimer      = null;
 const frameImageCache = {};
+
+
+/* ── Preview helpers ──────────────────────────────────── */
+function getLivePreviewSlotIndex(total) {
+  return Math.min(capturedPhotoImgs.length, Math.max(0, total - 1));
+}
+
+function drawMediaCover(ctx, media, x, y, w, h, r = 0, opts = {}) {
+  const srcW = media.videoWidth || media.naturalWidth || media.width || 1;
+  const srcH = media.videoHeight || media.naturalHeight || media.height || 1;
+  const scale = Math.max(w / srcW, h / srcH);
+  const sw = w / scale;
+  const sh = h / scale;
+  const sx = Math.max(0, (srcW - sw) / 2);
+  const sy = Math.max(0, (srcH - sh) / 2);
+  const mirror = !!opts.mirror;
+  const filter = opts.filter || 'none';
+
+  ctx.save();
+  if (r > 0) { roundedRect(ctx, x, y, w, h, r); ctx.clip(); }
+  ctx.filter = filter;
+
+  if (mirror) {
+    ctx.translate(x + w, y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(media, sx, sy, sw, sh, 0, 0, w, h);
+  } else {
+    ctx.drawImage(media, sx, sy, sw, sh, x, y, w, h);
+  }
+
+  ctx.restore();
+}
+
+function drawPreviewSlotPlaceholder(ctx, slot, index, state = 'idle') {
+  withSlotTransform(ctx, slot, (x, y, w, h) => {
+    ctx.save();
+    roundedRect(ctx, x, y, w, h, slot.radius || 0);
+    ctx.clip();
+
+    if (state === 'active') {
+      const g = ctx.createLinearGradient(x, y, x, y + h);
+      g.addColorStop(0, 'rgba(125,211,252,.34)');
+      g.addColorStop(1, 'rgba(187,247,208,.24)');
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,.75)';
+    }
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+
+    ctx.save();
+    ctx.lineWidth = state === 'active' ? 8 : 4;
+    ctx.strokeStyle = state === 'active' ? '#0ea5e9' : 'rgba(0,0,0,.18)';
+    roundedRect(ctx, x, y, w, h, slot.radius || 0);
+    ctx.stroke();
+
+    const bubbleSize = Math.max(38, Math.min(60, w * 0.12));
+    const bx = x + 18;
+    const by = y + 18;
+    ctx.fillStyle = state === 'active' ? '#0f766e' : 'rgba(17,24,39,.78)';
+    ctx.beginPath();
+    ctx.arc(bx + bubbleSize / 2, by + bubbleSize / 2, bubbleSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `700 ${Math.max(18, bubbleSize * 0.45)}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(index + 1), bx + bubbleSize / 2, by + bubbleSize / 2 + 1);
+
+    if (state === 'active') {
+      const label = 'LIVE';
+      const padX = 12;
+      ctx.font = '800 20px Inter, sans-serif';
+      const textW = ctx.measureText(label).width;
+      const lx = x + w - textW - padX * 2 - 18;
+      const ly = y + 18;
+      ctx.fillStyle = 'rgba(15,79,62,.92)';
+      roundedRect(ctx, lx, ly, textW + padX * 2, 34, 17);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, lx + (textW + padX * 2) / 2, ly + 18);
+    }
+    ctx.restore();
+  });
+}
+
+function stopPreviewLoop() {
+  if (previewTimer) {
+    clearInterval(previewTimer);
+    previewTimer = null;
+  }
+}
+
+function startPreviewLoop() {
+  stopPreviewLoop();
+  renderFramePreview();
+  if (!stream) return;
+  previewTimer = setInterval(() => {
+    renderFramePreview();
+  }, 150);
+}
+
+async function renderFramePreview() {
+  const canvas = els.framePreviewCanvas;
+  if (!canvas) return;
+
+  if (canvas.width !== STORY_W || canvas.height !== STORY_H) {
+    canvas.width = STORY_W;
+    canvas.height = STORY_H;
+  }
+
+  const frameKey = resolveFrameKey();
+  const total = getAutoPhotoCount(frameKey);
+  const slots = getSlotsForFrame(frameKey, total);
+  const ctx = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, STORY_W, STORY_H);
+  fillBase(ctx, frameKey);
+
+  // Background lembut agar frame transparan tetap nyaman dilihat.
+  ctx.save();
+  const g = ctx.createLinearGradient(0, 0, 0, STORY_H);
+  g.addColorStop(0, '#fcfaf5');
+  g.addColorStop(1, '#f5f7fb');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, STORY_W, STORY_H);
+  ctx.restore();
+
+  const liveIndex = getLivePreviewSlotIndex(total);
+  const canShowLive = !!stream && els.video && els.video.readyState >= 2;
+
+  slots.forEach((slot, i) => {
+    const saved = capturedPhotoImgs[i];
+    if (saved) {
+      withSlotTransform(ctx, slot, (x, y, w, h) => {
+        drawImageCover(ctx, saved, x, y, w, h, slot.radius || 0);
+        addDepth(ctx, x, y, w, h, slot.radius || 0);
+      });
+    } else if (canShowLive && i === liveIndex) {
+      withSlotTransform(ctx, slot, (x, y, w, h) => {
+        drawMediaCover(ctx, els.video, x, y, w, h, slot.radius || 0, {
+          mirror: mirrorMode,
+          filter: getFilterValue()
+        });
+        addDepth(ctx, x, y, w, h, slot.radius || 0);
+      });
+      drawPreviewSlotPlaceholder(ctx, slot, i, 'active');
+    } else {
+      drawPreviewSlotPlaceholder(ctx, slot, i, 'idle');
+    }
+  });
+
+  const frame = await getFrameImage(frameKey);
+  if (frame) {
+    ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
+  }
+
+  const currentStep = Math.min(capturedPhotoImgs.length + 1, total);
+  if (els.framePreviewNote) {
+    if (stream && capturedPhotoImgs.length < total) {
+      els.framePreviewNote.textContent = `Slot aktif: foto ${currentStep} dari ${total}. Posisikan wajah pada kotak yang sedang bertanda LIVE.`;
+    } else if (!stream) {
+      els.framePreviewNote.textContent = `Pilih frame terlebih dahulu, lalu aktifkan kamera. Preview akan tampil langsung pada kotak foto ${total > 1 ? `(${total} take)` : ''}.`;
+    } else {
+      els.framePreviewNote.textContent = `Semua slot foto untuk frame ini sudah terisi. Klik Mulai Foto atau Ulangi untuk sesi baru.`;
+    }
+  }
+}
 
 /* ── Audio ────────────────────────────────────────────── */
 let audioCtx = null;
@@ -401,6 +572,7 @@ async function startCamera(deviceId = null) {
     applyVideoMirror();
     applyLiveFilter();
     await enumerateCameras();
+    startPreviewLoop();
 
   } catch(err) {
     console.error('Camera error:', err);
@@ -409,6 +581,8 @@ async function startCamera(deviceId = null) {
       : err?.name === 'NotFoundError'
         ? 'Kamera tidak ditemukan. Pastikan webcam terpasang dan tidak sedang dipakai aplikasi lain.'
         : 'Kamera tidak bisa diakses. Pastikan halaman dibuka via HTTPS/localhost dan izin kamera diberikan.';
+    stopPreviewLoop();
+    renderFramePreview();
     setStatus(msg);
     alert(msg);
   }
@@ -469,26 +643,36 @@ async function startSession() {
   setBusy(true);
   resetResult(false);
   capturedPhotos = [];
+  capturedPhotoImgs = [];
   updatePhotoGrid([]);
 
   const frameKey = resolveFrameKey();
-  const total   = getAutoPhotoCount(frameKey);
+  const total = getAutoPhotoCount(frameKey);
   const seconds = Number(els.countdownSeconds?.value || 3);
 
   setProgress(0);
+  renderFramePreview();
+
   for (let i = 0; i < total; i++) {
-    setStatus(`Foto ${i+1} dari ${total} – bersiap…`);
+    setStatus(`Foto ${i + 1} dari ${total} – bersiap…`);
     await runCountdown(seconds);
-    capturedPhotos.push(capturePhoto());
+
+    const shot = capturePhoto();
+    capturedPhotos.push(shot);
+    capturedPhotoImgs.push(await loadImage(shot));
+
     els.shotCounter.textContent = `${capturedPhotos.length}/${total} foto`;
     updatePhotoGrid(capturedPhotos);
-    setProgress(Math.round(((i+1) / total) * 70));
-    if (i < total-1) await sleep(500);
+    renderFramePreview();
+    setProgress(Math.round(((i + 1) / total) * 70));
+
+    if (i < total - 1) await sleep(450);
   }
 
   setStatus('Merender gambar final…');
   setProgress(80);
   await renderFinalImage();
+  renderFramePreview();
   setProgress(100);
   setStatus('Selesai! Silakan download atau bagikan.');
   setBusy(false);
@@ -817,16 +1001,21 @@ function renderQRCode(val) {
 
 /* ── Reset ────────────────────────────────────────────── */
 function resetResult(clearPhotos = true) {
-  if (clearPhotos) { capturedPhotos = []; updatePhotoGrid([]); }
+  if (clearPhotos) {
+    capturedPhotos = [];
+    capturedPhotoImgs = [];
+    updatePhotoGrid([]);
+  }
   if (finalObjectUrl) URL.revokeObjectURL(finalObjectUrl);
-  finalBlob = null; finalObjectUrl = null;
+  finalBlob = null;
+  finalObjectUrl = null;
   els.finalPreview.removeAttribute('src');
   els.finalPreview.classList.add('hidden');
   els.emptyResult.classList.remove('hidden');
   els.downloadBtn.removeAttribute('href');
   els.downloadBtn.classList.add('disabled');
   els.shareBtn.disabled = true;
-  els.qrCode.innerHTML  = '';
+  els.qrCode.innerHTML = '';
   els.qrNote.textContent = 'QR foto pribadi aktif setelah hasil dibuat.';
   if (capturedPhotos.length) {
     els.shotCounter.textContent = `${capturedPhotos.length} foto`;
@@ -835,6 +1024,7 @@ function resetResult(clearPhotos = true) {
   }
   setProgress(0);
   setStatus(stream ? 'Kamera aktif. Siap memotret!' : 'Kamera belum aktif.');
+  renderFramePreview();
 }
 
 /* ── Share ────────────────────────────────────────────── */
@@ -854,12 +1044,14 @@ function handleCustomFrameUpload(e) {
   const file = e.target.files?.[0];
   if (!file) {
     customFrameImage = null;
+    renderFramePreview();
     if (capturedPhotos.length) renderFinalImage();
     return;
   }
   const reader = new FileReader();
   reader.onload = async () => {
     customFrameImage = await loadImage(reader.result);
+    renderFramePreview();
     if (capturedPhotos.length) renderFinalImage();
   };
   reader.readAsDataURL(file);
@@ -874,11 +1066,19 @@ function initLabShot() {
 
   els.startCameraBtn.addEventListener('click', () => startCamera());
   els.startSessionBtn?.addEventListener('click', startSession);
-  els.retakeBtn?.addEventListener('click', () => { resetResult(true); els.retakeBtn.disabled = true; });
+  els.retakeBtn?.addEventListener('click', () => {
+    resetResult(true);
+    els.retakeBtn.disabled = true;
+    startPreviewLoop();
+  });
   els.shareBtn?.addEventListener('click', sharePhoto);
   els.customFrame?.addEventListener('change', handleCustomFrameUpload);
 
-  els.mirrorToggle?.addEventListener('change', () => { mirrorMode = els.mirrorToggle.checked; applyVideoMirror(); });
+  els.mirrorToggle?.addEventListener('change', () => {
+    mirrorMode = els.mirrorToggle.checked;
+    applyVideoMirror();
+    renderFramePreview();
+  });
   els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
   els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
 
@@ -893,6 +1093,7 @@ function initLabShot() {
 
   els.filterMode?.addEventListener('change', () => {
     applyLiveFilter();
+    renderFramePreview();
     if (capturedPhotos.length) renderFinalImage();
   });
 
@@ -900,8 +1101,9 @@ function initLabShot() {
   updateFrameAutoInfo();
   resetResult(true);
   updateFrameAutoInfo();
+  renderFramePreview();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
-  console.log('LabShot v26 loaded. Compact layout aktif.');
+  console.log('LabShot v28 loaded. Live frame preview aktif.');
 }
 
 if (document.readyState === 'loading') {

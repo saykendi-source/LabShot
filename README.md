@@ -301,3 +301,16 @@ Perubahan:
 Penting:
 - Paste ulang `apps-script/Code.gs` ke Google Apps Script.
 - Deploy ulang Web App sebagai `New version`.
+
+
+## Update v28 – Preview Live Masuk ke Kotak Foto
+
+Perubahan:
+- Preview frame sekarang mengikuti proporsi frame story IG, jadi tidak memanjang dengan area kosong berlebih.
+- Saat kamera aktif, preview live langsung masuk ke kotak foto pada frame.
+- Untuk frame 2 atau 3 foto:
+  - sebelum foto 1 diambil, slot 1 tampil LIVE
+  - setelah foto 1 diambil, slot 1 berisi hasil foto 1 dan slot 2 tampil LIVE
+  - setelah foto 2 diambil, slot 1–2 berisi hasil sebelumnya dan slot 3 tampil LIVE
+- Slot aktif diberi badge `LIVE` agar pengguna mudah memperkirakan framing.
+- Script fallback preview lama di `index.html` dihapus karena sekarang semua preview ditangani langsung oleh `app.js`.
