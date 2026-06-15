@@ -21,6 +21,7 @@ const els = {
   countdown:          document.getElementById('countdown'),
   flash:              document.getElementById('flash'),
   shotCanvas:         document.getElementById('shotCanvas'),
+  themeSelect:        document.getElementById('themeSelect'),
   frameTheme:         document.getElementById('frameTheme'),
   filterMode:         document.getElementById('filterMode'),
   finalPreview:       document.getElementById('finalPreview'),
@@ -67,6 +68,14 @@ const DRIVE_UPLOAD_W  = 720;
 const DRIVE_UPLOAD_H  = 1280;
 
 /* ── Frame configurations ───────────────────────────────── */
+const FRAME_THEMES = {
+  "default": "Default LabShot",
+  "one-piece": "Anime Pirate / Wanted Poster",
+  "pendadaran": "Selamat Lulus Pendadaran",
+  "skp": "Seminar Kerja Praktek",
+  "ti": "TI UMY / Campus & Newspaper"
+};
+
 const FRAME_CONFIGS = {
   yogyakartaCity: {
     label: 'Yogyakarta City Series',
@@ -161,11 +170,1145 @@ const FRAME_CONFIGS = {
           { x: 687, y: 1704, w: 352, h: 162, radius: 8 }],
     },
   },
+  newOnePieceOp10001: {
+    theme: 'one-piece',
+    label: "Wanted Poster 10",
+    path: "assets/frames/new/one-piece/op-10.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 228, "y": 152, "w": 604, "h": 308, "radius": 10}, {"x": 784, "y": 1316, "w": 252, "h": 160, "radius": 10}, {"x": 80, "y": 1440, "w": 216, "h": 272, "radius": 10}],
+    },
+  },
+  newOnePieceOp11002: {
+    theme: 'one-piece',
+    label: "Wanted Poster 11",
+    path: "assets/frames/new/one-piece/op-11.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 204, "y": 477, "w": 632, "h": 576, "radius": 10}, {"x": 269, "y": 1140, "w": 665, "h": 508, "radius": 10}],
+    },
+  },
+  newOnePieceOp12003: {
+    theme: 'one-piece',
+    label: "Wanted Poster 12",
+    path: "assets/frames/new/one-piece/op-12.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 156, "y": 552, "w": 776, "h": 812, "radius": 10}],
+    },
+  },
+  newOnePieceOp13004: {
+    theme: 'one-piece',
+    label: "Wanted Poster 13",
+    path: "assets/frames/new/one-piece/op-13.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newOnePieceOp14005: {
+    theme: 'one-piece',
+    label: "Wanted Poster 14",
+    path: "assets/frames/new/one-piece/op-14.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 100, "y": 224, "w": 904, "h": 340, "radius": 10}, {"x": 224, "y": 548, "w": 648, "h": 660, "radius": 10}, {"x": 288, "y": 1564, "w": 539, "h": 276, "radius": 10}],
+    },
+  },
+  newOnePieceOp15006: {
+    theme: 'one-piece',
+    label: "Wanted Poster 15",
+    path: "assets/frames/new/one-piece/op-15.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 200, "y": 491, "w": 673, "h": 860, "radius": 10}],
+    },
+  },
+  newOnePieceOp16007: {
+    theme: 'one-piece',
+    label: "Wanted Poster 16",
+    path: "assets/frames/new/one-piece/op-16.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 184, "y": 472, "w": 732, "h": 704, "radius": 10}],
+    },
+  },
+  newOnePieceOp17008: {
+    theme: 'one-piece',
+    label: "Wanted Poster 17",
+    path: "assets/frames/new/one-piece/op-17.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newOnePieceOp18009: {
+    theme: 'one-piece',
+    label: "Wanted Poster 18",
+    path: "assets/frames/new/one-piece/op-18.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 464, "y": 220, "w": 480, "h": 272, "radius": 10}, {"x": 208, "y": 540, "w": 684, "h": 833, "radius": 10}],
+    },
+  },
+  newOnePieceOp19010: {
+    theme: 'one-piece',
+    label: "Wanted Poster 19",
+    path: "assets/frames/new/one-piece/op-19.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 216, "y": 512, "w": 652, "h": 812, "radius": 10}],
+    },
+  },
+  newOnePieceOp2011: {
+    theme: 'one-piece',
+    label: "Wanted Poster 02",
+    path: "assets/frames/new/one-piece/op-2.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 220, "y": 72, "w": 716, "h": 361, "radius": 10}],
+    },
+  },
+  newOnePieceOp20012: {
+    theme: 'one-piece',
+    label: "Wanted Poster 20",
+    path: "assets/frames/new/one-piece/op-20.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 188, "y": 1208, "w": 732, "h": 620, "radius": 10}],
+    },
+  },
+  newOnePieceOp21013: {
+    theme: 'one-piece',
+    label: "Wanted Poster 21",
+    path: "assets/frames/new/one-piece/op-21.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 108, "y": 132, "w": 888, "h": 284, "radius": 10}, {"x": 224, "y": 572, "w": 628, "h": 908, "radius": 10}],
+    },
+  },
+  newOnePieceOp22014: {
+    theme: 'one-piece',
+    label: "Wanted Poster 22",
+    path: "assets/frames/new/one-piece/op-22.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 184, "y": 396, "w": 720, "h": 880, "radius": 10}],
+    },
+  },
+  newOnePieceOp23015: {
+    theme: 'one-piece',
+    label: "Wanted Poster 23",
+    path: "assets/frames/new/one-piece/op-23.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 168, "y": 524, "w": 744, "h": 1044, "radius": 10}],
+    },
+  },
+  newOnePieceOp24016: {
+    theme: 'one-piece',
+    label: "Wanted Poster 24",
+    path: "assets/frames/new/one-piece/op-24.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 220, "y": 532, "w": 668, "h": 936, "radius": 10}],
+    },
+  },
+  newOnePieceOp25017: {
+    theme: 'one-piece',
+    label: "Wanted Poster 25",
+    path: "assets/frames/new/one-piece/op-25.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 36, "y": 243, "w": 984, "h": 1120, "radius": 10}],
+    },
+  },
+  newOnePieceOp26018: {
+    theme: 'one-piece',
+    label: "Wanted Poster 26",
+    path: "assets/frames/new/one-piece/op-26.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 416, "w": 805, "h": 868, "radius": 10}],
+    },
+  },
+  newOnePieceOp27019: {
+    theme: 'one-piece',
+    label: "Wanted Poster 27",
+    path: "assets/frames/new/one-piece/op-27.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 148, "y": 168, "w": 884, "h": 348, "radius": 10}, {"x": 196, "y": 508, "w": 708, "h": 1120, "radius": 10}],
+    },
+  },
+  newOnePieceOp28020: {
+    theme: 'one-piece',
+    label: "Wanted Poster 28",
+    path: "assets/frames/new/one-piece/op-28.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 80, "y": 80, "w": 920, "h": 288, "radius": 10}, {"x": 148, "y": 448, "w": 792, "h": 1176, "radius": 10}],
+    },
+  },
+  newOnePieceOp29021: {
+    theme: 'one-piece',
+    label: "Wanted Poster 29",
+    path: "assets/frames/new/one-piece/op-29.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 140, "y": 52, "w": 876, "h": 312, "radius": 10}, {"x": 196, "y": 528, "w": 716, "h": 984, "radius": 10}],
+    },
+  },
+  newOnePieceOp3022: {
+    theme: 'one-piece',
+    label: "Wanted Poster 03",
+    path: "assets/frames/new/one-piece/op-3.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 143, "y": 316, "w": 816, "h": 847, "radius": 10}, {"x": 460, "y": 1220, "w": 576, "h": 436, "radius": 10}],
+    },
+  },
+  newOnePieceOp30023: {
+    theme: 'one-piece',
+    label: "Wanted Poster 30",
+    path: "assets/frames/new/one-piece/op-30.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 172, "y": 540, "w": 744, "h": 1020, "radius": 10}],
+    },
+  },
+  newOnePieceOp31024: {
+    theme: 'one-piece',
+    label: "Wanted Poster 31",
+    path: "assets/frames/new/one-piece/op-31.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 204, "y": 464, "w": 676, "h": 836, "radius": 10}],
+    },
+  },
+  newOnePieceOp4025: {
+    theme: 'one-piece',
+    label: "Wanted Poster 04",
+    path: "assets/frames/new/one-piece/op-4.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 168, "y": 367, "w": 811, "h": 1321, "radius": 10}],
+    },
+  },
+  newOnePieceOp5026: {
+    theme: 'one-piece',
+    label: "Wanted Poster 05",
+    path: "assets/frames/new/one-piece/op-5.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newOnePieceOp6027: {
+    theme: 'one-piece',
+    label: "Wanted Poster 06",
+    path: "assets/frames/new/one-piece/op-6.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newOnePieceOp7028: {
+    theme: 'one-piece',
+    label: "Wanted Poster 07",
+    path: "assets/frames/new/one-piece/op-7.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 156, "y": 300, "w": 828, "h": 1424, "radius": 10}],
+    },
+  },
+  newOnePieceOp8029: {
+    theme: 'one-piece',
+    label: "Wanted Poster 08",
+    path: "assets/frames/new/one-piece/op-8.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newOnePieceOp9030: {
+    theme: 'one-piece',
+    label: "Wanted Poster 09",
+    path: "assets/frames/new/one-piece/op-9.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 224, "y": 1468, "w": 308, "h": 276, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy29031: {
+    theme: 'one-piece',
+    label: "Wanted Poster 29",
+    path: "assets/frames/new/one-piece/ti-umy-29.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy30032: {
+    theme: 'one-piece',
+    label: "Wanted Poster 30",
+    path: "assets/frames/new/one-piece/ti-umy-30.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 612, "y": 144, "w": 420, "h": 172, "radius": 10}, {"x": 248, "y": 148, "w": 320, "h": 144, "radius": 10}, {"x": 48, "y": 348, "w": 1012, "h": 224, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy31033: {
+    theme: 'one-piece',
+    label: "Wanted Poster 31",
+    path: "assets/frames/new/one-piece/ti-umy-31.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 36, "y": 300, "w": 200, "h": 229, "radius": 10}, {"x": 92, "y": 1592, "w": 316, "h": 220, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy32034: {
+    theme: 'one-piece',
+    label: "Wanted Poster 32",
+    path: "assets/frames/new/one-piece/ti-umy-32.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 24, "y": 256, "w": 1000, "h": 1612, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy33035: {
+    theme: 'one-piece',
+    label: "Wanted Poster 33",
+    path: "assets/frames/new/one-piece/ti-umy-33.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 576, "y": 144, "w": 464, "h": 148, "radius": 10}, {"x": 180, "y": 396, "w": 576, "h": 251, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy34036: {
+    theme: 'one-piece',
+    label: "Wanted Poster 34",
+    path: "assets/frames/new/one-piece/ti-umy-34.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 460, "y": 132, "w": 436, "h": 216, "radius": 10}, {"x": 224, "y": 483, "w": 636, "h": 892, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy35037: {
+    theme: 'one-piece',
+    label: "Wanted Poster 35",
+    path: "assets/frames/new/one-piece/ti-umy-35.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 308, "y": 108, "w": 384, "h": 200, "radius": 10}, {"x": 304, "y": 1688, "w": 456, "h": 140, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy36038: {
+    theme: 'one-piece',
+    label: "Wanted Poster 36",
+    path: "assets/frames/new/one-piece/ti-umy-36.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 464, "y": 76, "w": 388, "h": 124, "radius": 10}, {"x": 68, "y": 1136, "w": 555, "h": 500, "radius": 10}],
+    },
+  },
+  newOnePieceTiUmy37039: {
+    theme: 'one-piece',
+    label: "Wanted Poster 37",
+    path: "assets/frames/new/one-piece/ti-umy-37.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 72, "y": 372, "w": 428, "h": 144, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran1040: {
+    theme: 'pendadaran',
+    label: "Pendadaran 01",
+    path: "assets/frames/new/pendadaran/pendadaran-1.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 164, "y": 568, "w": 760, "h": 876, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran10041: {
+    theme: 'pendadaran',
+    label: "Pendadaran 10",
+    path: "assets/frames/new/pendadaran/pendadaran-10.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 164, "y": 500, "w": 756, "h": 971, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran11042: {
+    theme: 'pendadaran',
+    label: "Pendadaran 11",
+    path: "assets/frames/new/pendadaran/pendadaran-11.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran12043: {
+    theme: 'pendadaran',
+    label: "Pendadaran 12",
+    path: "assets/frames/new/pendadaran/pendadaran-12.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 188, "y": 624, "w": 740, "h": 912, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran13044: {
+    theme: 'pendadaran',
+    label: "Pendadaran 13",
+    path: "assets/frames/new/pendadaran/pendadaran-13.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 216, "y": 624, "w": 656, "h": 772, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran14045: {
+    theme: 'pendadaran',
+    label: "Pendadaran 14",
+    path: "assets/frames/new/pendadaran/pendadaran-14.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran15046: {
+    theme: 'pendadaran',
+    label: "Pendadaran 15",
+    path: "assets/frames/new/pendadaran/pendadaran-15.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran16047: {
+    theme: 'pendadaran',
+    label: "Pendadaran 16",
+    path: "assets/frames/new/pendadaran/pendadaran-16.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 264, "y": 624, "w": 600, "h": 784, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran17048: {
+    theme: 'pendadaran',
+    label: "Pendadaran 17",
+    path: "assets/frames/new/pendadaran/pendadaran-17.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 164, "y": 607, "w": 748, "h": 816, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran18049: {
+    theme: 'pendadaran',
+    label: "Pendadaran 18",
+    path: "assets/frames/new/pendadaran/pendadaran-18.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 36, "y": 1553, "w": 200, "h": 196, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran19050: {
+    theme: 'pendadaran',
+    label: "Pendadaran 19",
+    path: "assets/frames/new/pendadaran/pendadaran-19.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 212, "y": 312, "w": 676, "h": 308, "radius": 10}, {"x": 212, "y": 672, "w": 656, "h": 908, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran2051: {
+    theme: 'pendadaran',
+    label: "Pendadaran 02",
+    path: "assets/frames/new/pendadaran/pendadaran-2.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 72, "y": 500, "w": 811, "h": 1128, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran20052: {
+    theme: 'pendadaran',
+    label: "Pendadaran 20",
+    path: "assets/frames/new/pendadaran/pendadaran-20.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 208, "y": 612, "w": 700, "h": 704, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran21053: {
+    theme: 'pendadaran',
+    label: "Pendadaran 21",
+    path: "assets/frames/new/pendadaran/pendadaran-21.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 500, "y": 1524, "w": 304, "h": 204, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran22054: {
+    theme: 'pendadaran',
+    label: "Pendadaran 22",
+    path: "assets/frames/new/pendadaran/pendadaran-22.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran23055: {
+    theme: 'pendadaran',
+    label: "Pendadaran 23",
+    path: "assets/frames/new/pendadaran/pendadaran-23.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 232, "y": 156, "w": 656, "h": 388, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran24056: {
+    theme: 'pendadaran',
+    label: "Pendadaran 24",
+    path: "assets/frames/new/pendadaran/pendadaran-24.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran25057: {
+    theme: 'pendadaran',
+    label: "Pendadaran 25",
+    path: "assets/frames/new/pendadaran/pendadaran-25.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 224, "y": 127, "w": 648, "h": 216, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran26058: {
+    theme: 'pendadaran',
+    label: "Pendadaran 26",
+    path: "assets/frames/new/pendadaran/pendadaran-26.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran27059: {
+    theme: 'pendadaran',
+    label: "Pendadaran 27",
+    path: "assets/frames/new/pendadaran/pendadaran-27.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 296, "y": 80, "w": 500, "h": 148, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran28060: {
+    theme: 'pendadaran',
+    label: "Pendadaran 28",
+    path: "assets/frames/new/pendadaran/pendadaran-28.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 388, "y": 788, "w": 304, "h": 280, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran29061: {
+    theme: 'pendadaran',
+    label: "Pendadaran 29",
+    path: "assets/frames/new/pendadaran/pendadaran-29.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran3062: {
+    theme: 'pendadaran',
+    label: "Pendadaran 03",
+    path: "assets/frames/new/pendadaran/pendadaran-3.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran30063: {
+    theme: 'pendadaran',
+    label: "Pendadaran 30",
+    path: "assets/frames/new/pendadaran/pendadaran-30.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 300, "y": 92, "w": 528, "h": 208, "radius": 10}, {"x": 440, "y": 988, "w": 192, "h": 272, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran4064: {
+    theme: 'pendadaran',
+    label: "Pendadaran 04",
+    path: "assets/frames/new/pendadaran/pendadaran-4.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 143, "y": 588, "w": 868, "h": 1064, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran5065: {
+    theme: 'pendadaran',
+    label: "Pendadaran 05",
+    path: "assets/frames/new/pendadaran/pendadaran-5.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 269, "y": 1464, "w": 504, "h": 156, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran6066: {
+    theme: 'pendadaran',
+    label: "Pendadaran 06",
+    path: "assets/frames/new/pendadaran/pendadaran-6.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 188, "y": 748, "w": 704, "h": 884, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran7067: {
+    theme: 'pendadaran',
+    label: "Pendadaran 07",
+    path: "assets/frames/new/pendadaran/pendadaran-7.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 108, "y": 584, "w": 868, "h": 888, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran8068: {
+    theme: 'pendadaran',
+    label: "Pendadaran 08",
+    path: "assets/frames/new/pendadaran/pendadaran-8.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 224, "y": 668, "w": 632, "h": 748, "radius": 10}],
+    },
+  },
+  newPendadaranPendadaran9069: {
+    theme: 'pendadaran',
+    label: "Pendadaran 09",
+    path: "assets/frames/new/pendadaran/pendadaran-9.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 132, "y": 604, "w": 880, "h": 936, "radius": 10}],
+    },
+  },
+  newSkpSkp1070: {
+    theme: 'skp',
+    label: "SKP 01",
+    path: "assets/frames/new/skp/skp-1.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 156, "y": 483, "w": 844, "h": 1084, "radius": 10}],
+    },
+  },
+  newSkpSkp10071: {
+    theme: 'skp',
+    label: "SKP 10",
+    path: "assets/frames/new/skp/skp-10.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 84, "y": 92, "w": 636, "h": 388, "radius": 10}, {"x": 100, "y": 396, "w": 811, "h": 237, "radius": 10}, {"x": 172, "y": 599, "w": 816, "h": 1268, "radius": 10}],
+    },
+  },
+  newSkpSkp11072: {
+    theme: 'skp',
+    label: "SKP 11",
+    path: "assets/frames/new/skp/skp-11.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 508, "w": 808, "h": 1144, "radius": 10}],
+    },
+  },
+  newSkpSkp12073: {
+    theme: 'skp',
+    label: "SKP 12",
+    path: "assets/frames/new/skp/skp-12.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 632, "y": 104, "w": 420, "h": 164, "radius": 10}, {"x": 200, "y": 260, "w": 728, "h": 304, "radius": 10}],
+    },
+  },
+  newSkpSkp13074: {
+    theme: 'skp',
+    label: "SKP 13",
+    path: "assets/frames/new/skp/skp-13.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp14075: {
+    theme: 'skp',
+    label: "SKP 14",
+    path: "assets/frames/new/skp/skp-14.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 164, "y": 208, "w": 748, "h": 268, "radius": 10}, {"x": 68, "y": 620, "w": 872, "h": 1056, "radius": 10}],
+    },
+  },
+  newSkpSkp15076: {
+    theme: 'skp',
+    label: "SKP 15",
+    path: "assets/frames/new/skp/skp-15.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 384, "y": 1443, "w": 404, "h": 296, "radius": 10}],
+    },
+  },
+  newSkpSkp16077: {
+    theme: 'skp',
+    label: "SKP 16",
+    path: "assets/frames/new/skp/skp-16.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 572, "y": 119, "w": 401, "h": 144, "radius": 10}],
+    },
+  },
+  newSkpSkp17078: {
+    theme: 'skp',
+    label: "SKP 17",
+    path: "assets/frames/new/skp/skp-17.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 180, "y": 184, "w": 608, "h": 284, "radius": 10}],
+    },
+  },
+  newSkpSkp18079: {
+    theme: 'skp',
+    label: "SKP 18",
+    path: "assets/frames/new/skp/skp-18.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 296, "y": 260, "w": 516, "h": 119, "radius": 10}],
+    },
+  },
+  newSkpSkp19080: {
+    theme: 'skp',
+    label: "SKP 19",
+    path: "assets/frames/new/skp/skp-19.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 44, "y": 616, "w": 956, "h": 1068, "radius": 10}],
+    },
+  },
+  newSkpSkp2081: {
+    theme: 'skp',
+    label: "SKP 02",
+    path: "assets/frames/new/skp/skp-2.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 275, "y": 568, "w": 768, "h": 1203, "radius": 10}],
+    },
+  },
+  newSkpSkp20082: {
+    theme: 'skp',
+    label: "SKP 20",
+    path: "assets/frames/new/skp/skp-20.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp21083: {
+    theme: 'skp',
+    label: "SKP 21",
+    path: "assets/frames/new/skp/skp-21.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp22084: {
+    theme: 'skp',
+    label: "SKP 22",
+    path: "assets/frames/new/skp/skp-22.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 208, "y": 1580, "w": 528, "h": 188, "radius": 10}],
+    },
+  },
+  newSkpSkp23085: {
+    theme: 'skp',
+    label: "SKP 23",
+    path: "assets/frames/new/skp/skp-23.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp24086: {
+    theme: 'skp',
+    label: "SKP 24",
+    path: "assets/frames/new/skp/skp-24.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp25087: {
+    theme: 'skp',
+    label: "SKP 25",
+    path: "assets/frames/new/skp/skp-25.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 596, "y": 229, "w": 308, "h": 152, "radius": 10}, {"x": 200, "y": 237, "w": 360, "h": 176, "radius": 10}],
+    },
+  },
+  newSkpSkp3088: {
+    theme: 'skp',
+    label: "SKP 03",
+    path: "assets/frames/new/skp/skp-3.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp4089: {
+    theme: 'skp',
+    label: "SKP 04",
+    path: "assets/frames/new/skp/skp-4.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 272, "y": 656, "w": 612, "h": 456, "radius": 10}, {"x": 272, "y": 1156, "w": 612, "h": 460, "radius": 10}],
+    },
+  },
+  newSkpSkp5090: {
+    theme: 'skp',
+    label: "SKP 05",
+    path: "assets/frames/new/skp/skp-5.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 208, "y": 160, "w": 516, "h": 180, "radius": 10}, {"x": 40, "y": 444, "w": 888, "h": 620, "radius": 10}],
+    },
+  },
+  newSkpSkp6091: {
+    theme: 'skp',
+    label: "SKP 06",
+    path: "assets/frames/new/skp/skp-6.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 160, "y": 656, "w": 797, "h": 876, "radius": 10}],
+    },
+  },
+  newSkpSkp7092: {
+    theme: 'skp',
+    label: "SKP 07",
+    path: "assets/frames/new/skp/skp-7.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 200, "y": 652, "w": 676, "h": 952, "radius": 10}],
+    },
+  },
+  newSkpSkp8093: {
+    theme: 'skp',
+    label: "SKP 08",
+    path: "assets/frames/new/skp/skp-8.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newSkpSkp9094: {
+    theme: 'skp',
+    label: "SKP 09",
+    path: "assets/frames/new/skp/skp-9.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 176, "y": 680, "w": 744, "h": 864, "radius": 10}],
+    },
+  },
+  newTiTiUmy1095: {
+    theme: 'ti',
+    label: "TI UMY 01",
+    path: "assets/frames/new/ti/ti-umy-1.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 40, "y": 36, "w": 283, "h": 304, "radius": 10}],
+    },
+  },
+  newTiTiUmy10096: {
+    theme: 'ti',
+    label: "TI UMY 10",
+    path: "assets/frames/new/ti/ti-umy-10.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 168, "y": 452, "w": 748, "h": 477, "radius": 10}, {"x": 168, "y": 984, "w": 764, "h": 472, "radius": 10}, {"x": 412, "y": 1524, "w": 256, "h": 272, "radius": 10}],
+    },
+  },
+  newTiTiUmy11097: {
+    theme: 'ti',
+    label: "TI UMY 11",
+    path: "assets/frames/new/ti/ti-umy-11.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 104, "y": 1324, "w": 716, "h": 364, "radius": 10}],
+    },
+  },
+  newTiTiUmy12098: {
+    theme: 'ti',
+    label: "TI UMY 12",
+    path: "assets/frames/new/ti/ti-umy-12.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newTiTiUmy13099: {
+    theme: 'ti',
+    label: "TI UMY 13",
+    path: "assets/frames/new/ti/ti-umy-13.png",
+    defaultCount: 4,
+    slotsByCount: {
+      4: [{"x": 252, "y": 113, "w": 555, "h": 404, "radius": 10}, {"x": 76, "y": 564, "w": 560, "h": 420, "radius": 10}, {"x": 320, "y": 1096, "w": 340, "h": 448, "radius": 10}, {"x": 716, "y": 1189, "w": 300, "h": 288, "radius": 10}],
+    },
+  },
+  newTiTiUmy14100: {
+    theme: 'ti',
+    label: "TI UMY 14",
+    path: "assets/frames/new/ti/ti-umy-14.png",
+    defaultCount: 4,
+    slotsByCount: {
+      4: [{"x": 261, "y": 88, "w": 368, "h": 180, "radius": 10}, {"x": 84, "y": 436, "w": 744, "h": 496, "radius": 10}, {"x": 76, "y": 949, "w": 716, "h": 448, "radius": 10}, {"x": 88, "y": 1468, "w": 256, "h": 276, "radius": 10}],
+    },
+  },
+  newTiTiUmy15101: {
+    theme: 'ti',
+    label: "TI UMY 15",
+    path: "assets/frames/new/ti/ti-umy-15.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 196, "y": 24, "w": 716, "h": 353, "radius": 10}, {"x": 240, "y": 1360, "w": 600, "h": 380, "radius": 10}],
+    },
+  },
+  newTiTiUmy16102: {
+    theme: 'ti',
+    label: "TI UMY 16",
+    path: "assets/frames/new/ti/ti-umy-16.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 256, "y": 428, "w": 592, "h": 796, "radius": 10}, {"x": 92, "y": 1276, "w": 444, "h": 376, "radius": 10}, {"x": 572, "y": 1276, "w": 412, "h": 376, "radius": 10}],
+    },
+  },
+  newTiTiUmy17103: {
+    theme: 'ti',
+    label: "TI UMY 17",
+    path: "assets/frames/new/ti/ti-umy-17.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 344, "y": 76, "w": 344, "h": 248, "radius": 10}, {"x": 72, "y": 1240, "w": 612, "h": 424, "radius": 10}, {"x": 724, "y": 1240, "w": 283, "h": 424, "radius": 10}],
+    },
+  },
+  newTiTiUmy18104: {
+    theme: 'ti',
+    label: "TI UMY 18",
+    path: "assets/frames/new/ti/ti-umy-18.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 52, "y": 464, "w": 972, "h": 1124, "radius": 10}],
+    },
+  },
+  newTiTiUmy19105: {
+    theme: 'ti',
+    label: "TI UMY 19",
+    path: "assets/frames/new/ti/ti-umy-19.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 208, "y": 604, "w": 704, "h": 472, "radius": 10}, {"x": 212, "y": 1144, "w": 644, "h": 440, "radius": 10}],
+    },
+  },
+  newTiTiUmy2106: {
+    theme: 'ti',
+    label: "TI UMY 02",
+    path: "assets/frames/new/ti/ti-umy-2.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 252, "y": 584, "w": 792, "h": 892, "radius": 10}, {"x": 464, "y": 1480, "w": 348, "h": 336, "radius": 10}],
+    },
+  },
+  newTiTiUmy20107: {
+    theme: 'ti',
+    label: "TI UMY 20",
+    path: "assets/frames/new/ti/ti-umy-20.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newTiTiUmy21108: {
+    theme: 'ti',
+    label: "TI UMY 21",
+    path: "assets/frames/new/ti/ti-umy-21.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 129, "y": 736, "w": 824, "h": 432, "radius": 10}],
+    },
+  },
+  newTiTiUmy22109: {
+    theme: 'ti',
+    label: "TI UMY 22",
+    path: "assets/frames/new/ti/ti-umy-22.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 212, "y": 469, "w": 692, "h": 1028, "radius": 10}],
+    },
+  },
+  newTiTiUmy23110: {
+    theme: 'ti',
+    label: "TI UMY 23",
+    path: "assets/frames/new/ti/ti-umy-23.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newTiTiUmy24111: {
+    theme: 'ti',
+    label: "TI UMY 24",
+    path: "assets/frames/new/ti/ti-umy-24.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newTiTiUmy25112: {
+    theme: 'ti',
+    label: "TI UMY 25",
+    path: "assets/frames/new/ti/ti-umy-25.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 240, "y": 692, "w": 640, "h": 500, "radius": 10}, {"x": 304, "y": 1216, "w": 592, "h": 436, "radius": 10}],
+    },
+  },
+  newTiTiUmy26113: {
+    theme: 'ti',
+    label: "TI UMY 26",
+    path: "assets/frames/new/ti/ti-umy-26.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 129, "y": 616, "w": 856, "h": 872, "radius": 10}],
+    },
+  },
+  newTiTiUmy27114: {
+    theme: 'ti',
+    label: "TI UMY 27",
+    path: "assets/frames/new/ti/ti-umy-27.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 204, "y": 148, "w": 628, "h": 188, "radius": 10}, {"x": 196, "y": 588, "w": 692, "h": 1079, "radius": 10}],
+    },
+  },
+  newTiTiUmy28115: {
+    theme: 'ti',
+    label: "TI UMY 28",
+    path: "assets/frames/new/ti/ti-umy-28.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 44, "y": 119, "w": 448, "h": 204, "radius": 10}, {"x": 536, "y": 119, "w": 508, "h": 172, "radius": 10}],
+    },
+  },
+  newTiTiUmy3116: {
+    theme: 'ti',
+    label: "TI UMY 03",
+    path: "assets/frames/new/ti/ti-umy-3.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 252, "y": 296, "w": 700, "h": 524, "radius": 10}, {"x": 116, "y": 847, "w": 856, "h": 904, "radius": 10}],
+    },
+  },
+  newTiTiUmy4117: {
+    theme: 'ti',
+    label: "TI UMY 04",
+    path: "assets/frames/new/ti/ti-umy-4.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 140, "y": 520, "w": 800, "h": 980, "radius": 10}],
+    },
+  },
+  newTiTiUmy5118: {
+    theme: 'ti',
+    label: "TI UMY 05",
+    path: "assets/frames/new/ti/ti-umy-5.png",
+    defaultCount: 4,
+    slotsByCount: {
+      4: [{"x": 576, "y": 332, "w": 404, "h": 620, "radius": 10}, {"x": 92, "y": 340, "w": 401, "h": 612, "radius": 10}, {"x": 112, "y": 1036, "w": 380, "h": 580, "radius": 10}, {"x": 576, "y": 1036, "w": 380, "h": 628, "radius": 10}],
+    },
+  },
+  newTiTiUmy6119: {
+    theme: 'ti',
+    label: "TI UMY 06",
+    path: "assets/frames/new/ti/ti-umy-6.png",
+    defaultCount: 3,
+    slotsByCount: {
+      3: [{"x": 168, "y": 416, "w": 768, "h": 460, "radius": 10}, {"x": 168, "y": 932, "w": 768, "h": 452, "radius": 10}, {"x": 168, "y": 1440, "w": 316, "h": 328, "radius": 10}],
+    },
+  },
+  newTiTiUmy7120: {
+    theme: 'ti',
+    label: "TI UMY 07",
+    path: "assets/frames/new/ti/ti-umy-7.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 792, "y": 888, "w": 236, "h": 544, "radius": 10}, {"x": 780, "y": 1636, "w": 264, "h": 220, "radius": 10}],
+    },
+  },
+  newTiTiUmy8121: {
+    theme: 'ti',
+    label: "TI UMY 08",
+    path: "assets/frames/new/ti/ti-umy-8.png",
+    defaultCount: 2,
+    slotsByCount: {
+      2: [{"x": 44, "y": 68, "w": 811, "h": 216, "radius": 10}, {"x": 240, "y": 416, "w": 808, "h": 808, "radius": 10}],
+    },
+  },
+  newTiTiUmy9122: {
+    theme: 'ti',
+    label: "TI UMY 09",
+    path: "assets/frames/new/ti/ti-umy-9.png",
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{"x": 269, "y": 76, "w": 480, "h": 243, "radius": 10}],
+    },
+  },
 };
 
 /* ── Frame helpers ──────────────────────────────────────── */
+function populateThemeOptions() {
+  if (!els.themeSelect) return;
+  const current = els.themeSelect.value || 'all';
+  els.themeSelect.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = 'Semua Tema';
+  els.themeSelect.appendChild(allOpt);
+  Object.entries(FRAME_THEMES).forEach(([key, label]) => {
+    const hasFrame = Object.values(FRAME_CONFIGS).some(cfg => (cfg.theme || 'default') === key);
+    if (!hasFrame && key !== 'default') return;
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = label;
+    els.themeSelect.appendChild(opt);
+  });
+  els.themeSelect.value = [...els.themeSelect.options].some(o => o.value === current) ? current : 'all';
+}
+function populateFrameOptions(themeKey = null) {
+  if (!els.frameTheme) return;
+  const selectedTheme = themeKey || els.themeSelect?.value || 'all';
+  const currentFrame  = els.frameTheme.value;
+  const entries = Object.entries(FRAME_CONFIGS).filter(([, cfg]) => {
+    const t = cfg.theme || 'default';
+    return selectedTheme === 'all' || t === selectedTheme;
+  });
+  els.frameTheme.innerHTML = '';
+  entries.forEach(([key, cfg]) => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = cfg.label || key;
+    els.frameTheme.appendChild(opt);
+  });
+  const keepCurrent = entries.some(([key]) => key === currentFrame);
+  els.frameTheme.value = keepCurrent ? currentFrame : (entries[0]?.[0] || Object.keys(FRAME_CONFIGS)[0] || '');
+}
 function resolveFrameKey() {
-  return els.frameTheme?.value || 'yogyakartaCity';
+  return els.frameTheme?.value || Object.keys(FRAME_CONFIGS)[0] || 'yogyakartaCity';
 }
 
 function getAutoPhotoCount(frameKey) {
@@ -1099,6 +2242,10 @@ function initLabShot() {
     return;
   }
 
+  // Populate theme/template menu
+  populateThemeOptions();
+  populateFrameOptions();
+
   // Splash screen wiring
   document.getElementById('splashStartBtn')?.addEventListener('click', openApp);
   document.getElementById('showGuideBtn')?.addEventListener('click', showGuide);
@@ -1123,6 +2270,13 @@ function initLabShot() {
   els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
   els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
 
+  els.themeSelect?.addEventListener('change', () => {
+    populateFrameOptions(els.themeSelect.value);
+    updateFrameAutoInfo();
+    resetResult(true);
+    setStatus('🗂 Tema diganti. Pilih template yang ingin digunakan.');
+  });
+
   els.frameTheme?.addEventListener('change', () => {
     updateFrameAutoInfo();
     resetResult(true);
@@ -1135,7 +2289,7 @@ function initLabShot() {
   applyVideoMirror();
   resetResult(true);
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera untuk memulai.', 'idle');
-  console.log('LabShot v34 loaded.');
+  console.log('LabShot v35 loaded. Theme menu + new templates aktif.');
 }
 
 if (document.readyState === 'loading') {
