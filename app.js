@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   LabShot v33 – app.js
+   LabShot v37 – app.js
    Perbaikan dari v32:
    - Hapus referensi ke elemen yang sudah tidak ada di HTML
      (eventName, layoutMode, countdownSeconds, customFrame)
@@ -21,6 +21,7 @@ const els = {
   countdown:          document.getElementById('countdown'),
   flash:              document.getElementById('flash'),
   shotCanvas:         document.getElementById('shotCanvas'),
+  themeSelect:        document.getElementById('themeSelect'),
   frameTheme:         document.getElementById('frameTheme'),
   filterMode:         document.getElementById('filterMode'),
   finalPreview:       document.getElementById('finalPreview'),
@@ -63,11 +64,23 @@ const STORY_W = 1080;
 const STORY_H = 1920;
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec';
+
+// API template Google Drive (Apps Script langkah 3)
+const TEMPLATE_API_URL = 'https://script.google.com/macros/s/AKfycbwaTxWDPI63zCO3GwE0pmgHRErlPoZUuP-_6Oye1oAY9ANCv7KJ_T_LbeYF3wrVrZXc/exec';
+
 const DRIVE_UPLOAD_W  = 720;
 const DRIVE_UPLOAD_H  = 1280;
 
 /* ── Frame configurations ───────────────────────────────── */
-const FRAME_CONFIGS = {
+let FRAME_THEMES = {
+  "default": "Default LabShot",
+  "one-piece": "Anime Pirate / Wanted Poster",
+  "pendadaran": "Selamat Lulus Pendadaran",
+  "skp": "Seminar Kerja Praktek",
+  "ti": "TI UMY / Campus & Newspaper"
+};
+
+let FRAME_CONFIGS = {
   yogyakartaCity: {
     label: 'Yogyakarta City Series',
     path: 'assets/frames/yogyakarta-city-series.png',
@@ -163,9 +176,341 @@ const FRAME_CONFIGS = {
   },
 };
 
+
+
+/* ── Google Drive Template Mode ────────────────────────────
+   Template baru disimpan di Google Drive dan dibaca via Apps Script.
+   Aplikasi hanya memuat template yang dipilih, sehingga GitHub lebih ringan.
+──────────────────────────────────────────────────────────── */
+const SLOT_LIBRARY_CONFIGS = JSON.parse(JSON.stringify(FRAME_CONFIGS));
+const LOCAL_FALLBACK_KEYS = [
+  'yogyakartaCity', 'tiUmyCampus', 'tiUmyShowcase', 'umyCampusSeries',
+  'umyCitySeries', 'friendshipBonds', 'dailyQuote', 'itFuture'
+];
+const LOCAL_FALLBACK_CONFIGS = Object.fromEntries(
+  LOCAL_FALLBACK_KEYS.filter(k => FRAME_CONFIGS[k]).map(k => [k, FRAME_CONFIGS[k]])
+);
+const LOCAL_FALLBACK_THEMES = { default: 'Default LabShot' };
+const DRIVE_TEMPLATE_CACHE = {};
+
+// Mode default dibuat ringan. Template baru akan dimuat dari Google Drive.
+FRAME_THEMES = { ...LOCAL_FALLBACK_THEMES };
+FRAME_CONFIGS = { ...LOCAL_FALLBACK_CONFIGS };
+
+function slugifyText(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'template';
+}
+
+function normalizeTemplateName(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function basenameFromPath(path) {
+  return String(path || '').split('/').pop() || '';
+}
+
+function jsonpRequest(url, params = {}, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const cbName = `labshotJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const qs = new URLSearchParams({ ...params, callback: cbName });
+    const script = document.createElement('script');
+    let done = false;
+    const cleanup = () => {
+      delete window[cbName];
+      script.remove();
+    };
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true; cleanup();
+      reject(new Error('Timeout mengambil data dari Google Drive.'));
+    }, timeoutMs);
+
+    window[cbName] = (data) => {
+      if (done) return;
+      done = true; clearTimeout(timer); cleanup(); resolve(data);
+    };
+    script.onerror = () => {
+      if (done) return;
+      done = true; clearTimeout(timer); cleanup();
+      reject(new Error('Gagal memuat API template Google Drive.'));
+    };
+    script.src = `${url}?${qs.toString()}`;
+    document.body.appendChild(script);
+  });
+}
+
+function findSlotConfigForDriveFrame(frame) {
+  const candidates = [
+    normalizeTemplateName(frame?.fileName),
+    normalizeTemplateName(frame?.label),
+  ].filter(Boolean);
+
+  for (const cfg of Object.values(SLOT_LIBRARY_CONFIGS)) {
+    const cfgCandidates = [
+      normalizeTemplateName(cfg.path ? basenameFromPath(cfg.path) : ''),
+      normalizeTemplateName(cfg.label),
+    ].filter(Boolean);
+
+    if (candidates.some(c => cfgCandidates.includes(c))) {
+      return cfg;
+    }
+  }
+  return null;
+}
+
+function createGenericSlots(count = 1) {
+  count = Math.max(1, Math.min(4, Number(count) || 1));
+  if (count === 1) {
+    return { 1: [{ x: 150, y: 430, w: 780, h: 1050, radius: 12 }] };
+  }
+  if (count === 2) {
+    return { 2: [
+      { x: 145, y: 390,  w: 790, h: 520, radius: 12 },
+      { x: 145, y: 1015, w: 790, h: 520, radius: 12 },
+    ] };
+  }
+  if (count === 3) {
+    return { 3: [
+      { x: 150, y: 340,  w: 780, h: 360, radius: 12 },
+      { x: 150, y: 780,  w: 780, h: 360, radius: 12 },
+      { x: 150, y: 1220, w: 780, h: 360, radius: 12 },
+    ] };
+  }
+  return { 4: [
+    { x: 150, y: 300,  w: 780, h: 300, radius: 12 },
+    { x: 150, y: 675,  w: 780, h: 300, radius: 12 },
+    { x: 150, y: 1050, w: 780, h: 300, radius: 12 },
+    { x: 150, y: 1425, w: 780, h: 300, radius: 12 },
+  ] };
+}
+
+function createDriveFrameKey(themeKey, frame, index) {
+  const base = slugifyText(frame?.label || frame?.fileName || `template-${index + 1}`);
+  const idPart = String(frame?.id || index).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
+  return `drive_${slugifyText(themeKey)}_${base}_${idPart}`;
+}
+
+function buildDriveConfig(themeKey, frame, index) {
+  const matched = findSlotConfigForDriveFrame(frame);
+  const guessedCount = Number(frame?.defaultCount || matched?.defaultCount || 1) || 1;
+  const slotsByCount = matched?.slotsByCount
+    ? JSON.parse(JSON.stringify(matched.slotsByCount))
+    : createGenericSlots(guessedCount);
+
+  return {
+    theme: themeKey,
+    label: frame?.label || frame?.fileName || `Template ${index + 1}`,
+    fileName: frame?.fileName || '',
+    driveId: frame?.id,
+    defaultCount: Number(matched?.defaultCount || frame?.defaultCount || guessedCount) || 1,
+    slotsByCount,
+    remote: true,
+    _slotSource: matched ? 'library' : 'generic',
+  };
+}
+
+async function loadDriveManifest() {
+  const data = await jsonpRequest(TEMPLATE_API_URL, { action: 'manifest' }, 25000);
+  if (!data?.ok || !Array.isArray(data.themes)) {
+    throw new Error(data?.error || 'Manifest Google Drive tidak valid.');
+  }
+  return data.themes;
+}
+
+async function initDriveTemplates() {
+  try {
+    setStatus('⏳ Memuat daftar template dari Google Drive…', 'info');
+    const themes = await loadDriveManifest();
+    const nextThemes = {};
+    const nextConfigs = {};
+
+    themes.forEach((theme, themeIndex) => {
+      const themeKey = slugifyText(theme.value || theme.label || `tema-${themeIndex + 1}`);
+      nextThemes[themeKey] = theme.label || themeKey;
+      (theme.frames || []).forEach((frame, frameIndex) => {
+        if (!frame?.id) return;
+        const key = createDriveFrameKey(themeKey, frame, frameIndex);
+        nextConfigs[key] = buildDriveConfig(themeKey, frame, frameIndex);
+      });
+    });
+
+    if (!Object.keys(nextConfigs).length) throw new Error('Belum ada template di manifest Google Drive.');
+
+    FRAME_THEMES = nextThemes;
+    FRAME_CONFIGS = nextConfigs;
+    console.log(`LabShot: ${Object.keys(nextConfigs).length} template dimuat dari Google Drive.`);
+    return true;
+  } catch (err) {
+    console.warn('Template Drive gagal dimuat, memakai frame lokal bawaan:', err);
+    FRAME_THEMES = { ...LOCAL_FALLBACK_THEMES };
+    FRAME_CONFIGS = { ...LOCAL_FALLBACK_CONFIGS };
+    setStatus('⚠️ Template Drive belum terbaca. Mode fallback lokal aktif.', 'warning');
+    return false;
+  }
+}
+
+function getFrameSlotsToClear(frameKey) {
+  const count = getAutoPhotoCount(frameKey);
+  return getSlotsForFrame(frameKey, count);
+}
+
+function clearSlotArea(ctx, slot) {
+  withSlotTransform(ctx, slot, (x, y, w, h) => {
+    const pad = 1;
+    ctx.clearRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+  });
+}
+
+function detectSlotsFromCanvas(canvas, desiredCount = 1) {
+  const sw = 216, sh = 384;
+  const small = document.createElement('canvas');
+  small.width = sw; small.height = sh;
+  const sctx = small.getContext('2d', { willReadFrequently: true });
+  sctx.drawImage(canvas, 0, 0, sw, sh);
+  const { data } = sctx.getImageData(0, 0, sw, sh);
+  const mask = new Uint8Array(sw * sh);
+
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      const i = (y * sw + x) * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      const neutral = (max - min) <= 7;
+      const dark = r < 42 && g < 42 && b < 42;
+      const lightChecker = neutral && max > 175 && max < 255;
+      const transparent = a < 32;
+      if (transparent || dark || lightChecker) mask[y * sw + x] = 1;
+    }
+  }
+
+  const seen = new Uint8Array(sw * sh);
+  const comps = [];
+  const qx = [], qy = [];
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      const start = y * sw + x;
+      if (!mask[start] || seen[start]) continue;
+      let head = 0, area = 0, minX = x, maxX = x, minY = y, maxY = y;
+      qx.length = 0; qy.length = 0; qx.push(x); qy.push(y); seen[start] = 1;
+      while (head < qx.length) {
+        const cx = qx[head], cy = qy[head++]; area++;
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        const nb = [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]];
+        for (const [nx, ny] of nb) {
+          if (nx < 0 || ny < 0 || nx >= sw || ny >= sh) continue;
+          const ni = ny * sw + nx;
+          if (!mask[ni] || seen[ni]) continue;
+          seen[ni] = 1; qx.push(nx); qy.push(ny);
+        }
+      }
+      const bw = maxX - minX + 1, bh = maxY - minY + 1;
+      const rectArea = bw * bh;
+      const fill = area / Math.max(1, rectArea);
+      if (area > sw * sh * 0.025 && bw > sw * 0.18 && bh > sh * 0.10 && fill > 0.38) {
+        comps.push({ area, minX, minY, maxX, maxY, bw, bh });
+      }
+    }
+  }
+
+  comps.sort((a, b) => b.area - a.area);
+  const chosen = [];
+  for (const c of comps) {
+    const overlaps = chosen.some(o => !(c.maxX < o.minX || c.minX > o.maxX || c.maxY < o.minY || c.minY > o.maxY));
+    if (!overlaps) chosen.push(c);
+    if (chosen.length >= desiredCount) break;
+  }
+  if (!chosen.length) return [];
+
+  chosen.sort((a, b) => a.minY - b.minY || a.minX - b.minX);
+  return chosen.map(c => ({
+    x: Math.round(c.minX / sw * STORY_W),
+    y: Math.round(c.minY / sh * STORY_H),
+    w: Math.round((c.maxX - c.minX + 1) / sw * STORY_W),
+    h: Math.round((c.maxY - c.minY + 1) / sh * STORY_H),
+    radius: 10,
+  }));
+}
+
+async function loadDriveFrameImage(frameKey, config) {
+  const cacheKey = config.driveId;
+  if (DRIVE_TEMPLATE_CACHE[cacheKey]) return DRIVE_TEMPLATE_CACHE[cacheKey];
+
+  const data = await jsonpRequest(TEMPLATE_API_URL, { action: 'image', id: config.driveId }, 40000);
+  if (!data?.ok || !data.dataUrl) throw new Error(data?.error || 'Template Drive gagal dimuat.');
+
+  const source = await loadImage(data.dataUrl);
+  const canvas = document.createElement('canvas');
+  canvas.width = STORY_W; canvas.height = STORY_H;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.clearRect(0, 0, STORY_W, STORY_H);
+  ctx.drawImage(source, 0, 0, STORY_W, STORY_H);
+
+  const desired = getAutoPhotoCount(frameKey);
+  if (config._slotSource !== 'library') {
+    const detected = detectSlotsFromCanvas(canvas, desired);
+    if (detected.length) {
+      config.slotsByCount = { [detected.length]: detected };
+      config.defaultCount = detected.length;
+      config._slotSource = 'detected';
+    }
+  }
+
+  getFrameSlotsToClear(frameKey).forEach(slot => clearSlotArea(ctx, slot));
+  const img = await loadImage(canvas.toDataURL('image/png'));
+  DRIVE_TEMPLATE_CACHE[cacheKey] = img;
+  return img;
+}
+
 /* ── Frame helpers ──────────────────────────────────────── */
+function populateThemeOptions() {
+  if (!els.themeSelect) return;
+  const current = els.themeSelect.value || 'all';
+  els.themeSelect.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all';
+  allOpt.textContent = 'Semua Tema';
+  els.themeSelect.appendChild(allOpt);
+  Object.entries(FRAME_THEMES).forEach(([key, label]) => {
+    const hasFrame = Object.values(FRAME_CONFIGS).some(cfg => (cfg.theme || 'default') === key);
+    if (!hasFrame && key !== 'default') return;
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = label;
+    els.themeSelect.appendChild(opt);
+  });
+  els.themeSelect.value = [...els.themeSelect.options].some(o => o.value === current) ? current : 'all';
+}
+function populateFrameOptions(themeKey = null) {
+  if (!els.frameTheme) return;
+  const selectedTheme = themeKey || els.themeSelect?.value || 'all';
+  const currentFrame  = els.frameTheme.value;
+  const entries = Object.entries(FRAME_CONFIGS).filter(([, cfg]) => {
+    const t = cfg.theme || 'default';
+    return selectedTheme === 'all' || t === selectedTheme;
+  });
+  els.frameTheme.innerHTML = '';
+  entries.forEach(([key, cfg]) => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = cfg.label || key;
+    els.frameTheme.appendChild(opt);
+  });
+  const keepCurrent = entries.some(([key]) => key === currentFrame);
+  els.frameTheme.value = keepCurrent ? currentFrame : (entries[0]?.[0] || Object.keys(FRAME_CONFIGS)[0] || '');
+}
 function resolveFrameKey() {
-  return els.frameTheme?.value || 'yogyakartaCity';
+  return els.frameTheme?.value || Object.keys(FRAME_CONFIGS)[0] || 'yogyakartaCity';
 }
 
 function getAutoPhotoCount(frameKey) {
@@ -352,7 +697,20 @@ function startPreviewLoop() {
   previewTimer = setInterval(renderFramePreview, 90);
 }
 
+let _renderPreviewInProgress = false;
+
 async function renderFramePreview() {
+  // Prevent stacking concurrent canvas renders during Drive fetch
+  if (_renderPreviewInProgress) return;
+  _renderPreviewInProgress = true;
+  try {
+    await _renderFramePreviewInner();
+  } finally {
+    _renderPreviewInProgress = false;
+  }
+}
+
+async function _renderFramePreviewInner() {
   const canvas = els.framePreviewCanvas;
   if (!canvas) return;
 
@@ -365,6 +723,7 @@ async function renderFramePreview() {
 
   const frameKey = resolveFrameKey();
   const total    = getAutoPhotoCount(frameKey);
+  const frame    = await getFrameImage(frameKey);
   const slots    = getSlotsForFrame(frameKey, total);
   const ctx      = canvas.getContext('2d');
 
@@ -407,7 +766,6 @@ async function renderFramePreview() {
     }
   });
 
-  const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
 
   // Update hint text
@@ -421,7 +779,7 @@ async function renderFramePreview() {
       els.framePreviewNote.textContent = `Semua slot terisi. Atur urutan / retake, lalu klik ✓ Finish & Buat QR.`;
     }
   }
-}
+} // end _renderFramePreviewInner
 
 /* ── Audio ──────────────────────────────────────────────── */
 let audioCtx = null;
@@ -470,31 +828,29 @@ function setStatus(msg, flavour = 'info', autoDismissMs = 0) {
   // Legacy hidden element (JS compat)
   if (els.statusText) els.statusText.textContent = msg;
 
-  const toast    = els.statusToast;
-  const textEl   = els.statusToastText;
-  const f        = TOAST_FLAVOURS[flavour] || TOAST_FLAVOURS.info;
-
+  const toast  = els.statusToast;
+  const textEl = els.statusToastText;
   if (!toast || !textEl) return;
 
-  // Detect flavour from emoji prefix if not provided
+  // Auto-detect flavour from emoji prefix (use local vars, never mutate TOAST_FLAVOURS)
+  let resolvedFlavour = flavour;
   if (flavour === 'info') {
-    if (msg.startsWith('✅') || msg.startsWith('🎉')) flavour = 'success', f.cls = 'success', f.icon = '';
-    else if (msg.startsWith('⚠️') || msg.startsWith('❌')) flavour = 'error', f.cls = 'error', f.icon = '';
-    else if (msg.startsWith('📷') || msg.startsWith('📸') || msg.startsWith('⏳')) flavour = 'active', f.cls = 'active', f.icon = '';
-    else if (msg.startsWith('🔀') || msg.startsWith('🖼')) flavour = 'warning', f.cls = 'warning', f.icon = '';
+    if (msg.startsWith('✅') || msg.startsWith('🎉'))             resolvedFlavour = 'success';
+    else if (msg.startsWith('⚠️') || msg.startsWith('❌'))        resolvedFlavour = 'error';
+    else if (msg.startsWith('📷') || msg.startsWith('📸') || msg.startsWith('⏳')) resolvedFlavour = 'active';
+    else if (msg.startsWith('🔀') || msg.startsWith('🖼'))        resolvedFlavour = 'warning';
   }
+  const f = TOAST_FLAVOURS[resolvedFlavour] || TOAST_FLAVOURS.info;
 
-  const icon = document.querySelector('#statusToast .toast-icon');
-  if (icon) icon.textContent = f.icon;
+  const iconEl = toast.querySelector('.toast-icon');
+  if (iconEl) iconEl.textContent = f.icon;
   textEl.textContent = msg.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}][\uFE0F]?\s*/u, '');
 
   toast.className = `status-toast ${f.cls} show`;
 
   if (_toastTimer) clearTimeout(_toastTimer);
   if (autoDismissMs > 0) {
-    _toastTimer = setTimeout(() => {
-      toast.className = `status-toast ${f.cls}`;
-    }, autoDismissMs);
+    _toastTimer = setTimeout(() => toast.className = `status-toast ${f.cls}`, autoDismissMs);
   }
 }
 
@@ -596,7 +952,7 @@ async function startCamera(deviceId = null) {
         ? 'Kamera tidak ditemukan. Pastikan webcam terpasang dan tidak dipakai aplikasi lain.'
         : 'Kamera tidak bisa diakses. Pastikan halaman dibuka via HTTPS/localhost dan izin kamera diberikan.';
     stopPreviewLoop(); renderFramePreview();
-    setStatus('⚠️ ' + msg); alert(msg);
+    setStatus('⚠️ ' + msg, 'error'); alert(msg);
   }
 }
 
@@ -760,7 +1116,7 @@ function moveSelectedPhoto(direction) {
   [capturedPhotoImgs[selectedPhotoIndex], capturedPhotoImgs[next]]   = [capturedPhotoImgs[next], capturedPhotoImgs[selectedPhotoIndex]];
   selectedPhotoIndex = next;
   updatePhotoGrid(capturedPhotos); renderFramePreview();
-  setStatus('🔀 Urutan foto diperbarui. Klik Finish jika sudah cocok.');
+  setStatus('🔀 Urutan foto diperbarui. Klik Finish jika sudah cocok.', 'warning');
 }
 
 async function retakeSelectedPhoto() {
@@ -769,14 +1125,14 @@ async function retakeSelectedPhoto() {
   ensureAudio(); setBusy(true);
   retakeSlotIndex = selectedPhotoIndex;
   renderFramePreview();
-  setStatus(`📸 Retake foto ${selectedPhotoIndex + 1} – bersiap…`);
+  setStatus(`📸 Retake foto ${selectedPhotoIndex + 1} – bersiap…`, 'active');
   await runCountdown(3);
   const shot = capturePhoto();
   capturedPhotos[selectedPhotoIndex]    = shot;
   capturedPhotoImgs[selectedPhotoIndex] = await loadImage(shot);
   retakeSlotIndex = -1;
   updatePhotoGrid(capturedPhotos); renderFramePreview();
-  setStatus(`✅ Foto ${selectedPhotoIndex + 1} sudah diganti. Klik Finish jika sudah cocok.`);
+  setStatus(`✅ Foto ${selectedPhotoIndex + 1} sudah diganti. Klik Finish jika sudah cocok.`, 'success');
   setBusy(false);
 }
 
@@ -863,11 +1219,41 @@ function loadImage(src) {
   });
 }
 
+// Concurrent-fetch guard: stores Promises so parallel calls share one fetch
+const _frameFetchPromises = {};
+
 async function getFrameImage(frameKey) {
   const config = FRAME_CONFIGS[frameKey];
-  if (!config?.path) return null;
-  if (!frameImageCache[frameKey]) frameImageCache[frameKey] = await loadImage(config.path);
-  return frameImageCache[frameKey];
+  if (!config) return null;
+
+  // Return cached image immediately
+  if (frameImageCache[frameKey]) return frameImageCache[frameKey];
+
+  // If a fetch is already in-flight for this key, wait for it
+  if (_frameFetchPromises[frameKey]) return _frameFetchPromises[frameKey];
+
+  const doFetch = async () => {
+    try {
+      let img;
+      if (config.driveId) {
+        img = await loadDriveFrameImage(frameKey, config);
+      } else if (config.path) {
+        img = await loadImage(config.path);
+      } else {
+        return null;
+      }
+      frameImageCache[frameKey] = img;
+      return img;
+    } catch (err) {
+      console.warn(`getFrameImage(${frameKey}) failed:`, err);
+      return null;
+    } finally {
+      delete _frameFetchPromises[frameKey];
+    }
+  };
+
+  _frameFetchPromises[frameKey] = doFetch();
+  return _frameFetchPromises[frameKey];
 }
 
 function fillBase(ctx, frameKey) {
@@ -906,7 +1292,8 @@ async function renderFinalImage() {
 
   const images   = await Promise.all(capturedPhotos.map(loadImage));
   const total    = images.length;
-  const frameKey = resolveFrameKey(total);
+  const frameKey = resolveFrameKey();
+  const frame    = await getFrameImage(frameKey);
   const slots    = getSlotsForFrame(frameKey, total);
 
   const canvas  = document.createElement('canvas');
@@ -917,7 +1304,6 @@ async function renderFinalImage() {
   drawFullBleedPhotoBackground(ctx, images[0]);
   drawPhotosBehindFrame(ctx, images, slots);
 
-  const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
 
   const dataUrl = canvas.toDataURL('image/png');
@@ -1093,15 +1479,30 @@ function showGuide() {
 }
 
 /* ── Init ────────────────────────────────────────────────── */
-function initLabShot() {
+async function initLabShot() {
   if (!els.startCameraBtn || !els.video) {
     console.error('Elemen utama kamera tidak ditemukan. Pastikan index.html dan app.js versi sama.');
     return;
   }
 
-  // Splash screen wiring
+  // Splash screen wiring – pasang DULU sebelum fetch Drive agar splash langsung muncul
   document.getElementById('splashStartBtn')?.addEventListener('click', openApp);
   document.getElementById('showGuideBtn')?.addEventListener('click', showGuide);
+
+  // Muat template Drive di background (tidak block render splash)
+  initDriveTemplates().then(() => {
+    populateThemeOptions();
+    populateFrameOptions();
+    updateFrameAutoInfo();
+  }).catch(err => {
+    console.warn('Drive init error:', err);
+    populateThemeOptions();
+    populateFrameOptions();
+  });
+
+  // Langsung populate dengan fallback lokal agar dropdown tidak kosong saat Drive loading
+  populateThemeOptions();
+  populateFrameOptions();
 
   els.startCameraBtn.addEventListener('click',  () => startCamera());
   els.startSessionBtn?.addEventListener('click', startSession);
@@ -1123,6 +1524,13 @@ function initLabShot() {
   els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
   els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
 
+  els.themeSelect?.addEventListener('change', () => {
+    populateFrameOptions(els.themeSelect.value);
+    updateFrameAutoInfo();
+    resetResult(true);
+    setStatus('🗂 Tema diganti. Pilih template yang ingin digunakan.');
+  });
+
   els.frameTheme?.addEventListener('change', () => {
     updateFrameAutoInfo();
     resetResult(true);
@@ -1135,11 +1543,11 @@ function initLabShot() {
   applyVideoMirror();
   resetResult(true);
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera untuk memulai.', 'idle');
-  console.log('LabShot v34 loaded.');
+  console.log('LabShot v37 loaded. Google Drive template mode aktif.');
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initLabShot);
+  document.addEventListener('DOMContentLoaded', () => initLabShot().catch(console.error));
 } else {
-  initLabShot();
+  initLabShot().catch(console.error);
 }
