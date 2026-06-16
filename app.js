@@ -1,8 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
-   LabShot v38 – app.js
-   Drive template: fetch() biasa (bukan JSONP).
-   Apps Script ContentService/JSON otomatis kirim CORS header.
-   Template muncul dari subfolder Drive, bukan dari repo GitHub.
+   LabShot v39 – app.js
+   Frame dari assets/frames/{tema}/*.webp via manifest.json
+   Tambah frame baru: upload ke GitHub + update manifest.json
    Perbaikan dari v32:
    - Hapus referensi ke elemen yang sudah tidak ada di HTML
      (eventName, layoutMode, countdownSeconds, customFrame)
@@ -66,22 +65,13 @@ const els = {
 const STORY_W = 1080;
 const STORY_H = 1920;
 
-// ── SATU URL untuk semua endpoint (foto upload + template manifest + template image) ──
-// Isi dengan URL Web App dari Code.gs yang sudah di-deploy.
-const APPS_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec';
-const TEMPLATE_API_URL = APPS_SCRIPT_URL; // sama – satu Code.gs untuk semua endpoint
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec';
+
 
 const DRIVE_UPLOAD_W  = 720;
 const DRIVE_UPLOAD_H  = 1280;
 
 /* ── Frame configurations ───────────────────────────────── */
-let FRAME_THEMES = {
-  "default": "Default LabShot",
-  "one-piece": "Anime Pirate / Wanted Poster",
-  "pendadaran": "Selamat Lulus Pendadaran",
-  "skp": "Seminar Kerja Praktek",
-  "ti": "TI UMY / Campus & Newspaper"
-};
 
 let FRAME_CONFIGS = {
   yogyakartaCity: {
@@ -176,318 +166,262 @@ let FRAME_CONFIGS = {
           { x: 39,  y: 1579, w: 205, h: 287, radius: 8 },
           { x: 687, y: 1704, w: 352, h: 162, radius: 8 }],
     },
-  },
 };
-/* ── Google Drive Template Mode ─────────────────────────────
-   Menggunakan fetch() biasa (bukan JSONP).
-   Apps Script ContentService + MimeType.JSON otomatis
-   menambah header  Access-Control-Allow-Origin: *
-   sehingga fetch() dari GitHub Pages langsung bisa.
 
-   Endpoint yang dipakai (semua ke APPS_SCRIPT_URL yang sama):
-     GET ?action=manifest          → { ok, themes:[...] }
-     GET ?action=image&id=FILE_ID  → { ok, dataUrl }
+/* ── Local Theme System ──────────────────────────────────────
+   Template disimpan di assets/frames/{tema}/{file}.webp
+   Daftar tema & frame dibaca dari assets/frames/manifest.json
+   
+   Cara menambah frame baru:
+   1. Upload file .webp ke folder assets/frames/{tema}/ di GitHub
+   2. Tambahkan entry ke manifest.json di bagian tema yang sesuai
+   3. Commit & push — otomatis terbaca tanpa ubah kode
 ──────────────────────────────────────────────────────────── */
 
-// Simpan copy config lokal untuk slot-matching nama file
-const SLOT_LIBRARY_CONFIGS = JSON.parse(JSON.stringify(FRAME_CONFIGS));
+const FRAMES_BASE_PATH = 'assets/frames';
+const MANIFEST_PATH    = `${FRAMES_BASE_PATH}/manifest.json`;
 
-// Fallback: 8 frame lokal jika Drive tidak bisa diakses
-const LOCAL_FALLBACK_KEYS = [
-  'yogyakartaCity', 'tiUmyCampus', 'tiUmyShowcase', 'umyCampusSeries',
-  'umyCitySeries', 'friendshipBonds', 'dailyQuote', 'itFuture',
-];
-const LOCAL_FALLBACK_CONFIGS = Object.fromEntries(
-  LOCAL_FALLBACK_KEYS.filter(k => FRAME_CONFIGS[k]).map(k => [k, FRAME_CONFIGS[k]])
-);
-const LOCAL_FALLBACK_THEMES = { default: 'Frame Bawaan LabShot' };
-const DRIVE_TEMPLATE_CACHE  = {}; // { driveId → HTMLImageElement }
+// Runtime state
+let FRAME_THEMES  = {};
+let FRAME_CONFIGS = {};
 
-// Mulai dengan fallback lokal — Drive dimuat di background
-FRAME_THEMES  = { ...LOCAL_FALLBACK_THEMES };
-FRAME_CONFIGS = { ...LOCAL_FALLBACK_CONFIGS };
+// Cache gambar yang sudah diload
+const frameImageCache = {};
+const _frameInFlight  = {};
 
-// ── fetch() helper dengan timeout dan retry ─────────────────
-async function apiFetch(url, params = {}, timeoutMs = 30000) {
-  const qs       = new URLSearchParams(params).toString();
-  const fullUrl  = url + (qs ? '?' + qs : '');
-  const controller = new AbortController();
-  const timer    = setTimeout(() => controller.abort(), timeoutMs);
+// ── Load manifest dari GitHub ─────────────────────────────────
+async function initLocalTemplates() {
+  setStatus('⏳ Memuat daftar template…', 'info');
   try {
-    const res = await fetch(fullUrl, {
-      method: 'GET',
-      signal: controller.signal,
-      // Tidak perlu custom headers — Apps Script JSON sudah CORS-safe
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' dari Apps Script');
-    const json = await res.json();
-    return json;
-  } finally {
-    clearTimeout(timer);
-  }
-}
+    const res = await fetch(`${MANIFEST_PATH}?v=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const manifest = await res.json();
 
-// ── Slug helper ───────────────────────────────────────────────
-function slugifyText(text) {
-  return String(text || '').toLowerCase().normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'tema';
-}
-function normalizeTemplateName(text) {
-  return String(text || '').toLowerCase().replace(/\.[a-z0-9]+$/i, '').replace(/[^a-z0-9]+/g, '');
-}
-function basenameFromPath(p) { return String(p || '').split('/').pop() || ''; }
+    if (!Array.isArray(manifest.themes) || !manifest.themes.length) {
+      throw new Error('manifest.json kosong atau tidak valid.');
+    }
 
-// ── Manifest: daftar tema+frame dari Drive ────────────────────
-async function loadDriveManifest() {
-  console.log('[LabShot] Fetch manifest dari:', TEMPLATE_API_URL);
-  const data = await apiFetch(TEMPLATE_API_URL, { action: 'manifest' }, 30000);
-  console.log('[LabShot] Manifest response:', JSON.stringify(data).slice(0, 200));
-  if (!data || data.ok === false) {
-    throw new Error('Manifest error: ' + (data?.error || 'response tidak valid'));
-  }
-  if (!Array.isArray(data.themes) || data.themes.length === 0) {
-    throw new Error('Manifest kosong – belum ada template di folder Drive. Pastikan FRAMES_FOLDER_ID sudah diisi di Code.gs.');
-  }
-  return data.themes;
-}
-
-// ── Cocokkan nama file Drive dengan slot lokal ───────────────
-function findSlotConfigForDriveFrame(frame) {
-  const candidates = [
-    normalizeTemplateName(frame?.fileName),
-    normalizeTemplateName(frame?.label),
-  ].filter(Boolean);
-  for (const cfg of Object.values(SLOT_LIBRARY_CONFIGS)) {
-    const cfgNames = [
-      normalizeTemplateName(cfg.path ? basenameFromPath(cfg.path) : ''),
-      normalizeTemplateName(cfg.label),
-    ].filter(Boolean);
-    if (candidates.some(c => cfgNames.includes(c))) return cfg;
-  }
-  return null;
-}
-
-// ── Slot generik fallback ─────────────────────────────────────
-function createGenericSlots(count) {
-  count = Math.max(1, Math.min(4, Number(count) || 1));
-  const map = {
-    1: { 1: [{ x:150, y:430, w:780, h:1050, radius:12 }] },
-    2: { 2: [{ x:145, y:390, w:790, h:520, radius:12 }, { x:145, y:1015, w:790, h:520, radius:12 }] },
-    3: { 3: [{ x:150, y:340, w:780, h:360, radius:12 }, { x:150, y:780, w:780, h:360, radius:12 }, { x:150, y:1220, w:780, h:360, radius:12 }] },
-    4: { 4: [{ x:150, y:300, w:780, h:300, radius:12 }, { x:150, y:675, w:780, h:300, radius:12 }, { x:150, y:1050, w:780, h:300, radius:12 }, { x:150, y:1425, w:780, h:300, radius:12 }] },
-  };
-  return map[count] || map[1];
-}
-
-// ── Build config untuk satu frame dari Drive ─────────────────
-function buildDriveConfig(themeKey, frame, index) {
-  const matched      = findSlotConfigForDriveFrame(frame);
-  const defaultCount = Number(matched?.defaultCount || frame?.defaultCount || 1) || 1;
-  const slotsByCount = matched?.slotsByCount
-    ? JSON.parse(JSON.stringify(matched.slotsByCount))
-    : createGenericSlots(defaultCount);
-  return {
-    theme:        themeKey,
-    label:        frame.label || frame.fileName || ('Template ' + (index + 1)),
-    fileName:     frame.fileName || '',
-    driveId:      frame.id,
-    defaultCount: defaultCount,
-    slotsByCount: slotsByCount,
-    remote:       true,
-    _slotSource:  matched ? 'library' : 'generic',
-  };
-}
-
-// ── Init: muat semua tema+frame dari Drive ───────────────────
-async function initDriveTemplates() {
-  setStatus('⏳ Memuat template dari Google Drive…', 'info');
-  try {
-    const themes      = await loadDriveManifest();
     const nextThemes  = {};
     const nextConfigs = {};
 
-    themes.forEach((theme, ti) => {
-      if (!theme) return;
-      const themeKey = slugifyText(theme.value || theme.label || ('tema-' + ti));
-      nextThemes[themeKey] = theme.label || themeKey;
-      (theme.frames || []).forEach((frame, fi) => {
-        if (!frame?.id) { console.warn('[LabShot] Frame tanpa id dilewati:', frame); return; }
-        const key = 'drive_' + themeKey + '_' + fi + '_' + String(frame.id).slice(-6);
-        nextConfigs[key] = buildDriveConfig(themeKey, frame, fi);
+    manifest.themes.forEach(theme => {
+      if (!theme.slug || !theme.label) return;
+      nextThemes[theme.slug] = theme.label;
+
+      (theme.frames || []).forEach(frame => {
+        if (!frame.key || !frame.file) return;
+        const frameKey = `${theme.slug}__${frame.key}`;
+        // Slot: gunakan dari manifest jika ada, atau akan di-detect otomatis
+        const slotsByCount = frame.slotsByCount || {
+          1: [{ x: 150, y: 390, w: 780, h: 1140, radius: 12 }]
+        };
+        nextConfigs[frameKey] = {
+          theme:        theme.slug,
+          label:        frame.label || frame.key,
+          path:         `${FRAMES_BASE_PATH}/${theme.slug}/${frame.file}`,
+          defaultCount: frame.defaultCount || 1,
+          slotsByCount: slotsByCount,
+          _autoDetect:  !frame.slotsByCount, // flag untuk auto-detect slot saat load
+        };
       });
     });
 
     if (!Object.keys(nextConfigs).length) {
-      throw new Error('Tidak ada frame valid di manifest. Periksa isi subfolder Drive.');
+      throw new Error('Tidak ada frame valid di manifest.json');
     }
 
     FRAME_THEMES  = nextThemes;
     FRAME_CONFIGS = nextConfigs;
-    console.log('[LabShot] Drive OK:', Object.keys(nextConfigs).length, 'template,', Object.keys(nextThemes).length, 'tema');
-    setStatus('✅ ' + Object.keys(nextConfigs).length + ' template Drive siap.', 'success', 4000);
+
+    console.log(`[LabShot] ${Object.keys(nextConfigs).length} frame dari ${Object.keys(nextThemes).length} tema dimuat.`);
+    setStatus(`✅ ${Object.keys(nextConfigs).length} template siap.`, 'success', 3500);
     return true;
 
   } catch (err) {
-    console.error('[LabShot] Drive gagal:', err.message);
-    FRAME_THEMES  = { ...LOCAL_FALLBACK_THEMES };
-    FRAME_CONFIGS = { ...LOCAL_FALLBACK_CONFIGS };
-    setStatus('⚠️ Drive belum terbaca (' + err.message + '). Memakai frame lokal.', 'warning');
+    console.error('[LabShot] manifest gagal:', err.message);
+    // Fallback ke 8 frame lokal lama jika manifest tidak ada
+    useLegacyFallback();
+    setStatus('⚠️ manifest.json tidak terbaca. Memakai frame bawaan.', 'warning');
     return false;
   }
 }
 
-// ── Fetch gambar satu frame dari Drive (dengan cache) ────────
-const _frameFetchInFlight = {};
-
-async function loadDriveFrameImage(frameKey, config) {
-  const cacheKey = config.driveId;
-  if (DRIVE_TEMPLATE_CACHE[cacheKey]) return DRIVE_TEMPLATE_CACHE[cacheKey];
-
-  setStatus('⏳ Memuat frame "' + config.label + '" dari Drive…', 'info');
-  console.log('[LabShot] Fetch gambar frame, id:', cacheKey);
-
-  const data = await apiFetch(TEMPLATE_API_URL, { action: 'image', id: cacheKey }, 40000);
-  if (!data || data.ok === false || !data.dataUrl) {
-    throw new Error('Gambar template gagal: ' + (data?.error || 'dataUrl kosong'));
-  }
-
-  const source = await loadImage(data.dataUrl);
-
-  // Render ke canvas 1080×1920 lalu clear area slot
-  const canvas = document.createElement('canvas');
-  canvas.width  = STORY_W;
-  canvas.height = STORY_H;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.clearRect(0, 0, STORY_W, STORY_H);
-  ctx.drawImage(source, 0, 0, STORY_W, STORY_H);
-
-  // Auto-detect slot jika belum ada dari library
-  if (config._slotSource !== 'library') {
-    const detected = detectSlotsFromCanvas(canvas, config.defaultCount || 1);
-    if (detected.length) {
-      config.slotsByCount = { [detected.length]: detected };
-      config.defaultCount = detected.length;
-      config._slotSource  = 'detected';
-      console.log('[LabShot] Auto-detected slots untuk', config.label, ':', detected);
-    }
-  }
-
-  // Clear slot area supaya foto bisa terlihat di balik frame
-  const slots = getSlotsForFrame(frameKey, getAutoPhotoCount(frameKey));
-  slots.forEach(slot => {
-    withSlotTransform(ctx, slot, (x, y, w, h) => {
-      ctx.clearRect(x - 1, y - 1, w + 2, h + 2);
-    });
-  });
-
-  const img = await loadImage(canvas.toDataURL('image/png'));
-  DRIVE_TEMPLATE_CACHE[cacheKey] = img;
-  console.log('[LabShot] Frame cached:', config.label);
-  return img;
+// ── Fallback 8 frame lokal (jika manifest tidak ada) ─────────
+function useLegacyFallback() {
+  FRAME_THEMES  = { default: 'Frame Bawaan LabShot' };
+  FRAME_CONFIGS = {
+    yogyakartaCity: {
+      theme: 'default', label: 'Yogyakarta City Series',
+      path: 'assets/frames/yogyakarta-city-series.png',
+      defaultCount: 1, _autoDetect: false,
+      slotsByCount: { 1: [{ x:78, y:558, w:602, h:905, radius:10 }] },
+    },
+    tiUmyCampus: {
+      theme: 'default', label: 'TI UMY Campus Series',
+      path: 'assets/frames/ti-umy-campus.png',
+      defaultCount: 1, _autoDetect: false,
+      slotsByCount: { 1: [{ x:56, y:497, w:967, h:361, radius:10 }] },
+    },
+    friendshipBonds: {
+      theme: 'default', label: 'TI UMY Friendship',
+      path: 'assets/frames/friendship-bonds-v23.png',
+      defaultCount: 3, _autoDetect: false,
+      slotsByCount: {
+        3: [{ x:46, y:771, w:642, h:754, radius:8 },
+            { x:45, y:1564, w:217, h:256, radius:8 },
+            { x:732, y:1563, w:304, h:257, radius:8 }],
+      },
+    },
+  };
 }
 
-// ── Auto-detect area transparan/gelap dari canvas ────────────
-function detectSlotsFromCanvas(canvas, desiredCount) {
-  const SW = 216, SH = 384;
-  const small = document.createElement('canvas');
-  small.width = SW; small.height = SH;
-  const sc = small.getContext('2d', { willReadFrequently: true });
-  sc.drawImage(canvas, 0, 0, SW, SH);
-  const { data } = sc.getImageData(0, 0, SW, SH);
-  const mask = new Uint8Array(SW * SH);
+// ── Ambil gambar frame (dengan cache dan concurrent guard) ────
+async function getFrameImage(frameKey) {
+  const config = FRAME_CONFIGS[frameKey];
+  if (!config?.path) return null;
+  if (frameImageCache[frameKey]) return frameImageCache[frameKey];
+  if (_frameInFlight[frameKey])  return _frameInFlight[frameKey];
 
-  for (let y = 0; y < SH; y++) {
-    for (let x = 0; x < SW; x++) {
-      const i = (y * SW + x) * 4;
-      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-      const dark    = r < 42 && g < 42 && b < 42;
-      const transp  = a < 32;
-      const checker = (Math.max(r,g,b) - Math.min(r,g,b)) <= 7 && Math.max(r,g,b) > 175;
-      if (dark || transp || checker) mask[y * SW + x] = 1;
-    }
-  }
-
-  const seen = new Uint8Array(SW * SH);
-  const comps = [];
-  for (let y = 0; y < SH; y++) {
-    for (let x = 0; x < SW; x++) {
-      const start = y * SW + x;
-      if (!mask[start] || seen[start]) continue;
-      const qx = [x], qy = [y]; seen[start] = 1;
-      let head = 0, area = 0, minX = x, maxX = x, minY = y, maxY = y;
-      while (head < qx.length) {
-        const cx = qx[head], cy = qy[head++]; area++;
-        if (cx < minX) minX=cx; if (cx > maxX) maxX=cx;
-        if (cy < minY) minY=cy; if (cy > maxY) maxY=cy;
-        for (const [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
-          if (nx<0||ny<0||nx>=SW||ny>=SH) continue;
-          const ni = ny*SW+nx;
-          if (!mask[ni]||seen[ni]) continue;
-          seen[ni]=1; qx.push(nx); qy.push(ny);
+  _frameInFlight[frameKey] = (async () => {
+    try {
+      const img = await loadImage(config.path);
+      // Auto-detect slot jika flag _autoDetect aktif
+      if (config._autoDetect) {
+        const detected = detectSlotFromImage(img, config.defaultCount || 1);
+        if (detected.length) {
+          config.slotsByCount = { [detected.length]: detected };
+          config.defaultCount  = detected.length;
+          config._autoDetect   = false;
+          console.log(`[LabShot] Slot auto-detected untuk ${config.label}:`, detected);
         }
       }
-      const bw = maxX-minX+1, bh = maxY-minY+1;
-      if (area > SW*SH*0.02 && bw > SW*0.15 && bh > SH*0.08 && (area/(bw*bh)) > 0.35) {
-        comps.push({ area, minX, minY, maxX, maxY });
-      }
+      frameImageCache[frameKey] = img;
+      return img;
+    } catch (err) {
+      console.warn(`[LabShot] Gagal load frame ${frameKey}:`, err.message);
+      return null;
+    } finally {
+      delete _frameInFlight[frameKey];
     }
+  })();
+
+  return _frameInFlight[frameKey];
+}
+
+// ── Auto-detect area slot (gelap/terang) dari gambar ─────────
+function detectSlotFromImage(img, desiredCount) {
+  const SW = 216, SH = 384;
+  const c  = document.createElement('canvas');
+  c.width  = SW; c.height = SH;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, SW, SH);
+  const { data } = ctx.getImageData(0, 0, SW, SH);
+
+  const dark  = new Uint8Array(SW * SH);
+  const light = new Uint8Array(SW * SH);
+  for (let i = 0; i < SW * SH; i++) {
+    const r = data[i*4], g = data[i*4+1], b = data[i*4+2], a = data[i*4+3];
+    if (r < 52 && g < 52 && b < 52)       dark[i]  = 1;
+    if (r > 205 && g > 205 && b > 205 && a > 200) light[i] = 1;
   }
 
-  comps.sort((a,b) => b.area-a.area);
-  const chosen = [];
-  for (const c of comps) {
-    const overlaps = chosen.some(o => !(c.maxX<o.minX||c.minX>o.maxX||c.maxY<o.minY||c.minY>o.maxY));
-    if (!overlaps) chosen.push(c);
-    if (chosen.length >= (desiredCount||1)) break;
-  }
-  chosen.sort((a,b) => a.minY-b.minY||a.minX-b.minX);
-  return chosen.map(c => ({
-    x: Math.round(c.minX/SW*STORY_W), y: Math.round(c.minY/SH*STORY_H),
-    w: Math.round((c.maxX-c.minX+1)/SW*STORY_W), h: Math.round((c.maxY-c.minY+1)/SH*STORY_H),
+  const findBiggest = (mask) => {
+    const vis = new Uint8Array(SW * SH);
+    let best = null, bestArea = 0;
+    for (let sy = 0; sy < SH; sy++) {
+      for (let sx = 0; sx < SW; sx++) {
+        const si = sy * SW + sx;
+        if (!mask[si] || vis[si]) continue;
+        const queue = [si]; vis[si] = 1;
+        let head = 0;
+        let minX=sx,maxX=sx,minY=sy,maxY=sy;
+        while (head < queue.length) {
+          const idx = queue[head++];
+          const cy = (idx / SW) | 0, cx = idx % SW;
+          if (cx<minX) minX=cx; if (cx>maxX) maxX=cx;
+          if (cy<minY) minY=cy; if (cy>maxY) maxY=cy;
+          for (const [ny,nx] of [[cy-1,cx],[cy+1,cx],[cy,cx-1],[cy,cx+1]]) {
+            if (ny<0||ny>=SH||nx<0||nx>=SW) continue;
+            const ni = ny*SW+nx;
+            if (!mask[ni]||vis[ni]) continue;
+            vis[ni]=1; queue.push(ni);
+          }
+        }
+        const area = queue.length;
+        const bw = maxX-minX+1, bh = maxY-minY+1;
+        const touchesAll = minY<=1&&maxY>=SH-2&&minX<=1&&maxX>=SW-2;
+        const tooBig     = area > SW*SH*0.82;
+        const tooSmall   = bw < SW*0.10 || bh < SH*0.08 || area < SW*SH*0.03;
+        if (!touchesAll && !tooBig && !tooSmall && area > bestArea) {
+          bestArea = area;
+          best = { x:minX,y:minY,w:bw,h:bh };
+        }
+      }
+    }
+    return { slot: best, area: bestArea };
+  };
+
+  const d = findBiggest(dark);
+  const l = findBiggest(light);
+  const winner = (l.area > d.area && l.slot) ? l.slot : d.slot;
+
+  if (!winner) return [];
+
+  const SCALE_X = STORY_W / SW, SCALE_Y = STORY_H / SH;
+  return [{
+    x: Math.round(winner.x * SCALE_X),
+    y: Math.round(winner.y * SCALE_Y),
+    w: Math.round(winner.w * SCALE_X),
+    h: Math.round(winner.h * SCALE_Y),
     radius: 10,
-  }));
+  }];
 }
 
 /* ── Frame helpers ──────────────────────────────────────── */
 function populateThemeOptions() {
   if (!els.themeSelect) return;
-  const current = els.themeSelect.value || 'all';
+  const current = els.themeSelect.value;
   els.themeSelect.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all';
-  allOpt.textContent = 'Semua Tema';
-  els.themeSelect.appendChild(allOpt);
+  // Placeholder – wajib pilih tema dulu
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '— Pilih Tema —';
+  placeholder.disabled = true;
+  placeholder.selected = !current;
+  els.themeSelect.appendChild(placeholder);
   Object.entries(FRAME_THEMES).forEach(([key, label]) => {
-    const hasFrame = Object.values(FRAME_CONFIGS).some(cfg => (cfg.theme || 'default') === key);
-    if (!hasFrame && key !== 'default') return;
     const opt = document.createElement('option');
     opt.value = key;
     opt.textContent = label;
     els.themeSelect.appendChild(opt);
   });
-  els.themeSelect.value = [...els.themeSelect.options].some(o => o.value === current) ? current : 'all';
+  const valid = [...els.themeSelect.options].some(o => o.value === current);
+  if (valid) els.themeSelect.value = current;
 }
 function populateFrameOptions(themeKey = null) {
   if (!els.frameTheme) return;
-  const selectedTheme = themeKey || els.themeSelect?.value || 'all';
+  const selectedTheme = themeKey || els.themeSelect?.value || '';
   const currentFrame  = els.frameTheme.value;
-  const entries = Object.entries(FRAME_CONFIGS).filter(([, cfg]) => {
-    const t = cfg.theme || 'default';
-    return selectedTheme === 'all' || t === selectedTheme;
-  });
   els.frameTheme.innerHTML = '';
+
+  if (!selectedTheme) {
+    // Belum ada tema dipilih
+    const ph = document.createElement('option');
+    ph.value = ''; ph.textContent = '— Pilih tema dulu —'; ph.disabled = true; ph.selected = true;
+    els.frameTheme.appendChild(ph);
+    if (els.startSessionBtn) els.startSessionBtn.disabled = true;
+    return;
+  }
+
+  const entries = Object.entries(FRAME_CONFIGS).filter(([, cfg]) => cfg.theme === selectedTheme);
   entries.forEach(([key, cfg]) => {
     const opt = document.createElement('option');
-    opt.value = key;
-    opt.textContent = cfg.label || key;
+    opt.value = key; opt.textContent = cfg.label || key;
     els.frameTheme.appendChild(opt);
   });
   const keepCurrent = entries.some(([key]) => key === currentFrame);
-  els.frameTheme.value = keepCurrent ? currentFrame : (entries[0]?.[0] || Object.keys(FRAME_CONFIGS)[0] || '');
+  els.frameTheme.value = keepCurrent ? currentFrame : (entries[0]?.[0] || '');
+  if (els.frameTheme.value) updateFrameAutoInfo();
 }
 function resolveFrameKey() {
   return els.frameTheme?.value || Object.keys(FRAME_CONFIGS)[0] || 'yogyakartaCity';
@@ -547,7 +481,6 @@ let previewTimer        = null;
 let selectedPhotoIndex  = -1;
 let retakeSlotIndex     = -1;
 let reviewReady         = false;
-const frameImageCache   = {};
 
 /* ── Upload status helper ───────────────────────────────── */
 function setUploadStatus(state, msg) {
@@ -677,13 +610,7 @@ function startPreviewLoop() {
   previewTimer = setInterval(renderFramePreview, 90);
 }
 
-let _rfpRunning = false;
 async function renderFramePreview() {
-  if (_rfpRunning) return;
-  _rfpRunning = true;
-  try { await _rfpInner(); } finally { _rfpRunning = false; }
-}
-async function _rfpInner() {
   const canvas = els.framePreviewCanvas;
   if (!canvas) return;
 
@@ -798,30 +725,37 @@ const TOAST_FLAVOURS = {
 };
 
 function setStatus(msg, flavour = 'info', autoDismissMs = 0) {
+  // Legacy hidden element (JS compat)
   if (els.statusText) els.statusText.textContent = msg;
-  const toast  = els.statusToast;
-  const textEl = els.statusToastText;
+
+  const toast    = els.statusToast;
+  const textEl   = els.statusToastText;
+  const f        = TOAST_FLAVOURS[flavour] || TOAST_FLAVOURS.info;
+
   if (!toast || !textEl) return;
 
-  // Auto-detect flavour dari emoji prefix — gunakan variabel lokal, jangan mutasi TOAST_FLAVOURS
-  let fl = flavour;
-  if (fl === 'info') {
-    if (msg.startsWith('✅') || msg.startsWith('🎉'))                           fl = 'success';
-    else if (msg.startsWith('⚠️') || msg.startsWith('❌'))                     fl = 'error';
-    else if (msg.startsWith('📷') || msg.startsWith('📸') || msg.startsWith('⏳')) fl = 'active';
-    else if (msg.startsWith('🔀') || msg.startsWith('🖼'))                     fl = 'warning';
-  }
-  const f = TOAST_FLAVOURS[fl] || TOAST_FLAVOURS.info;
+  // Detect flavour from emoji prefix if not provided
+  // Auto-detect flavour
+    let fl = flavour;
+    if (fl === 'info') {
+      if (msg.startsWith('✅') || msg.startsWith('🎉'))                              fl = 'success';
+      else if (msg.startsWith('⚠️') || msg.startsWith('❌'))                        fl = 'error';
+      else if (msg.startsWith('📷') || msg.startsWith('📸') || msg.startsWith('⏳')) fl = 'active';
+      else if (msg.startsWith('🔀') || msg.startsWith('🖼'))                        fl = 'warning';
+    }
+    const f = TOAST_FLAVOURS[fl] || TOAST_FLAVOURS.info;
 
-  const iconEl = toast.querySelector('.toast-icon');
-  if (iconEl) iconEl.textContent = f.icon;
+  const icon = document.querySelector('#statusToast .toast-icon');
+  if (icon) icon.textContent = f.icon;
   textEl.textContent = msg.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}][\uFE0F]?\s*/u, '');
 
-  toast.className = 'status-toast ' + f.cls + ' show';
+  toast.className = `status-toast ${f.cls} show`;
 
   if (_toastTimer) clearTimeout(_toastTimer);
   if (autoDismissMs > 0) {
-    _toastTimer = setTimeout(() => { toast.className = 'status-toast ' + f.cls; }, autoDismissMs);
+    _toastTimer = setTimeout(() => {
+      toast.className = `status-toast ${f.cls}`;
+    }, autoDismissMs);
   }
 }
 
@@ -923,7 +857,7 @@ async function startCamera(deviceId = null) {
         ? 'Kamera tidak ditemukan. Pastikan webcam terpasang dan tidak dipakai aplikasi lain.'
         : 'Kamera tidak bisa diakses. Pastikan halaman dibuka via HTTPS/localhost dan izin kamera diberikan.';
     stopPreviewLoop(); renderFramePreview();
-    setStatus('⚠️ ' + msg, 'error'); alert(msg);
+    setStatus('⚠️ ' + msg); alert(msg);
   }
 }
 
@@ -1087,7 +1021,7 @@ function moveSelectedPhoto(direction) {
   [capturedPhotoImgs[selectedPhotoIndex], capturedPhotoImgs[next]]   = [capturedPhotoImgs[next], capturedPhotoImgs[selectedPhotoIndex]];
   selectedPhotoIndex = next;
   updatePhotoGrid(capturedPhotos); renderFramePreview();
-  setStatus('🔀 Urutan foto diperbarui. Klik Finish jika sudah cocok.', 'warning');
+  setStatus('🔀 Urutan foto diperbarui. Klik Finish jika sudah cocok.');
 }
 
 async function retakeSelectedPhoto() {
@@ -1096,14 +1030,14 @@ async function retakeSelectedPhoto() {
   ensureAudio(); setBusy(true);
   retakeSlotIndex = selectedPhotoIndex;
   renderFramePreview();
-  setStatus(`📸 Retake foto ${selectedPhotoIndex + 1} – bersiap…`, 'active');
+  setStatus(`📸 Retake foto ${selectedPhotoIndex + 1} – bersiap…`);
   await runCountdown(3);
   const shot = capturePhoto();
   capturedPhotos[selectedPhotoIndex]    = shot;
   capturedPhotoImgs[selectedPhotoIndex] = await loadImage(shot);
   retakeSlotIndex = -1;
   updatePhotoGrid(capturedPhotos); renderFramePreview();
-  setStatus(`✅ Foto ${selectedPhotoIndex + 1} sudah diganti. Klik Finish jika sudah cocok.`, 'success');
+  setStatus(`✅ Foto ${selectedPhotoIndex + 1} sudah diganti. Klik Finish jika sudah cocok.`);
   setBusy(false);
 }
 
@@ -1190,31 +1124,18 @@ function loadImage(src) {
   });
 }
 
-// In-flight promise guard – cegah double-fetch frame yang sama
-const _frameInFlight = {};
-
 async function getFrameImage(frameKey) {
   const config = FRAME_CONFIGS[frameKey];
   if (!config) return null;
-  if (frameImageCache[frameKey]) return frameImageCache[frameKey];
-  if (_frameInFlight[frameKey])  return _frameInFlight[frameKey];
 
-  _frameInFlight[frameKey] = (async () => {
-    try {
-      const img = config.driveId
-        ? await loadDriveFrameImage(frameKey, config)
-        : config.path ? await loadImage(config.path) : null;
-      if (img) frameImageCache[frameKey] = img;
-      return img;
-    } catch (err) {
-      console.warn('[LabShot] getFrameImage gagal:', frameKey, err.message);
-      return null;
-    } finally {
-      delete _frameInFlight[frameKey];
-    }
-  })();
+  if (config.driveId) {
+    if (!frameImageCache[frameKey]) frameImageCache[frameKey] = await loadDriveFrameImage(frameKey, config);
+    return frameImageCache[frameKey];
+  }
 
-  return _frameInFlight[frameKey];
+  if (!config.path) return null;
+  if (!frameImageCache[frameKey]) frameImageCache[frameKey] = await loadImage(config.path);
+  return frameImageCache[frameKey];
 }
 
 function fillBase(ctx, frameKey) {
@@ -1446,23 +1367,18 @@ async function initLabShot() {
     return;
   }
 
-  // ── Splash screen wiring DULU agar langsung muncul ─────────────────────────
+  // ── Splash wiring DULU ─────────────────────────────────────
   document.getElementById('splashStartBtn')?.addEventListener('click', openApp);
   document.getElementById('showGuideBtn')?.addEventListener('click', showGuide);
 
-  // ── Populate dropdown dengan fallback lokal dulu (cepat) ─────────────────
-  populateThemeOptions();
-  populateFrameOptions();
-
-  // ── Muat template Drive di background – tidak block UI ───────────────────
-  initDriveTemplates().then(ok => {
-    if (ok) {
-      populateThemeOptions();
-      populateFrameOptions();
-      updateFrameAutoInfo();
-    }
+  // ── Muat manifest dari GitHub (fetch ringan ~15KB) ──────────
+  initLocalTemplates().then(() => {
+    populateThemeOptions();
+    populateFrameOptions();
   }).catch(err => {
-    console.error('[LabShot] initDriveTemplates error:', err);
+    console.error('[LabShot] initLocalTemplates error:', err);
+    populateThemeOptions();
+    populateFrameOptions();
   });
 
   els.startCameraBtn.addEventListener('click',  () => startCamera());
@@ -1504,7 +1420,7 @@ async function initLabShot() {
   applyVideoMirror();
   resetResult(true);
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera untuk memulai.', 'idle');
-  console.log('[LabShot] v38 loaded. Drive templates (fetch) aktif via:', TEMPLATE_API_URL);
+  console.log('[LabShot] v39 loaded. Manifest template dari:', MANIFEST_PATH);
 }
 
 if (document.readyState === 'loading') {
