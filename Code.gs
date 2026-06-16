@@ -1,305 +1,267 @@
 // ═══════════════════════════════════════════════════════════════
-//  LabShot v37 – Code.gs  (SATU FILE UNTUK SEMUA ENDPOINT)
+//  LabShot v38 – Code.gs
 //
-//  Endpoint:
-//  GET  ?n=filename.jpg          → serve halaman foto hasil
-//  GET  ?action=manifest         → JSONP daftar tema+template dari Drive
-//  GET  ?action=image&id=FILE_ID → JSONP gambar template base64
-//  POST (body JSON)              → upload foto hasil ke Drive
+//  PENTING: Apps Script Web App WAJIB di-deploy dengan:
+//    Execute as : Me
+//    Who has access : Anyone
 //
-//  Setup:
-//  1. Paste seluruh file ini ke Google Apps Script (satu project).
-//  2. Isi PHOTO_FOLDER_ID  = folder ID tempat foto hasil disimpan.
-//  3. Isi FRAMES_FOLDER_ID = folder ID induk folder-tema template.
-//  4. Deploy → Web App:  Execute as: Me | Who has access: Anyone
-//  5. Salin URL Web App ke APPS_SCRIPT_URL di app.js.
-//     (TEMPLATE_API_URL bisa diisi URL yang sama.)
+//  Semua GET response pakai ContentService → otomatis ada header
+//  Access-Control-Allow-Origin: * sehingga fetch() dari browser bisa.
+//
+//  Endpoint GET:
+//    ?action=manifest          → JSON daftar tema + frame
+//    ?action=image&id=FILE_ID  → JSON { ok, dataUrl }
+//    ?n=filename.jpg           → HTML halaman foto hasil
+//    (kosong)                  → teks health-check
+//
+//  Endpoint POST:
+//    body JSON { imageBase64, fileName } → simpan foto ke Drive
 //
 //  Struktur folder template di Google Drive:
-//  FRAMES_FOLDER_ID/
-//    ├── Yogyakarta City/          ← nama folder = nama tema
-//    │     ├── yogyakarta-city.png
-//    │     └── ...
-//    ├── TI UMY Campus/
-//    │     └── ti-umy-campus.png
-//    └── (folder tema lainnya...)
-//
-//  Setiap PNG di dalam subfolder otomatis muncul sebagai template.
-//  Tidak perlu edit kode saat menambah tema/template baru.
+//    FRAMES_FOLDER_ID/
+//      ├── Nama Tema 1/          ← nama folder = nama tema
+//      │     ├── frame-a.png
+//      │     └── frame-b.png
+//      └── Nama Tema 2/
+//            └── frame-c.png
 // ═══════════════════════════════════════════════════════════════
 
-// ── ID Folder Google Drive ──────────────────────────────────
-const PHOTO_FOLDER_ID  = "1HLXr6Y-mX1EqveyV-KPtAQp-5Pt0e6GJ";  // folder hasil foto
-const FRAMES_FOLDER_ID = "GANTI_DENGAN_ID_FOLDER_FRAMES";        // folder induk template
+// ──────────────────────────────────────────────────────────────
+//  WAJIB DIISI: ID folder Google Drive
+// ──────────────────────────────────────────────────────────────
+var PHOTO_FOLDER_ID  = "1HLXr6Y-mX1EqveyV-KPtAQp-5Pt0e6GJ";
+var FRAMES_FOLDER_ID = "GANTI_DENGAN_ID_FOLDER_FRAMES_ANDA";
 
-// ── Cache manifest agar tidak bolak-balik baca Drive ───────
-let _manifestCache     = null;
-let _manifestCacheTime = 0;
-const MANIFEST_TTL_MS  = 5 * 60 * 1000; // 5 menit
+// Cache manifest di memory (reset setiap deploy / setiap jam)
+var _cache     = null;
+var _cacheTime = 0;
+var CACHE_TTL  = 60 * 60 * 1000; // 1 jam
 
 // ═══════════════════════════════════════════════════════════════
-//  ROUTER UTAMA
+//  ROUTER
 // ═══════════════════════════════════════════════════════════════
 function doGet(e) {
-  const p = (e && e.parameter) ? e.parameter : {};
-  const cb = p.callback || '';   // JSONP callback name
+  var p  = (e && e.parameter) ? e.parameter : {};
+  var action = p.action || '';
 
-  // ── Template: manifest (daftar tema + file ID per template) ──
-  if (p.action === 'manifest') {
-    return jsonpOrJson_(cb, buildManifest_());
+  if (action === 'manifest') {
+    return jsonOut_(buildManifest_());
   }
 
-  // ── Template: ambil gambar satu template sebagai base64 ──────
-  if (p.action === 'image' && p.id) {
-    return jsonpOrJson_(cb, serveImage_(p.id));
+  if (action === 'image' && p.id) {
+    return jsonOut_(serveImage_(p.id));
   }
 
-  // ── Foto hasil: serve halaman foto pribadi ───────────────────
   if (p.n) {
     return renderPhotoPage_(p.n);
   }
 
-  // ── Health check ─────────────────────────────────────────────
   return ContentService
-    .createTextOutput("LabShot Drive aktif. Endpoint: ?action=manifest | ?action=image&id=ID | ?n=filename.jpg")
+    .createTextOutput('LabShot API aktif. GET ?action=manifest | ?action=image&id=ID | ?n=file.jpg')
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  UPLOAD FOTO HASIL  (POST)
-// ═══════════════════════════════════════════════════════════════
 function doPost(e) {
   try {
     if (!e || !e.postData || !e.postData.contents) {
-      return jsonResponse_({ ok: false, error: 'Data POST kosong.' });
+      return jsonOut_({ ok: false, error: 'Body POST kosong.' });
     }
-    const data = JSON.parse(e.postData.contents);
-    if (!data.imageBase64) {
-      return jsonResponse_({ ok: false, error: 'imageBase64 tidak ditemukan.' });
+    var body = JSON.parse(e.postData.contents);
+    if (!body.imageBase64) {
+      return jsonOut_({ ok: false, error: 'imageBase64 tidak ada.' });
     }
 
-    const folder   = DriveApp.getFolderById(PHOTO_FOLDER_ID);
-    const fileName = data.fileName || makeFileName_();
-    const clean64  = String(data.imageBase64).replace(/^data:image\/[a-z]+;base64,/, '');
-    const bytes    = Utilities.base64Decode(clean64);
-    const blob     = Utilities.newBlob(bytes, 'image/jpeg', fileName);
+    var folder   = DriveApp.getFolderById(PHOTO_FOLDER_ID);
+    var fileName = body.fileName || makeFileName_();
+    var b64      = String(body.imageBase64).replace(/^data:image\/[a-z]+;base64,/, '');
+    var bytes    = Utilities.base64Decode(b64);
+    var blob     = Utilities.newBlob(bytes, 'image/jpeg', fileName);
 
-    // Hapus file lama dengan nama yang sama (jika ada retake)
-    const old = folder.getFilesByName(fileName);
-    while (old.hasNext()) old.next().setTrashed(true);
+    var old = folder.getFilesByName(fileName);
+    while (old.hasNext()) { old.next().setTrashed(true); }
 
-    const file = folder.createFile(blob);
+    var file = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    return jsonResponse_({ ok: true, fileId: file.getId(), fileName: file.getName() });
+    return jsonOut_({ ok: true, fileId: file.getId(), fileName: file.getName() });
   } catch (err) {
-    return jsonResponse_({ ok: false, error: err.message });
+    return jsonOut_({ ok: false, error: err.message });
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  MANIFEST TEMPLATE  (GET ?action=manifest)
-//  Kembalikan semua subfolder sebagai tema dan file PNG di
-//  dalamnya sebagai daftar template.
-//  Format response:
-//  { ok: true, themes: [{ label, value, frames: [{id, fileName, label}] }] }
+//  MANIFEST: baca subfolder Drive → daftar tema + frame
 // ═══════════════════════════════════════════════════════════════
 function buildManifest_() {
   try {
-    // Cache agar request berulang tidak membebani Drive API
-    const now = Date.now();
-    if (_manifestCache && (now - _manifestCacheTime) < MANIFEST_TTL_MS) {
-      return _manifestCache;
+    var now = Date.now();
+    if (_cache && (now - _cacheTime) < CACHE_TTL) {
+      return _cache;
     }
 
-    const rootFolder = DriveApp.getFolderById(FRAMES_FOLDER_ID);
-    const themes     = [];
-    const subFolders = rootFolder.getFolders();
+    var root    = DriveApp.getFolderById(FRAMES_FOLDER_ID);
+    var folders = root.getFolders();
+    var themes  = [];
 
-    while (subFolders.hasNext()) {
-      const folder    = subFolders.next();
-      const themeLabel = folder.getName();
-      const frames    = [];
+    while (folders.hasNext()) {
+      var folder     = folders.next();
+      var themeLabel = folder.getName();
+      var frames     = [];
 
-      const files = folder.getFilesByType(MimeType.PNG);
-      while (files.hasNext()) {
-        const file     = files.next();
-        const fileName = file.getName();
-        frames.push({
-          id:       file.getId(),
-          fileName: fileName,
-          // Label dari nama file: hilangkan ekstensi, ganti tanda baca jadi spasi
-          label: fileName
-            .replace(/\.[^.]+$/, '')
-            .replace(/[-_]+/g, ' ')
-            .replace(/\b\w/g, c => c.toUpperCase()),
-        });
+      // Ambil semua PNG di subfolder ini
+      var pngFiles = folder.getFilesByType(MimeType.PNG);
+      while (pngFiles.hasNext()) {
+        var f        = pngFiles.next();
+        var fname    = f.getName();
+        var labelRaw = fname.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+        // Title-case
+        var label = labelRaw.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        frames.push({ id: f.getId(), fileName: fname, label: label });
       }
 
-      // Urutkan alfabetis berdasarkan nama file
-      frames.sort((a, b) => a.fileName.localeCompare(b.fileName));
+      frames.sort(function(a, b) { return a.fileName.localeCompare(b.fileName); });
 
       if (frames.length > 0) {
         themes.push({
-          label: themeLabel,
-          // value = slug dari nama folder untuk dijadikan key di JS
-          value: slugify_(themeLabel),
-          frames: frames,
+          label : themeLabel,
+          value : slugify_(themeLabel),
+          frames: frames
         });
       }
     }
 
-    // Urutkan tema alfabetis
-    themes.sort((a, b) => a.label.localeCompare(b.label));
+    themes.sort(function(a, b) { return a.label.localeCompare(b.label); });
 
-    const result = { ok: true, themes: themes };
-    _manifestCache     = result;
-    _manifestCacheTime = now;
+    var result = { ok: true, themes: themes };
+    _cache     = result;
+    _cacheTime = now;
     return result;
 
   } catch (err) {
-    return { ok: false, error: 'Gagal membaca folder template: ' + err.message };
+    return { ok: false, error: 'buildManifest gagal: ' + err.message };
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  SERVE GAMBAR TEMPLATE  (GET ?action=image&id=FILE_ID)
-//  Kembalikan gambar sebagai base64 dataUrl agar bisa langsung
-//  digunakan di canvas tanpa CORS issue.
-//  Format response: { ok: true, dataUrl: "data:image/png;base64,..." }
+//  IMAGE: kembalikan file Drive sebagai base64 dataUrl
 // ═══════════════════════════════════════════════════════════════
 function serveImage_(fileId) {
   try {
-    const file     = DriveApp.getFileById(fileId);
-    const blob     = file.getBlob();
-    const mime     = blob.getContentType() || 'image/png';
-    const base64   = Utilities.base64Encode(blob.getBytes());
-    const dataUrl  = 'data:' + mime + ';base64,' + base64;
+    var file    = DriveApp.getFileById(fileId);
+    var blob    = file.getBlob();
+    var mime    = blob.getContentType() || 'image/png';
+    var b64     = Utilities.base64Encode(blob.getBytes());
+    var dataUrl = 'data:' + mime + ';base64,' + b64;
     return { ok: true, dataUrl: dataUrl, fileName: file.getName() };
   } catch (err) {
-    return { ok: false, error: 'Gagal memuat gambar template: ' + err.message };
+    return { ok: false, error: 'serveImage gagal: ' + err.message };
   }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HALAMAN FOTO HASIL  (GET ?n=filename.jpg)
+//  FOTO HASIL: halaman HTML untuk scan QR
 // ═══════════════════════════════════════════════════════════════
 function renderPhotoPage_(fileName) {
-  const folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
-  const files  = folder.getFilesByName(fileName);
-  const found  = files.hasNext() ? files.next() : null;
-  const html   = found ? successHtml_(found) : waitingHtml_(fileName);
+  var folder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
+  var files  = folder.getFilesByName(fileName);
+  var found  = files.hasNext() ? files.next() : null;
+  var html   = found ? successHtml_(found) : waitingHtml_(fileName);
   return HtmlService.createHtmlOutput(html)
     .setTitle('LabShot Photo')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function waitingHtml_(fileName) {
-  const safe = escapeHtml_(fileName);
-  return `<!doctype html><html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="4">
-<title>LabShot – Menunggu Foto</title>
-<style>
-*{box-sizing:border-box;margin:0}
-body{font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#fffaf0,#ecfeff);
-  color:#14342b;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-.card{max-width:460px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:24px;
-  padding:28px;box-shadow:0 20px 50px rgba(20,52,43,.12);text-align:center}
-.spin{width:52px;height:52px;border:5px solid #d9f4ec;border-top-color:#2dd4bf;
-  border-radius:50%;margin:0 auto 16px;animation:sp 1s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-h1{margin:0 0 10px;font-size:26px;color:#0f4f3e}
-p{line-height:1.6;color:#5b6470;margin:8px 0}
-.name{background:#f8fafc;border:1px solid #e5e7eb;padding:6px 12px;
-  border-radius:10px;font-size:12px;color:#334155;word-break:break-all;display:inline-block;margin-top:8px}
-</style></head>
-<body><div class="card">
-<div class="spin"></div>
-<h1>Foto sedang disiapkan</h1>
-<p>Halaman ini akan memuat ulang otomatis setiap 4 detik sampai foto Anda tersedia.</p>
-<span class="name">${safe}</span>
-</div></body></html>`;
+  var safe = escapeHtml_(fileName);
+  return '<!doctype html><html><head>'
+    + '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<meta http-equiv="refresh" content="4">'
+    + '<title>LabShot \u2013 Menunggu Foto</title>'
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0}'
+    + 'body{font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#fffaf0,#ecfeff);'
+    + 'color:#14342b;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}'
+    + '.card{max-width:440px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:24px;'
+    + 'padding:28px;box-shadow:0 20px 50px rgba(20,52,43,.12);text-align:center}'
+    + '.spin{width:48px;height:48px;border:5px solid #d9f4ec;border-top-color:#2dd4bf;'
+    + 'border-radius:50%;margin:0 auto 14px;animation:sp 1s linear infinite}'
+    + '@keyframes sp{to{transform:rotate(360deg)}}'
+    + 'h1{margin:0 0 8px;font-size:24px;color:#0f4f3e}'
+    + 'p{line-height:1.6;color:#5b6470;margin:8px 0;font-size:14px}'
+    + '.name{background:#f8fafc;border:1px solid #e5e7eb;padding:5px 10px;'
+    + 'border-radius:8px;font-size:11px;color:#334155;word-break:break-all;display:inline-block;margin-top:6px}'
+    + '</style></head>'
+    + '<body><div class="card">'
+    + '<div class="spin"></div>'
+    + '<h1>Foto sedang disiapkan</h1>'
+    + '<p>Halaman otomatis memuat ulang setiap 4 detik.</p>'
+    + '<span class="name">' + safe + '</span>'
+    + '</div></body></html>';
 }
 
 function successHtml_(file) {
-  const fileName = escapeHtml_(file.getName());
-  const mime     = file.getMimeType() || 'image/jpeg';
-  const base64   = Utilities.base64Encode(file.getBlob().getBytes());
-  const dataUrl  = 'data:' + mime + ';base64,' + base64;
+  var fileName = escapeHtml_(file.getName());
+  var mime     = file.getMimeType() || 'image/jpeg';
+  var b64      = Utilities.base64Encode(file.getBlob().getBytes());
+  var dataUrl  = 'data:' + mime + ';base64,' + b64;
 
-  return `<!doctype html><html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LabShot Photo</title>
-<style>
-*{box-sizing:border-box;margin:0}
-body{font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#fffaf0,#ecfeff);
-  padding:18px;min-height:100vh}
-.wrap{max-width:560px;margin:0 auto}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:24px;
-  padding:18px;box-shadow:0 20px 50px rgba(20,52,43,.12)}
-h1{margin:0 0 6px;font-size:26px;color:#0f4f3e;text-align:center}
-p{text-align:center;color:#5b6470;margin:0 0 14px;font-size:13px}
-img{display:block;width:100%;border-radius:16px;background:#f8fafc}
-.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-a.btn{display:inline-block;padding:11px 20px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px}
-a.primary{background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#fff}
-a.secondary{background:#f8fafc;color:#103b31;border:1px solid #d1d5db}
-.hint{font-size:12px;text-align:center;margin-top:10px;color:#64748b;line-height:1.5}
-.name{font-size:11px;text-align:center;margin-top:8px;color:#94a3b8}
-</style></head>
-<body><div class="wrap"><div class="card">
-<h1>Foto Anda siap ✓</h1>
-<p>Tekan tombol download atau tahan gambar → Simpan.</p>
-<img src="${dataUrl}" alt="LabShot Photo" />
-<div class="actions">
-  <a class="btn primary" href="${dataUrl}" download="${fileName}">⬇ Download Foto</a>
-  <a class="btn secondary" href="${dataUrl}" target="_blank">Buka Penuh</a>
-</div>
-<div class="hint">Jika tombol download tidak bekerja, tekan & tahan gambar lalu pilih Simpan.</div>
-<div class="name">${fileName}</div>
-</div></div></body></html>`;
+  return '<!doctype html><html><head>'
+    + '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>LabShot Photo</title>'
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0}'
+    + 'body{font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#fffaf0,#ecfeff);padding:16px;min-height:100vh}'
+    + '.wrap{max-width:520px;margin:0 auto}'
+    + '.card{background:#fff;border:1px solid #e5e7eb;border-radius:22px;padding:16px;box-shadow:0 18px 48px rgba(20,52,43,.12)}'
+    + 'h1{margin:0 0 5px;font-size:24px;color:#0f4f3e;text-align:center}'
+    + 'p{text-align:center;color:#5b6470;margin:0 0 12px;font-size:13px}'
+    + 'img{display:block;width:100%;border-radius:14px;background:#f8fafc}'
+    + '.acts{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:12px}'
+    + 'a.btn{display:inline-block;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:700;font-size:13px}'
+    + 'a.p{background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#fff}'
+    + 'a.s{background:#f8fafc;color:#103b31;border:1px solid #d1d5db}'
+    + '.hint{font-size:11px;text-align:center;margin-top:8px;color:#94a3b8;line-height:1.5}'
+    + '</style></head>'
+    + '<body><div class="wrap"><div class="card">'
+    + '<h1>Foto Anda siap \u2713</h1>'
+    + '<p>Tekan download atau tahan gambar \u2192 Simpan.</p>'
+    + '<img src="' + dataUrl + '" alt="LabShot" />'
+    + '<div class="acts">'
+    + '<a class="btn p" href="' + dataUrl + '" download="' + fileName + '">\u2B07 Download</a>'
+    + '<a class="btn s" href="' + dataUrl + '" target="_blank">Buka Penuh</a>'
+    + '</div>'
+    + '<div class="hint">Jika tombol tidak bekerja, tahan gambar lalu pilih Simpan.</div>'
+    + '</div></div></body></html>';
 }
 
 // ═══════════════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-// Kembalikan JSONP jika ada callback name, JSON biasa jika tidak ada
-function jsonpOrJson_(callback, obj) {
-  const json = JSON.stringify(obj);
-  if (callback) {
-    // JSONP: callback(data)
-    return ContentService
-      .createTextOutput(callback + '(' + json + ');')
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-  return ContentService
-    .createTextOutput(json)
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function jsonResponse_(obj) {
+// JSON output — ContentService otomatis menambah CORS header
+// Access-Control-Allow-Origin: * saat type = JSON atau JAVASCRIPT
+function jsonOut_(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 function makeFileName_() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  return `ls-${String(now.getFullYear()).slice(-2)}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.jpg`;
+  var now = new Date();
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  return 'ls-' + String(now.getFullYear()).slice(-2)
+    + pad(now.getMonth() + 1) + pad(now.getDate())
+    + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()) + '.jpg';
 }
 
 function escapeHtml_(s) {
   return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function slugify_(text) {
-  return String(text || '')
-    .toLowerCase().normalize('NFKD')
+  return String(text || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'tema';

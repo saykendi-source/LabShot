@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
-   LabShot v37 – app.js
-   Drive template: JSONP via satu Code.gs yang sama.
+   LabShot v38 – app.js
+   Drive template: fetch() biasa (bukan JSONP).
+   Apps Script ContentService/JSON otomatis kirim CORS header.
    Template muncul dari subfolder Drive, bukan dari repo GitHub.
    Perbaikan dari v32:
    - Hapus referensi ke elemen yang sudah tidak ada di HTML
@@ -178,70 +179,61 @@ let FRAME_CONFIGS = {
   },
 };
 /* ── Google Drive Template Mode ─────────────────────────────
-   Template dimuat via JSONP dari Code.gs yang sudah di-deploy.
-   Alur:
-   1. loadDriveManifest()  → GET ?action=manifest&callback=cbName
-      Response: { ok:true, themes:[{label, value, frames:[{id, fileName, label}]}] }
-   2. loadDriveFrameImage() → GET ?action=image&id=FILE_ID&callback=cbName
-      Response: { ok:true, dataUrl:"data:image/png;base64,..." }
+   Menggunakan fetch() biasa (bukan JSONP).
+   Apps Script ContentService + MimeType.JSON otomatis
+   menambah header  Access-Control-Allow-Origin: *
+   sehingga fetch() dari GitHub Pages langsung bisa.
+
+   Endpoint yang dipakai (semua ke APPS_SCRIPT_URL yang sama):
+     GET ?action=manifest          → { ok, themes:[...] }
+     GET ?action=image&id=FILE_ID  → { ok, dataUrl }
 ──────────────────────────────────────────────────────────── */
 
-// Cache SLOT_LIBRARY_CONFIGS untuk matching nama file dengan slot lokal
+// Simpan copy config lokal untuk slot-matching nama file
 const SLOT_LIBRARY_CONFIGS = JSON.parse(JSON.stringify(FRAME_CONFIGS));
 
-// Fallback lokal (8 frame bawaan) jika Drive tidak bisa diakses
+// Fallback: 8 frame lokal jika Drive tidak bisa diakses
 const LOCAL_FALLBACK_KEYS = [
   'yogyakartaCity', 'tiUmyCampus', 'tiUmyShowcase', 'umyCampusSeries',
-  'umyCitySeries', 'friendshipBonds', 'dailyQuote', 'itFuture'
+  'umyCitySeries', 'friendshipBonds', 'dailyQuote', 'itFuture',
 ];
 const LOCAL_FALLBACK_CONFIGS = Object.fromEntries(
   LOCAL_FALLBACK_KEYS.filter(k => FRAME_CONFIGS[k]).map(k => [k, FRAME_CONFIGS[k]])
 );
 const LOCAL_FALLBACK_THEMES = { default: 'Frame Bawaan LabShot' };
-const DRIVE_TEMPLATE_CACHE  = {}; // cache gambar yang sudah di-fetch
+const DRIVE_TEMPLATE_CACHE  = {}; // { driveId → HTMLImageElement }
 
-// Inisialisasi dengan fallback lokal dulu — Drive dimuat di background
+// Mulai dengan fallback lokal — Drive dimuat di background
 FRAME_THEMES  = { ...LOCAL_FALLBACK_THEMES };
 FRAME_CONFIGS = { ...LOCAL_FALLBACK_CONFIGS };
 
-// ── JSONP helper ──────────────────────────────────────────────
-function jsonpRequest(url, params = {}, timeoutMs = 30000) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'labshotCb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    const qs     = new URLSearchParams({ ...params, callback: cbName });
-    const script = document.createElement('script');
-    let settled  = false;
-
-    const finish = (fn, val) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      fn(val);
-    };
-
-    const timer = setTimeout(
-      () => finish(reject, new Error(`Timeout (${timeoutMs}ms) saat fetch: ${url}`)),
-      timeoutMs
-    );
-
-    window[cbName] = (data) => finish(resolve, data);
-    script.onerror = () => finish(reject, new Error('Script error saat fetch JSONP: ' + url));
-    script.src = url + '?' + qs.toString();
-    document.head.appendChild(script);
-  });
+// ── fetch() helper dengan timeout dan retry ─────────────────
+async function apiFetch(url, params = {}, timeoutMs = 30000) {
+  const qs       = new URLSearchParams(params).toString();
+  const fullUrl  = url + (qs ? '?' + qs : '');
+  const controller = new AbortController();
+  const timer    = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(fullUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      // Tidak perlu custom headers — Apps Script JSON sudah CORS-safe
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' dari Apps Script');
+    const json = await res.json();
+    return json;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── Slug helper ───────────────────────────────────────────────
 function slugifyText(text) {
-  return String(text || '')
-    .toLowerCase().normalize('NFKD')
+  return String(text || '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'tema';
 }
-
 function normalizeTemplateName(text) {
   return String(text || '').toLowerCase().replace(/\.[a-z0-9]+$/i, '').replace(/[^a-z0-9]+/g, '');
 }
@@ -249,25 +241,24 @@ function basenameFromPath(p) { return String(p || '').split('/').pop() || ''; }
 
 // ── Manifest: daftar tema+frame dari Drive ────────────────────
 async function loadDriveManifest() {
-  console.log('[LabShot] Memuat manifest dari:', TEMPLATE_API_URL);
-  const data = await jsonpRequest(TEMPLATE_API_URL, { action: 'manifest' }, 30000);
-  console.log('[LabShot] Manifest response:', data);
+  console.log('[LabShot] Fetch manifest dari:', TEMPLATE_API_URL);
+  const data = await apiFetch(TEMPLATE_API_URL, { action: 'manifest' }, 30000);
+  console.log('[LabShot] Manifest response:', JSON.stringify(data).slice(0, 200));
   if (!data || data.ok === false) {
     throw new Error('Manifest error: ' + (data?.error || 'response tidak valid'));
   }
   if (!Array.isArray(data.themes) || data.themes.length === 0) {
-    throw new Error('Manifest kosong – belum ada tema/template di folder Drive.');
+    throw new Error('Manifest kosong – belum ada template di folder Drive. Pastikan FRAMES_FOLDER_ID sudah diisi di Code.gs.');
   }
   return data.themes;
 }
 
-// ── Cari slot lokal berdasarkan kesamaan nama file ───────────
+// ── Cocokkan nama file Drive dengan slot lokal ───────────────
 function findSlotConfigForDriveFrame(frame) {
   const candidates = [
     normalizeTemplateName(frame?.fileName),
     normalizeTemplateName(frame?.label),
   ].filter(Boolean);
-
   for (const cfg of Object.values(SLOT_LIBRARY_CONFIGS)) {
     const cfgNames = [
       normalizeTemplateName(cfg.path ? basenameFromPath(cfg.path) : ''),
@@ -278,26 +269,25 @@ function findSlotConfigForDriveFrame(frame) {
   return null;
 }
 
-// ── Slot generik jika tidak ada yang cocok ───────────────────
+// ── Slot generik fallback ─────────────────────────────────────
 function createGenericSlots(count) {
   count = Math.max(1, Math.min(4, Number(count) || 1));
-  const configs = {
-    1: { 1: [{ x: 150, y: 430, w: 780, h: 1050, radius: 12 }] },
-    2: { 2: [{ x: 145, y: 390, w: 790, h: 520, radius: 12 }, { x: 145, y: 1015, w: 790, h: 520, radius: 12 }] },
-    3: { 3: [{ x: 150, y: 340, w: 780, h: 360, radius: 12 }, { x: 150, y: 780, w: 780, h: 360, radius: 12 }, { x: 150, y: 1220, w: 780, h: 360, radius: 12 }] },
-    4: { 4: [{ x: 150, y: 300, w: 780, h: 300, radius: 12 }, { x: 150, y: 675, w: 780, h: 300, radius: 12 }, { x: 150, y: 1050, w: 780, h: 300, radius: 12 }, { x: 150, y: 1425, w: 780, h: 300, radius: 12 }] },
+  const map = {
+    1: { 1: [{ x:150, y:430, w:780, h:1050, radius:12 }] },
+    2: { 2: [{ x:145, y:390, w:790, h:520, radius:12 }, { x:145, y:1015, w:790, h:520, radius:12 }] },
+    3: { 3: [{ x:150, y:340, w:780, h:360, radius:12 }, { x:150, y:780, w:780, h:360, radius:12 }, { x:150, y:1220, w:780, h:360, radius:12 }] },
+    4: { 4: [{ x:150, y:300, w:780, h:300, radius:12 }, { x:150, y:675, w:780, h:300, radius:12 }, { x:150, y:1050, w:780, h:300, radius:12 }, { x:150, y:1425, w:780, h:300, radius:12 }] },
   };
-  return configs[count] || configs[1];
+  return map[count] || map[1];
 }
 
-// ── Build config object untuk satu frame Drive ───────────────
+// ── Build config untuk satu frame dari Drive ─────────────────
 function buildDriveConfig(themeKey, frame, index) {
-  const matched       = findSlotConfigForDriveFrame(frame);
-  const defaultCount  = Number(matched?.defaultCount || frame?.defaultCount || 1) || 1;
-  const slotsByCount  = matched?.slotsByCount
+  const matched      = findSlotConfigForDriveFrame(frame);
+  const defaultCount = Number(matched?.defaultCount || frame?.defaultCount || 1) || 1;
+  const slotsByCount = matched?.slotsByCount
     ? JSON.parse(JSON.stringify(matched.slotsByCount))
     : createGenericSlots(defaultCount);
-
   return {
     theme:        themeKey,
     label:        frame.label || frame.fileName || ('Template ' + (index + 1)),
@@ -312,17 +302,16 @@ function buildDriveConfig(themeKey, frame, index) {
 
 // ── Init: muat semua tema+frame dari Drive ───────────────────
 async function initDriveTemplates() {
-  setStatus('⏳ Memuat daftar template dari Google Drive…', 'info');
+  setStatus('⏳ Memuat template dari Google Drive…', 'info');
   try {
-    const themes     = await loadDriveManifest();
-    const nextThemes = {};
-    const nextConfigs= {};
+    const themes      = await loadDriveManifest();
+    const nextThemes  = {};
+    const nextConfigs = {};
 
     themes.forEach((theme, ti) => {
       if (!theme) return;
       const themeKey = slugifyText(theme.value || theme.label || ('tema-' + ti));
       nextThemes[themeKey] = theme.label || themeKey;
-
       (theme.frames || []).forEach((frame, fi) => {
         if (!frame?.id) { console.warn('[LabShot] Frame tanpa id dilewati:', frame); return; }
         const key = 'drive_' + themeKey + '_' + fi + '_' + String(frame.id).slice(-6);
@@ -331,17 +320,17 @@ async function initDriveTemplates() {
     });
 
     if (!Object.keys(nextConfigs).length) {
-      throw new Error('Manifest tidak memiliki frame valid (semua frame tidak memiliki id).');
+      throw new Error('Tidak ada frame valid di manifest. Periksa isi subfolder Drive.');
     }
 
     FRAME_THEMES  = nextThemes;
     FRAME_CONFIGS = nextConfigs;
-    console.log('[LabShot] Drive template berhasil dimuat:', Object.keys(nextConfigs).length, 'template dari', Object.keys(nextThemes).length, 'tema.');
-    setStatus('✅ ' + Object.keys(nextConfigs).length + ' template dari Google Drive siap.', 'success', 4000);
+    console.log('[LabShot] Drive OK:', Object.keys(nextConfigs).length, 'template,', Object.keys(nextThemes).length, 'tema');
+    setStatus('✅ ' + Object.keys(nextConfigs).length + ' template Drive siap.', 'success', 4000);
     return true;
 
   } catch (err) {
-    console.error('[LabShot] Drive template gagal:', err.message);
+    console.error('[LabShot] Drive gagal:', err.message);
     FRAME_THEMES  = { ...LOCAL_FALLBACK_THEMES };
     FRAME_CONFIGS = { ...LOCAL_FALLBACK_CONFIGS };
     setStatus('⚠️ Drive belum terbaca (' + err.message + '). Memakai frame lokal.', 'warning');
@@ -349,22 +338,24 @@ async function initDriveTemplates() {
   }
 }
 
-// ── Ambil gambar frame dari Drive (dengan cache) ─────────────
+// ── Fetch gambar satu frame dari Drive (dengan cache) ────────
+const _frameFetchInFlight = {};
+
 async function loadDriveFrameImage(frameKey, config) {
   const cacheKey = config.driveId;
   if (DRIVE_TEMPLATE_CACHE[cacheKey]) return DRIVE_TEMPLATE_CACHE[cacheKey];
 
-  console.log('[LabShot] Memuat gambar frame dari Drive, id:', cacheKey);
   setStatus('⏳ Memuat frame "' + config.label + '" dari Drive…', 'info');
+  console.log('[LabShot] Fetch gambar frame, id:', cacheKey);
 
-  const data = await jsonpRequest(TEMPLATE_API_URL, { action: 'image', id: cacheKey }, 40000);
+  const data = await apiFetch(TEMPLATE_API_URL, { action: 'image', id: cacheKey }, 40000);
   if (!data || data.ok === false || !data.dataUrl) {
     throw new Error('Gambar template gagal: ' + (data?.error || 'dataUrl kosong'));
   }
 
   const source = await loadImage(data.dataUrl);
 
-  // Gambar di-render ke canvas 1080×1920 lalu slot area di-clear (transparan)
+  // Render ke canvas 1080×1920 lalu clear area slot
   const canvas = document.createElement('canvas');
   canvas.width  = STORY_W;
   canvas.height = STORY_H;
@@ -374,23 +365,22 @@ async function loadDriveFrameImage(frameKey, config) {
   ctx.clearRect(0, 0, STORY_W, STORY_H);
   ctx.drawImage(source, 0, 0, STORY_W, STORY_H);
 
-  // Auto-detect slot jika belum ada dari library match
+  // Auto-detect slot jika belum ada dari library
   if (config._slotSource !== 'library') {
     const detected = detectSlotsFromCanvas(canvas, config.defaultCount || 1);
     if (detected.length) {
-      config.slotsByCount  = { [detected.length]: detected };
-      config.defaultCount  = detected.length;
-      config._slotSource   = 'detected';
-      console.log('[LabShot] Slot auto-detected untuk', config.label, ':', detected);
+      config.slotsByCount = { [detected.length]: detected };
+      config.defaultCount = detected.length;
+      config._slotSource  = 'detected';
+      console.log('[LabShot] Auto-detected slots untuk', config.label, ':', detected);
     }
   }
 
-  // Clear area slot agar foto bisa terlihat di balik frame
+  // Clear slot area supaya foto bisa terlihat di balik frame
   const slots = getSlotsForFrame(frameKey, getAutoPhotoCount(frameKey));
   slots.forEach(slot => {
     withSlotTransform(ctx, slot, (x, y, w, h) => {
-      const pad = 1;
-      ctx.clearRect(x - pad, y - pad, w + pad * 2, h + pad * 2);
+      ctx.clearRect(x - 1, y - 1, w + 2, h + 2);
     });
   });
 
@@ -400,14 +390,14 @@ async function loadDriveFrameImage(frameKey, config) {
   return img;
 }
 
-// ── Auto-detect transparent/dark slot area dari canvas ───────
+// ── Auto-detect area transparan/gelap dari canvas ────────────
 function detectSlotsFromCanvas(canvas, desiredCount) {
   const SW = 216, SH = 384;
   const small = document.createElement('canvas');
   small.width = SW; small.height = SH;
-  const sctx = small.getContext('2d', { willReadFrequently: true });
-  sctx.drawImage(canvas, 0, 0, SW, SH);
-  const { data } = sctx.getImageData(0, 0, SW, SH);
+  const sc = small.getContext('2d', { willReadFrequently: true });
+  sc.drawImage(canvas, 0, 0, SW, SH);
+  const { data } = sc.getImageData(0, 0, SW, SH);
   const mask = new Uint8Array(SW * SH);
 
   for (let y = 0; y < SH; y++) {
@@ -427,42 +417,37 @@ function detectSlotsFromCanvas(canvas, desiredCount) {
     for (let x = 0; x < SW; x++) {
       const start = y * SW + x;
       if (!mask[start] || seen[start]) continue;
-      const qx = [x], qy = [y];
-      seen[start] = 1;
-      let head = 0, area = 0;
-      let minX = x, maxX = x, minY = y, maxY = y;
+      const qx = [x], qy = [y]; seen[start] = 1;
+      let head = 0, area = 0, minX = x, maxX = x, minY = y, maxY = y;
       while (head < qx.length) {
         const cx = qx[head], cy = qy[head++]; area++;
-        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
-        if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+        if (cx < minX) minX=cx; if (cx > maxX) maxX=cx;
+        if (cy < minY) minY=cy; if (cy > maxY) maxY=cy;
         for (const [nx, ny] of [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]]) {
-          if (nx < 0 || ny < 0 || nx >= SW || ny >= SH) continue;
-          const ni = ny * SW + nx;
-          if (!mask[ni] || seen[ni]) continue;
-          seen[ni] = 1; qx.push(nx); qy.push(ny);
+          if (nx<0||ny<0||nx>=SW||ny>=SH) continue;
+          const ni = ny*SW+nx;
+          if (!mask[ni]||seen[ni]) continue;
+          seen[ni]=1; qx.push(nx); qy.push(ny);
         }
       }
-      const bw = maxX - minX + 1, bh = maxY - minY + 1;
-      if (area > SW * SH * 0.02 && bw > SW * 0.15 && bh > SH * 0.08 && (area / (bw * bh)) > 0.35) {
+      const bw = maxX-minX+1, bh = maxY-minY+1;
+      if (area > SW*SH*0.02 && bw > SW*0.15 && bh > SH*0.08 && (area/(bw*bh)) > 0.35) {
         comps.push({ area, minX, minY, maxX, maxY });
       }
     }
   }
 
-  comps.sort((a, b) => b.area - a.area);
+  comps.sort((a,b) => b.area-a.area);
   const chosen = [];
   for (const c of comps) {
-    const overlaps = chosen.some(o => !(c.maxX < o.minX || c.minX > o.maxX || c.maxY < o.minY || c.minY > o.maxY));
+    const overlaps = chosen.some(o => !(c.maxX<o.minX||c.minX>o.maxX||c.maxY<o.minY||c.minY>o.maxY));
     if (!overlaps) chosen.push(c);
-    if (chosen.length >= (desiredCount || 1)) break;
+    if (chosen.length >= (desiredCount||1)) break;
   }
-  chosen.sort((a, b) => a.minY - b.minY || a.minX - b.minX);
-
+  chosen.sort((a,b) => a.minY-b.minY||a.minX-b.minX);
   return chosen.map(c => ({
-    x: Math.round(c.minX / SW * STORY_W),
-    y: Math.round(c.minY / SH * STORY_H),
-    w: Math.round((c.maxX - c.minX + 1) / SW * STORY_W),
-    h: Math.round((c.maxY - c.minY + 1) / SH * STORY_H),
+    x: Math.round(c.minX/SW*STORY_W), y: Math.round(c.minY/SH*STORY_H),
+    w: Math.round((c.maxX-c.minX+1)/SW*STORY_W), h: Math.round((c.maxY-c.minY+1)/SH*STORY_H),
     radius: 10,
   }));
 }
@@ -1205,40 +1190,31 @@ function loadImage(src) {
   });
 }
 
-// Concurrent fetch guard — prevent double-fetching the same frame
-const _frameFetchInFlight = {};
+// In-flight promise guard – cegah double-fetch frame yang sama
+const _frameInFlight = {};
 
 async function getFrameImage(frameKey) {
   const config = FRAME_CONFIGS[frameKey];
   if (!config) return null;
-
-  // Return cached immediately
   if (frameImageCache[frameKey]) return frameImageCache[frameKey];
-  // If already fetching, share the same promise
-  if (_frameFetchInFlight[frameKey]) return _frameFetchInFlight[frameKey];
+  if (_frameInFlight[frameKey])  return _frameInFlight[frameKey];
 
-  const fetchPromise = (async () => {
+  _frameInFlight[frameKey] = (async () => {
     try {
-      let img;
-      if (config.driveId) {
-        img = await loadDriveFrameImage(frameKey, config);
-      } else if (config.path) {
-        img = await loadImage(config.path);
-      } else {
-        return null;
-      }
-      frameImageCache[frameKey] = img;
+      const img = config.driveId
+        ? await loadDriveFrameImage(frameKey, config)
+        : config.path ? await loadImage(config.path) : null;
+      if (img) frameImageCache[frameKey] = img;
       return img;
     } catch (err) {
-      console.warn('[LabShot] getFrameImage gagal untuk', frameKey, ':', err.message);
+      console.warn('[LabShot] getFrameImage gagal:', frameKey, err.message);
       return null;
     } finally {
-      delete _frameFetchInFlight[frameKey];
+      delete _frameInFlight[frameKey];
     }
   })();
 
-  _frameFetchInFlight[frameKey] = fetchPromise;
-  return fetchPromise;
+  return _frameInFlight[frameKey];
 }
 
 function fillBase(ctx, frameKey) {
@@ -1528,7 +1504,7 @@ async function initLabShot() {
   applyVideoMirror();
   resetResult(true);
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera untuk memulai.', 'idle');
-  console.log('[LabShot] v37 loaded. Drive templates aktif via:', TEMPLATE_API_URL);
+  console.log('[LabShot] v38 loaded. Drive templates (fetch) aktif via:', TEMPLATE_API_URL);
 }
 
 if (document.readyState === 'loading') {
