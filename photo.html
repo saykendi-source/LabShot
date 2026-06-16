@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LabShot – Foto Kamu</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800;900&family=Inter:wght@400;600&display=swap');
+
+    :root {
+      --bg:      #0d1324;
+      --card:    rgba(255,255,255,.09);
+      --text:    #f1f5f9;
+      --muted:   #94a3b8;
+      --teal:    #2dd4bf;
+      --blue:    #93c5fd;
+      --amber:   #fde68a;
+      --line:    rgba(255,255,255,.14);
+      --radius:  24px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html { height: 100%; }
+
+    body {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(45,212,191,.22), transparent 22rem),
+        radial-gradient(circle at 82% 18%, rgba(147,197,253,.16), transparent 20rem),
+        radial-gradient(circle at 50% 95%, rgba(253,230,138,.10), transparent 18rem),
+        linear-gradient(135deg, #0d1324, #141b33 55%, #0f172a);
+    }
+
+    /* ── Card ── */
+    .card {
+      width: min(440px, 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      background: linear-gradient(180deg, var(--card), rgba(255,255,255,.05));
+      box-shadow: 0 28px 80px rgba(0,0,0,.40);
+      text-align: center;
+      animation: fadeUp .5s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── Brand ── */
+    .brand {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .brand-logo {
+      width: 40px; height: 40px; border-radius: 12px;
+      overflow: hidden; background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .brand-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 22px; font-weight: 900; letter-spacing: -.06em;
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; color: var(--teal);
+    }
+
+    /* ── Status ── */
+    .status-box {
+      margin-bottom: 18px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      transition: background .3s, color .3s;
+    }
+    .status-box.loading { color: var(--teal); background: rgba(45,212,191,.10); border-color: rgba(45,212,191,.22); }
+    .status-box.ready   { color: #86efac; background: rgba(134,239,172,.08); border-color: rgba(134,239,172,.22); }
+    .status-box.error   { color: #fca5a5; background: rgba(252,165,165,.08); border-color: rgba(252,165,165,.22); }
+
+    /* ── Loader spinner ── */
+    .loader {
+      width: 44px; height: 44px; margin: 6px auto 18px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.12);
+      border-top-color: var(--teal);
+      animation: spin .85s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Retry counter pill ── */
+    .retry-badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 999px;
+      background: rgba(253,230,138,.12);
+      color: var(--amber);
+      border: 1px solid rgba(253,230,138,.22);
+      margin-top: 6px;
+    }
+
+    /* ── Photo ── */
+    .photo-wrap {
+      position: relative; margin: 16px 0;
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0,0,0,.40);
+    }
+    .photo-wrap img {
+      display: block; width: 100%;
+      border-radius: 16px; background: #fff;
+    }
+    .photo-badge {
+      position: absolute; top: 10px; right: 10px;
+      font-size: 10px; font-weight: 800; letter-spacing: .08em;
+      text-transform: uppercase; color: #fff;
+      background: rgba(0,0,0,.52); backdrop-filter: blur(6px);
+      padding: 4px 10px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    /* ── CTA hint ── */
+    .save-hint {
+      font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5;
+    }
+
+    /* ── Button ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 13px 18px;
+      border: 0; border-radius: 999px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px; font-weight: 800; letter-spacing: .01em;
+      text-decoration: none; cursor: pointer;
+      color: #0d1324;
+      background: linear-gradient(135deg, var(--teal), #0d9488);
+      box-shadow: 0 8px 28px rgba(45,212,191,.28);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(45,212,191,.36); }
+    .btn:active { transform: translateY(0); }
+
+    /* ── Footer note ── */
+    .foot-note {
+      margin-top: 16px;
+      font-size: 11.5px; color: var(--muted); line-height: 1.55;
+    }
+    .foot-note a { color: var(--teal); text-decoration: underline; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="card">
+
+    <div class="brand">
+      <div class="brand-logo">
+        <img src="assets/logo-ti-umy.png" alt="Logo TI UMY" onerror="this.style.display='none'" />
+      </div>
+      <span class="brand-name">LabShot</span>
+    </div>
+
+    <div id="statusBox" class="status-box loading">Memuat foto kamu…</div>
+    <div id="retryBadge" class="retry-badge hidden">Mencoba ulang…</div>
+    <div id="loader" class="loader"></div>
+
+    <div id="photoWrap" class="photo-wrap hidden">
+      <img id="photo" alt="Hasil foto LabShot" />
+      <span class="photo-badge">LabShot Story IG</span>
+    </div>
+
+    <p id="saveHint" class="save-hint hidden">
+      Tekan tombol di bawah untuk download, atau tekan &amp; tahan gambar lalu pilih <em>Simpan Gambar</em>.
+    </p>
+
+    <a id="downloadBtn" class="btn hidden" href="#" download="labshot-story.jpg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Foto
+    </a>
+
+    <p id="footNote" class="foot-note hidden"></p>
+
+  </main>
+
+  <script>
+    /* ── Config ── */
+    // Ganti dengan URL Apps Script Anda yang sama dengan di app.js
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec';
+    const MAX_RETRIES     = 60;   // maks ~72 detik total
+    const RETRY_INTERVAL  = 1200; // ms antar retry
+
+    /* ── Elements ── */
+    const statusBox   = document.getElementById('statusBox');
+    const retryBadge  = document.getElementById('retryBadge');
+    const loader      = document.getElementById('loader');
+    const photoWrap   = document.getElementById('photoWrap');
+    const photoEl     = document.getElementById('photo');
+    const saveHint    = document.getElementById('saveHint');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const footNote    = document.getElementById('footNote');
+
+    /* ── Helpers ── */
+    function setStatus(msg, type = 'loading') {
+      statusBox.textContent = msg;
+      statusBox.className   = `status-box ${type}`;
+    }
+    function showPhoto(dataUrl, fileName) {
+      loader.classList.add('hidden');
+      retryBadge.classList.add('hidden');
+
+      photoEl.src = dataUrl;
+      photoWrap.classList.remove('hidden');
+      saveHint.classList.remove('hidden');
+
+      downloadBtn.href     = dataUrl;
+      downloadBtn.download = fileName || 'labshot-story.jpg';
+      downloadBtn.classList.remove('hidden');
+
+      footNote.innerHTML = `Foto tersimpan di Google Drive event LabShot.<br>
+        Punya masalah? <a href="${APPS_SCRIPT_URL}" target="_blank" rel="noopener">Buka link langsung</a>.`;
+      footNote.classList.remove('hidden');
+    }
+    function showError(msg) {
+      loader.classList.add('hidden');
+      retryBadge.classList.add('hidden');
+      setStatus(msg, 'error');
+      footNote.textContent = 'Silakan scan ulang QR dari layar LabShot, atau ambil foto ulang.';
+      footNote.classList.remove('hidden');
+    }
+
+    /* ── Main: wait for photo via Apps Script ── */
+    const params   = new URLSearchParams(location.search);
+    const fileName = params.get('n');
+
+    if (!fileName) {
+      showError('Link foto tidak valid. Parameter ?n= tidak ditemukan.');
+    } else {
+      waitForPhoto(fileName);
+    }
+
+    async function waitForPhoto(name) {
+      setStatus('Menghubungkan ke server foto…', 'loading');
+      const url = `${APPS_SCRIPT_URL}?n=${encodeURIComponent(name)}`;
+
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const res  = await fetch(url);
+          const text = await res.text();
+
+          // Apps Script returns an HTML page with the base64 image embedded,
+          // or a JSON with {ok, dataUrl} depending on your Code.gs version.
+          // Try JSON first, fall back to HTML scrape.
+          let dataUrl = null;
+          try {
+            const json = JSON.parse(text);
+            if (json?.ok && json?.dataUrl) dataUrl = json.dataUrl;
+          } catch (_) {
+            // HTML response: extract src="data:..." from <img>
+            const match = text.match(/src="(data:image\/[^"]+)"/);
+            if (match) dataUrl = match[1];
+          }
+
+          if (dataUrl) {
+            setStatus('Foto siap! 🎉', 'ready');
+            showPhoto(dataUrl, name.replace(/^ls-/, 'labshot-').replace(/\.jpg$/, '') + '.jpg');
+            return;
+          }
+
+          // Photo not ready yet (Apps Script returned waiting page / empty)
+          if (attempt === 1) {
+            setStatus('Foto sedang diproses, mohon tunggu…', 'loading');
+            retryBadge.classList.remove('hidden');
+          }
+          retryBadge.textContent = `Menunggu… (${attempt}/${MAX_RETRIES})`;
+
+        } catch (err) {
+          // Network error – keep retrying silently
+          retryBadge.textContent = `Koneksi gagal, mencoba ulang… (${attempt}/${MAX_RETRIES})`;
+          retryBadge.classList.remove('hidden');
+          console.warn('Fetch attempt', attempt, 'failed:', err.message);
+        }
+
+        await new Promise(r => setTimeout(r, RETRY_INTERVAL));
+      }
+
+      showError('Foto belum tersedia setelah beberapa menit. Upload mungkin gagal.');
+    }
+  </script>
+</body>
+</html>
