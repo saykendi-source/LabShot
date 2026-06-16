@@ -191,14 +191,44 @@ const _frameInFlight  = {};
 
 // ── Load manifest dari GitHub ─────────────────────────────────
 async function initLocalTemplates() {
-  setStatus('⏳ Memuat daftar template…', 'info');
+  // Coba beberapa lokasi manifest (support struktur repo yang berbeda)
+  const MANIFEST_CANDIDATES = [
+    MANIFEST_PATH,                    // assets/frames/manifest.json (ideal)
+    'manifest.json',                  // root (jika di-upload ke root)
+    'assets/manifest.json',           // assets/ langsung
+  ];
+
+  console.log('[LabShot] Mencari manifest di:', MANIFEST_CANDIDATES);
+
+  let res = null;
+  let usedPath = '';
+  for (const candidate of MANIFEST_CANDIDATES) {
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 8000);
+      try {
+        const r = await fetch(`${candidate}?v=${Date.now()}`, { signal: controller.signal });
+        if (r.ok) { res = r; usedPath = candidate; break; }
+        console.log(`[LabShot] ${candidate} → HTTP ${r.status}`);
+      } finally { clearTimeout(t); }
+    } catch (e) { console.log(`[LabShot] ${candidate} → ${e.message}`); }
+  }
+
+  if (!res) {
+      console.warn('[LabShot] manifest.json tidak ditemukan di semua lokasi. Fallback ke frame bawaan.');
+      useLegacyFallback();
+      return false;
+    }
+
+  console.log('[LabShot] manifest ditemukan di:', usedPath);
   try {
-    const res = await fetch(`${MANIFEST_PATH}?v=${Date.now()}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const manifest = await res.json();
 
     if (!Array.isArray(manifest.themes) || !manifest.themes.length) {
-      throw new Error('manifest.json kosong atau tidak valid.');
+      console.warn('[LabShot] manifest.json kosong. Fallback ke frame bawaan.');
+      useLegacyFallback();
+      return false;
     }
 
     const nextThemes  = {};
@@ -211,37 +241,42 @@ async function initLocalTemplates() {
       (theme.frames || []).forEach(frame => {
         if (!frame.key || !frame.file) return;
         const frameKey = `${theme.slug}__${frame.key}`;
-        // Slot: gunakan dari manifest jika ada, atau akan di-detect otomatis
         const slotsByCount = frame.slotsByCount || {
           1: [{ x: 150, y: 390, w: 780, h: 1140, radius: 12 }]
         };
+        // Tentukan base path frame dari lokasi manifest yang berhasil dibaca
+        const frameBase = usedPath.includes('/')
+          ? usedPath.substring(0, usedPath.lastIndexOf('/') + 1) + theme.slug
+          : theme.slug;
         nextConfigs[frameKey] = {
           theme:        theme.slug,
           label:        frame.label || frame.key,
-          path:         `${FRAMES_BASE_PATH}/${theme.slug}/${frame.file}`,
+          path:         `${frameBase}/${frame.file}`,
           defaultCount: frame.defaultCount || 1,
           slotsByCount: slotsByCount,
-          _autoDetect:  !frame.slotsByCount, // flag untuk auto-detect slot saat load
+          _autoDetect:  !frame.slotsByCount,
         };
       });
     });
 
     if (!Object.keys(nextConfigs).length) {
-      throw new Error('Tidak ada frame valid di manifest.json');
+      console.warn('[LabShot] Manifest tidak memiliki frame valid. Fallback ke frame bawaan.');
+      useLegacyFallback();
+      return false;
     }
 
     FRAME_THEMES  = nextThemes;
     FRAME_CONFIGS = nextConfigs;
 
-    console.log(`[LabShot] ${Object.keys(nextConfigs).length} frame dari ${Object.keys(nextThemes).length} tema dimuat.`);
-    setStatus(`✅ ${Object.keys(nextConfigs).length} template siap.`, 'success', 3500);
+    const n = Object.keys(nextConfigs).length;
+    const t = Object.keys(nextThemes).length;
+    console.log(`[LabShot] ${n} frame dari ${t} tema berhasil dimuat dari manifest.`);
     return true;
 
   } catch (err) {
-    console.error('[LabShot] manifest gagal:', err.message);
-    // Fallback ke 8 frame lokal lama jika manifest tidak ada
+    // Network error, CORS, abort, dll
+    console.error('[LabShot] Gagal fetch manifest:', err.message);
     useLegacyFallback();
-    setStatus('⚠️ manifest.json tidak terbaca. Memakai frame bawaan.', 'warning');
     return false;
   }
 }
@@ -1334,20 +1369,29 @@ function openApp() {
   const appShell = document.getElementById('appShell');
   if (!splash || !appShell) return;
 
-  splash.classList.add('splash-exit');
-  splash.addEventListener('transitionend', () => {
-    splash.style.display = 'none';
-    splash.setAttribute('aria-hidden', 'true');
-  }, { once: true });
-
+  // Tampilkan app shell DULU (tidak tunggu CSS transition)
   appShell.classList.remove('hidden');
   appShell.removeAttribute('aria-hidden');
 
-  // Start preview setelah app shell terlihat
+  // Sembunyikan splash — pakai animasi jika ada, langsung hide jika tidak
+  splash.classList.add('splash-exit');
+  // Fallback: pastikan splash hilang setelah 500ms meski transition tidak fired
+  const hideSplash = () => {
+    splash.style.display   = 'none';
+    splash.setAttribute('aria-hidden', 'true');
+  };
+  const fallbackTimer = setTimeout(hideSplash, 500);
+  splash.addEventListener('transitionend', () => {
+    clearTimeout(fallbackTimer);
+    hideSplash();
+  }, { once: true });
+
+  // Inisialisasi app setelah frame render
   setTimeout(() => {
     updateFrameAutoInfo();
     renderFramePreview();
-  }, 100);
+    startPreviewLoop();
+  }, 120);
 }
 
 function showGuide() {
@@ -1367,19 +1411,30 @@ async function initLabShot() {
     return;
   }
 
-  // ── Splash wiring DULU ─────────────────────────────────────
-  document.getElementById('splashStartBtn')?.addEventListener('click', openApp);
-  document.getElementById('showGuideBtn')?.addEventListener('click', showGuide);
+  // ── Splash wiring: pasang listener SEBELUM apapun ───────────
+  // Tombol harus bisa diklik bahkan sebelum manifest selesai load
+  const splashBtn = document.getElementById('splashStartBtn');
+  const guideBtn  = document.getElementById('showGuideBtn');
+  if (splashBtn) splashBtn.addEventListener('click', openApp);
+  if (guideBtn)  guideBtn.addEventListener('click', showGuide);
 
-  // ── Muat manifest dari GitHub (fetch ringan ~15KB) ──────────
-  initLocalTemplates().then(() => {
-    populateThemeOptions();
-    populateFrameOptions();
-  }).catch(err => {
-    console.error('[LabShot] initLocalTemplates error:', err);
-    populateThemeOptions();
-    populateFrameOptions();
-  });
+  // ── Muat manifest (non-blocking, fallback otomatis jika gagal) ──
+  // Tidak await — splash tetap responsif selama loading
+  initLocalTemplates()
+    .then(() => {
+      populateThemeOptions();
+      populateFrameOptions();
+    })
+    .catch(err => {
+      console.error('[LabShot] initLocalTemplates unexpected error:', err);
+      useLegacyFallback();
+      populateThemeOptions();
+      populateFrameOptions();
+    });
+
+  // Populate segera dengan fallback agar dropdown tidak kosong saat splash
+  populateThemeOptions();
+  populateFrameOptions();
 
   els.startCameraBtn.addEventListener('click',  () => startCamera());
   els.startSessionBtn?.addEventListener('click', startSession);
