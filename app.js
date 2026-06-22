@@ -309,7 +309,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/01-neon-agenda.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 95, y: 676, w: 904, h: 677, radius: 12 }]
+      1: [{ x: 106, y: 688, w: 878, h: 648, radius: 12 }]
     },
   },
 
@@ -318,7 +318,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/02-neon-bulb.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 82, y: 860, w: 920, h: 845, radius: 12 }]
+      1: [{ x: 91, y: 870, w: 898, h: 823, radius: 12 }]
     },
   },
 
@@ -327,7 +327,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/03-spotlight-frame.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 69, y: 472, w: 937, h: 1079, radius: 12 }]
+      1: [{ x: 73, y: 473, w: 930, h: 1075, radius: 12 }]
     },
   },
 
@@ -336,7 +336,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/04-city-future.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 57, y: 524, w: 967, h: 1102, radius: 12 }]
+      1: [{ x: 63, y: 529, w: 952, h: 1011, radius: 12 }]
     },
   },
 
@@ -345,7 +345,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/05-innovation-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 228, y: 610, w: 621, h: 894, radius: 12 }]
+      1: [{ x: 241, y: 622, w: 593, h: 866, radius: 12 }]
     },
   },
 
@@ -354,7 +354,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/06-the-innovation-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 248, y: 620, w: 585, h: 1008, radius: 12 }]
+      1: [{ x: 260, y: 633, w: 562, h: 982, radius: 12 }]
     },
   },
 
@@ -363,7 +363,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/07-innovation-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 255, y: 621, w: 787, h: 811, radius: 12 }]
+      1: [{ x: 265, y: 631, w: 765, h: 785, radius: 12 }]
     },
   },
 
@@ -372,7 +372,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/08-sie-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 271, y: 617, w: 540, h: 929, radius: 12 }]
+      1: [{ x: 284, y: 630, w: 513, h: 901, radius: 12 }]
     },
   },
 
@@ -381,7 +381,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/09-sie-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 43, y: 641, w: 994, h: 797, radius: 12 }]
+      1: [{ x: 56, y: 653, w: 966, h: 770, radius: 12 }]
     },
   },
 
@@ -390,7 +390,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/10-daily-innovation.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 52, y: 785, w: 767, h: 737, radius: 12 }]
+      1: [{ x: 64, y: 790, w: 740, h: 725, radius: 12 }]
     },
   },
 
@@ -399,7 +399,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/11-collaboration-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 46, y: 760, w: 988, h: 748, radius: 12 }]
+      1: [{ x: 50, y: 772, w: 983, h: 747, radius: 12 }]
     },
   },
   ft1: {
@@ -407,7 +407,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/01-ft-innovation-dampak.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 40, y: 640, w: 718, h: 841, radius: 10 }]
+      1: [{ x: 48, y: 648, w: 700, h: 813, radius: 10 }]
     },
   },
   ft2: {
@@ -415,7 +415,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/02-ft-engineering-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 46, y: 738, w: 640, h: 900, radius: 10 }]
+      1: [{ x: 55, y: 744, w: 495, h: 883, radius: 10 }]
     },
   },
   ft3: {
@@ -423,7 +423,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/03-ft-special-edition.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 263, y: 553, w: 811, h: 1020, radius: 10 }]
+      1: [{ x: 270, y: 562, w: 793, h: 997, radius: 10 }]
     },
   },
   ft4: {
@@ -431,7 +431,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/04-ft-meets-impact.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 37, y: 642, w: 744, h: 371, radius: 10 }]
+      1: [{ x: 45, y: 649, w: 724, h: 352, radius: 10 }]
     },
   },
   ft5: {
@@ -439,7 +439,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/05-ft-tabloid.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 38, y: 618, w: 715, h: 945, radius: 10 }]
+      1: [{ x: 45, y: 621, w: 696, h: 927, radius: 10 }]
     },
   },
   ft6: {
@@ -447,7 +447,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/06-ft-bulletin.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 271, y: 742, w: 534, h: 798, radius: 10 }]
+      1: [{ x: 280, y: 751, w: 513, h: 775, radius: 10 }]
     },
   },
   ft7: {
@@ -455,7 +455,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/07-ft-campus-news.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 45, y: 811, w: 706, h: 726, radius: 10 }]
+      1: [{ x: 55, y: 819, w: 684, h: 702, radius: 10 }]
     },
   },
   ft8: {
@@ -463,7 +463,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/08-ft-engineer-future.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 334, y: 619, w: 718, h: 950, radius: 10 }]
+      1: [{ x: 343, y: 628, w: 697, h: 930, radius: 10 }]
     },
   },
   ft9: {
@@ -471,7 +471,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/09-ft-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 264, y: 797, w: 564, h: 868, radius: 10 }]
+      1: [{ x: 273, y: 804, w: 544, h: 849, radius: 10 }]
     },
   },
   ft10: {
@@ -479,7 +479,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/10-ft-chronicle.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 254, y: 590, w: 575, h: 830, radius: 10 }]
+      1: [{ x: 262, y: 598, w: 555, h: 810, radius: 10 }]
     },
   },
   tiNews1: {
@@ -487,7 +487,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/01-ti-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 297, y: 648, w: 739, h: 881, radius: 10 }]
+      1: [{ x: 300, y: 652, w: 728, h: 869, radius: 10 }]
     },
   },
   tiNews2: {
@@ -495,7 +495,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/02-ti-press.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 275, y: 358, w: 575, h: 1087, radius: 10 }]
+      1: [{ x: 276, y: 359, w: 572, h: 1081, radius: 10 }]
     },
   },
   tiNews3: {
@@ -503,7 +503,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/03-ti-tabloid.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 37, y: 566, w: 721, h: 865, radius: 10 }]
+      1: [{ x: 44, y: 570, w: 697, h: 847, radius: 10 }]
     },
   },
   tiNews4: {
@@ -511,7 +511,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/04-ti-bulletin.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 222, y: 506, w: 632, h: 870, radius: 10 }]
+      1: [{ x: 226, y: 511, w: 620, h: 861, radius: 10 }]
     },
   },
   tiNews5: {
@@ -519,7 +519,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/05-ti-post.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 59, y: 400, w: 963, h: 563, radius: 10 }]
+      1: [{ x: 39, y: 937, w: 996, h: 941, radius: 10 }]
     },
   },
   tiNews6: {
@@ -527,7 +527,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/06-ti-newsroom.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 207, y: 381, w: 658, h: 1143, radius: 10 }]
+      1: [{ x: 214, y: 392, w: 638, h: 1013, radius: 10 }]
     },
   },
   tiNews7: {
@@ -535,7 +535,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/07-ti-special-issue.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 324, y: 580, w: 685, h: 1050, radius: 10 }]
+      1: [{ x: 320, y: 576, w: 689, h: 1051, radius: 10 }]
     },
   },
 
@@ -1618,7 +1618,7 @@ async function renderFinalImage() {
     4. Frame overlay paling atas
   */
   fillBase(ctx, frameKey);
-  if (!isExpoFrame(frameKey)) {
+  if (!usesTopOverlayLook(frameKey)) {
     drawFullBleedPhotoBackground(ctx, images[0]);
   }
   drawPhotosBehindFrame(ctx, images, slots, frameKey);
