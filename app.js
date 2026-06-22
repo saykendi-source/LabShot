@@ -309,7 +309,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/01-neon-agenda.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 98, y: 684, w: 898, h: 664, radius: 12 }]
+      1: [{ x: 92, y: 680, w: 907, h: 671, radius: 12 }]
     },
   },
 
@@ -318,7 +318,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/02-neon-bulb.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 91, y: 870, w: 898, h: 823, radius: 12 }]
+      1: [{ x: 86, y: 865, w: 909, h: 834, radius: 12 }]
     },
   },
 
@@ -327,7 +327,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/03-spotlight-frame.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 73, y: 473, w: 930, h: 1077, radius: 12 }]
+      1: [{ x: 70, y: 470, w: 935, h: 1082, radius: 12 }]
     },
   },
 
@@ -336,7 +336,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/04-city-future.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 57, y: 524, w: 965, h: 1110, radius: 12 }]
+      1: [{ x: 54, y: 522, w: 970, h: 1096, radius: 12 }]
     },
   },
 
@@ -345,7 +345,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/05-innovation-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 238, y: 620, w: 599, h: 872, radius: 12 }]
+      1: [{ x: 236, y: 617, w: 604, h: 878, radius: 12 }]
     },
   },
 
@@ -354,7 +354,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/06-the-innovation-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 260, y: 633, w: 562, h: 982, radius: 12 }]
+      1: [{ x: 255, y: 629, w: 573, h: 993, radius: 12 }]
     },
   },
 
@@ -363,7 +363,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/07-innovation-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 265, y: 631, w: 765, h: 785, radius: 12 }]
+      1: [{ x: 260, y: 626, w: 776, h: 796, radius: 12 }]
     },
   },
 
@@ -372,7 +372,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/08-sie-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 284, y: 630, w: 513, h: 901, radius: 12 }]
+      1: [{ x: 279, y: 625, w: 523, h: 912, radius: 12 }]
     },
   },
 
@@ -381,7 +381,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/09-sie-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 56, y: 653, w: 966, h: 770, radius: 12 }]
+      1: [{ x: 51, y: 648, w: 977, h: 781, radius: 12 }]
     },
   },
 
@@ -390,7 +390,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/10-daily-innovation.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 53, y: 785, w: 763, h: 733, radius: 12 }]
+      1: [{ x: 51, y: 782, w: 768, h: 738, radius: 12 }]
     },
   },
 
@@ -399,7 +399,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/11-collaboration-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 50, y: 772, w: 983, h: 747, radius: 12 }]
+      1: [{ x: 47, y: 770, w: 989, h: 753, radius: 12 }]
     },
   },
   ft1: {
@@ -407,7 +407,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/01-ft-innovation-dampak.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 48, y: 648, w: 700, h: 813, radius: 10 }]
+      1: [{ x: 43, y: 643, w: 710, h: 837, radius: 10 }]
     },
   },
   ft2: {
@@ -415,7 +415,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/02-ft-engineering-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 52, y: 745, w: 625, h: 885, radius: 10 }]
+      1: [{ x: 50, y: 742, w: 630, h: 890, radius: 10 }]
     },
   },
   ft3: {
@@ -423,7 +423,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/03-ft-special-edition.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 270, y: 562, w: 793, h: 997, radius: 10 }]
+      1: [{ x: 266, y: 557, w: 803, h: 1008, radius: 10 }]
     },
   },
   ft4: {
@@ -431,7 +431,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/04-ft-meets-impact.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 45, y: 649, w: 724, h: 352, radius: 10 }]
+      1: [{ x: 41, y: 645, w: 736, h: 363, radius: 10 }]
     },
   },
   ft5: {
@@ -439,7 +439,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/05-ft-tabloid.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 45, y: 621, w: 696, h: 927, radius: 10 }]
+      1: [{ x: 41, y: 622, w: 707, h: 932, radius: 10 }]
     },
   },
   ft6: {
@@ -447,7 +447,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/06-ft-bulletin.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 280, y: 751, w: 513, h: 775, radius: 10 }]
+      1: [{ x: 275, y: 746, w: 523, h: 787, radius: 10 }]
     },
   },
   ft7: {
@@ -455,7 +455,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/07-ft-campus-news.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 55, y: 819, w: 684, h: 702, radius: 10 }]
+      1: [{ x: 50, y: 815, w: 694, h: 713, radius: 10 }]
     },
   },
   ft8: {
@@ -463,7 +463,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/08-ft-engineer-future.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 343, y: 628, w: 697, h: 930, radius: 10 }]
+      1: [{ x: 340, y: 623, w: 706, h: 940, radius: 10 }]
     },
   },
   ft9: {
@@ -471,7 +471,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/09-ft-daily.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 273, y: 804, w: 544, h: 849, radius: 10 }]
+      1: [{ x: 269, y: 800, w: 552, h: 860, radius: 10 }]
     },
   },
   ft10: {
@@ -479,7 +479,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/10-ft-chronicle.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 262, y: 598, w: 555, h: 810, radius: 10 }]
+      1: [{ x: 257, y: 593, w: 566, h: 821, radius: 10 }]
     },
   },
   tiNews1: {
@@ -487,7 +487,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/01-ti-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 300, y: 652, w: 728, h: 869, radius: 10 }]
+      1: [{ x: 298, y: 648, w: 735, h: 876, radius: 10 }]
     },
   },
   tiNews2: {
@@ -495,7 +495,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/02-ti-press.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 276, y: 359, w: 571, h: 1081, radius: 10 }]
+      1: [{ x: 272, y: 355, w: 578, h: 1089, radius: 10 }]
     },
   },
   tiNews3: {
@@ -503,7 +503,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/03-ti-tabloid.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 44, y: 570, w: 697, h: 847, radius: 10 }]
+      1: [{ x: 41, y: 565, w: 707, h: 858, radius: 10 }]
     },
   },
   tiNews4: {
@@ -511,7 +511,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/04-ti-bulletin.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 226, y: 511, w: 620, h: 861, radius: 10 }]
+      1: [{ x: 221, y: 506, w: 631, h: 872, radius: 10 }]
     },
   },
   tiNews5: {
@@ -519,7 +519,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/05-ti-post.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 65, y: 406, w: 949, h: 547, radius: 10 }]
+      1: [{ x: 62, y: 403, w: 954, h: 552, radius: 10 }]
     },
   },
   tiNews6: {
@@ -527,7 +527,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/06-ti-newsroom.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 213, y: 390, w: 642, h: 1111, radius: 10 }]
+      1: [{ x: 209, y: 387, w: 648, h: 1116, radius: 10 }]
     },
   },
   tiNews7: {
@@ -535,7 +535,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/07-ti-special-issue.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 320, y: 576, w: 689, h: 1051, radius: 10 }]
+      1: [{ x: 316, y: 572, w: 697, h: 1058, radius: 10 }]
     },
   },
 
