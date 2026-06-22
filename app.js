@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────
-   LabShot v36 – app.js
+   LabShot v35 – app.js
    Perbaikan utama:
    - Preview frame mengikuti ukuran story IG secara proporsional.
    - Saat kamera aktif, preview live muncul langsung di slot foto.
@@ -7,7 +7,7 @@
      lalu klik Finish untuk membuat hasil akhir dan QR.
    - Preview frame dan hasil foto mengikuti area yang benar-benar terlihat
      pada kamera utama, agar framing lebih konsisten.
-   - Perbaikan tema Expo: foto dibuat masuk ke dalam frame/recess, bukan rata seperti tempelan.
+   - Perbaikan tema Expo: foto diposisikan lebih terasa di belakang template.
    - Pilihan kamera dibuat selalu tersedia untuk webcam eksternal.
 ───────────────────────────────────────────── */
 
@@ -402,6 +402,142 @@ const FRAME_CONFIGS = {
       1: [{ x: 46, y: 760, w: 988, h: 748, radius: 12 }]
     },
   },
+  ft1: {
+    label: 'FT UMY - Inovasi Rekayasa Dampak',
+    path: 'assets/frames/fakultas-teknik/01-ft-innovation-dampak.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 40, y: 640, w: 718, h: 841, radius: 10 }]
+    },
+  },
+  ft2: {
+    label: 'FT UMY - Engineering Times',
+    path: 'assets/frames/fakultas-teknik/02-ft-engineering-times.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 46, y: 738, w: 640, h: 900, radius: 10 }]
+    },
+  },
+  ft3: {
+    label: 'FT UMY - Special Edition',
+    path: 'assets/frames/fakultas-teknik/03-ft-special-edition.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 263, y: 553, w: 811, h: 1020, radius: 10 }]
+    },
+  },
+  ft4: {
+    label: 'FT UMY - Meets Impact',
+    path: 'assets/frames/fakultas-teknik/04-ft-meets-impact.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 37, y: 642, w: 744, h: 371, radius: 10 }]
+    },
+  },
+  ft5: {
+    label: 'FT UMY - Build Innovate Elevate',
+    path: 'assets/frames/fakultas-teknik/05-ft-tabloid.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 38, y: 618, w: 715, h: 945, radius: 10 }]
+    },
+  },
+  ft6: {
+    label: 'FT UMY - Engineering Bulletin',
+    path: 'assets/frames/fakultas-teknik/06-ft-bulletin.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 271, y: 742, w: 534, h: 798, radius: 10 }]
+    },
+  },
+  ft7: {
+    label: 'FT UMY - Campus Engineering News',
+    path: 'assets/frames/fakultas-teknik/07-ft-campus-news.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 45, y: 811, w: 706, h: 726, radius: 10 }]
+    },
+  },
+  ft8: {
+    label: 'FT UMY - Engineer The Future',
+    path: 'assets/frames/fakultas-teknik/08-ft-engineer-future.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 334, y: 619, w: 718, h: 950, radius: 10 }]
+    },
+  },
+  ft9: {
+    label: 'FT UMY - FT UMY Daily',
+    path: 'assets/frames/fakultas-teknik/09-ft-daily.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 264, y: 797, w: 564, h: 868, radius: 10 }]
+    },
+  },
+  ft10: {
+    label: 'FT UMY - Engineering Chronicle',
+    path: 'assets/frames/fakultas-teknik/10-ft-chronicle.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 254, y: 590, w: 575, h: 830, radius: 10 }]
+    },
+  },
+  tiNews1: {
+    label: 'TI UMY - Captured on Campus',
+    path: 'assets/frames/ti-umy-news/01-ti-times.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 297, y: 648, w: 739, h: 881, radius: 10 }]
+    },
+  },
+  tiNews2: {
+    label: 'TI UMY - Print The Moment',
+    path: 'assets/frames/ti-umy-news/02-ti-press.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 275, y: 358, w: 575, h: 1087, radius: 10 }]
+    },
+  },
+  tiNews3: {
+    label: 'TI UMY - Front Page Photo',
+    path: 'assets/frames/ti-umy-news/03-ti-tabloid.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 37, y: 566, w: 721, h: 865, radius: 10 }]
+    },
+  },
+  tiNews4: {
+    label: 'TI UMY - Bulletin',
+    path: 'assets/frames/ti-umy-news/04-ti-bulletin.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 222, y: 506, w: 632, h: 870, radius: 10 }]
+    },
+  },
+  tiNews5: {
+    label: 'TI UMY - Printed Memories',
+    path: 'assets/frames/ti-umy-news/05-ti-post.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 59, y: 400, w: 963, h: 563, radius: 10 }]
+    },
+  },
+  tiNews6: {
+    label: 'TI UMY - Headline Moment',
+    path: 'assets/frames/ti-umy-news/06-ti-newsroom.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 207, y: 381, w: 658, h: 1143, radius: 10 }]
+    },
+  },
+  tiNews7: {
+    label: 'TI UMY - Special Issue 2026',
+    path: 'assets/frames/ti-umy-news/07-ti-special-issue.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 324, y: 580, w: 685, h: 1050, radius: 10 }]
+    },
+  },
 
 };
 
@@ -421,6 +557,16 @@ const THEME_CONFIGS = [
     value: 'expo',
     label: 'SIE Expo 2026',
     frames: ['expo1', 'expo2', 'expo3', 'expo4', 'expo6', 'expo7', 'expo8', 'expo9', 'expo11', 'expo13', 'expo15']
+  },
+  {
+    value: 'ft',
+    label: 'Fakultas Teknik UMY',
+    frames: ['ft1', 'ft2', 'ft3', 'ft4', 'ft5', 'ft6', 'ft7', 'ft8', 'ft9', 'ft10']
+  },
+  {
+    value: 'tiNews',
+    label: 'TI UMY Newspaper',
+    frames: ['tiNews1', 'tiNews2', 'tiNews3', 'tiNews4', 'tiNews5', 'tiNews6', 'tiNews7']
   }
 
 ];
@@ -633,128 +779,6 @@ function drawMediaCover(ctx, media, x, y, w, h, r = 0, opts = {}) {
   ctx.restore();
 }
 
-
-function getExpoPhotoInset(w, h) {
-  // Khusus Expo: foto tidak dibuat memenuhi seluruh lubang transparan.
-  // Disisakan sedikit bibir/margin gelap agar terlihat berada DI BELAKANG template.
-  return Math.max(18, Math.min(36, Math.round(Math.min(w, h) * 0.045)));
-}
-
-function drawExpoPhotoWell(ctx, x, y, w, h, r) {
-  ctx.save();
-  roundedRect(ctx, x, y, w, h, r);
-  ctx.clip();
-
-  const bg = ctx.createLinearGradient(x, y, x, y + h);
-  bg.addColorStop(0, '#020617');
-  bg.addColorStop(0.5, '#08111f');
-  bg.addColorStop(1, '#020617');
-  ctx.fillStyle = bg;
-  ctx.fillRect(x, y, w, h);
-
-  // Glow tipis di belakang, supaya mengikuti nuansa neon Expo.
-  const glow = ctx.createRadialGradient(x + w * .5, y + h * .45, 10, x + w * .5, y + h * .45, Math.max(w, h) * .7);
-  glow.addColorStop(0, 'rgba(56,189,248,.18)');
-  glow.addColorStop(0.45, 'rgba(59,130,246,.08)');
-  glow.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(x, y, w, h);
-  ctx.restore();
-}
-
-function drawExpoInsetShadow(ctx, x, y, w, h, r) {
-  ctx.save();
-  roundedRect(ctx, x, y, w, h, r);
-  ctx.clip();
-
-  // Bayangan di atas foto. Ini digambar SETELAH template, sehingga memberi efek foto masuk ke dalam frame.
-  const edge = Math.max(24, Math.min(70, Math.round(Math.min(w, h) * 0.09)));
-
-  let grad = ctx.createLinearGradient(x, y, x, y + edge);
-  grad.addColorStop(0, 'rgba(0,0,0,.58)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(x, y, w, edge);
-
-  grad = ctx.createLinearGradient(x, y + h - edge, x, y + h);
-  grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(1, 'rgba(0,0,0,.48)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(x, y + h - edge, w, edge);
-
-  grad = ctx.createLinearGradient(x, y, x + edge, y);
-  grad.addColorStop(0, 'rgba(0,0,0,.50)');
-  grad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(x, y, edge, h);
-
-  grad = ctx.createLinearGradient(x + w - edge, y, x + w, y);
-  grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(1, 'rgba(0,0,0,.44)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(x + w - edge, y, edge, h);
-
-  ctx.restore();
-
-  ctx.save();
-  ctx.strokeStyle = 'rgba(0,0,0,.55)';
-  ctx.lineWidth = 5;
-  roundedRect(ctx, x + 2, y + 2, w - 4, h - 4, Math.max(0, r - 2));
-  ctx.stroke();
-
-  ctx.strokeStyle = 'rgba(255,255,255,.18)';
-  ctx.lineWidth = 1.5;
-  roundedRect(ctx, x + 10, y + 10, w - 20, h - 20, Math.max(0, r - 7));
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawImageInFrameSlot(ctx, img, slot, frameKey) {
-  const expo = isExpoFrame(frameKey);
-  withSlotTransform(ctx, slot, (x, y, w, h) => {
-    const r = slot.radius || 0;
-    if (expo) {
-      drawExpoPhotoWell(ctx, x, y, w, h, r);
-      const inset = getExpoPhotoInset(w, h);
-      const ix = x + inset;
-      const iy = y + inset;
-      const iw = Math.max(1, w - inset * 2);
-      const ih = Math.max(1, h - inset * 2);
-      drawImageCover(ctx, img, ix, iy, iw, ih, Math.max(0, r - 7));
-      addDepth(ctx, ix, iy, iw, ih, Math.max(0, r - 7));
-    } else {
-      drawImageCover(ctx, img, x, y, w, h, r);
-      addDepth(ctx, x, y, w, h, r);
-    }
-  });
-}
-
-function drawVideoInFrameSlot(ctx, video, slot, frameKey) {
-  const expo = isExpoFrame(frameKey);
-  withSlotTransform(ctx, slot, (x, y, w, h) => {
-    const r = slot.radius || 0;
-    if (expo) {
-      drawExpoPhotoWell(ctx, x, y, w, h, r);
-      const inset = getExpoPhotoInset(w, h);
-      const ix = x + inset;
-      const iy = y + inset;
-      const iw = Math.max(1, w - inset * 2);
-      const ih = Math.max(1, h - inset * 2);
-      drawMediaFromMainView(ctx, video, ix, iy, iw, ih, Math.max(0, r - 7), {
-        mirror: mirrorMode,
-        filter: getFilterValue()
-      });
-      addDepth(ctx, ix, iy, iw, ih, Math.max(0, r - 7));
-    } else {
-      drawMediaFromMainView(ctx, video, x, y, w, h, r, {
-        mirror: mirrorMode,
-        filter: getFilterValue()
-      });
-      addDepth(ctx, x, y, w, h, r);
-    }
-  });
-}
-
 function drawPreviewSlotPlaceholder(ctx, slot, index, state = 'idle') {
   withSlotTransform(ctx, slot, (x, y, w, h) => {
     ctx.save();
@@ -868,9 +892,18 @@ async function renderFramePreview() {
     const saved = capturedPhotoImgs[i];
     const isRetakingThisSlot = retakeSlotIndex === i;
     if (saved && !isRetakingThisSlot) {
-      drawImageInFrameSlot(ctx, saved, slot, frameKey);
+      withSlotTransform(ctx, slot, (x, y, w, h) => {
+        drawImageCover(ctx, saved, x, y, w, h, slot.radius || 0);
+        if (!usesTopOverlayLook(frameKey)) addDepth(ctx, x, y, w, h, slot.radius || 0);
+      });
     } else if (canShowLive && i === liveIndex) {
-      drawVideoInFrameSlot(ctx, els.video, slot, frameKey);
+      withSlotTransform(ctx, slot, (x, y, w, h) => {
+        drawMediaFromMainView(ctx, els.video, x, y, w, h, slot.radius || 0, {
+          mirror: mirrorMode,
+          filter: getFilterValue()
+        });
+        if (!usesTopOverlayLook(frameKey)) addDepth(ctx, x, y, w, h, slot.radius || 0);
+      });
       drawPreviewSlotPlaceholder(ctx, slot, i, 'active');
     } else {
       drawPreviewSlotPlaceholder(ctx, slot, i, 'idle');
@@ -1438,8 +1471,13 @@ function getSlotsForFrame(frameKey, count) {
 function drawPhotosBehindFrame(ctx, images, slots, frameKey) {
   slots.forEach((slot, i) => {
     const img = images[i % images.length];
-    // Expo memakai mode recess/inset agar foto terlihat berada di belakang template.
-    drawImageInFrameSlot(ctx, img, slot, frameKey);
+    const r = slot.radius || 0;
+
+    withSlotTransform(ctx, slot, (x, y, w, h) => {
+      // Cover agar ruang penuh terisi foto, bukan seperti gambar kecil ditempel.
+      drawImageCover(ctx, img, x, y, w, h, r);
+      if (!usesTopOverlayLook(frameKey)) addDepth(ctx, x, y, w, h, r);
+    });
   });
 }
 
@@ -1461,14 +1499,47 @@ function isExpoFrame(frameKey) {
   return /^expo/.test(String(frameKey || ''));
 }
 
+function usesTopOverlayLook(frameKey) {
+  return /^(expo|ft|tiNews)/.test(String(frameKey || ''));
+}
+
 function drawPhotoRecessOverlay(ctx, slots, frameKey) {
+  return;
   if (!isExpoFrame(frameKey)) return;
 
   slots.forEach(slot => {
     withSlotTransform(ctx, slot, (x, y, w, h) => {
       const r = slot.radius || 0;
-      // Lapisan shadow/outline paling atas agar foto tidak terlihat menempel di depan.
-      drawExpoInsetShadow(ctx, x, y, w, h, r);
+      ctx.save();
+      roundedRect(ctx, x, y, w, h, r);
+      ctx.clip();
+
+      // Inner shadow around the photo window so the photo reads as being under the frame/template.
+      const top = ctx.createLinearGradient(x, y, x, y + Math.min(90, h * 0.18));
+      top.addColorStop(0, 'rgba(0,0,0,.34)');
+      top.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = top;
+      ctx.fillRect(x, y, w, Math.min(110, h * 0.2));
+
+      const bottom = ctx.createLinearGradient(x, y + h - Math.min(90, h * 0.18), x, y + h);
+      bottom.addColorStop(0, 'rgba(0,0,0,0)');
+      bottom.addColorStop(1, 'rgba(0,0,0,.28)');
+      ctx.fillStyle = bottom;
+      ctx.fillRect(x, y + h - Math.min(110, h * 0.2), w, Math.min(110, h * 0.2));
+
+      const left = ctx.createLinearGradient(x, y, x + Math.min(70, w * 0.14), y);
+      left.addColorStop(0, 'rgba(0,0,0,.28)');
+      left.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = left;
+      ctx.fillRect(x, y, Math.min(90, w * 0.16), h);
+
+      const right = ctx.createLinearGradient(x + w - Math.min(70, w * 0.14), y, x + w, y);
+      right.addColorStop(0, 'rgba(0,0,0,0)');
+      right.addColorStop(1, 'rgba(0,0,0,.24)');
+      ctx.fillStyle = right;
+      ctx.fillRect(x + w - Math.min(90, w * 0.16), y, Math.min(90, w * 0.16), h);
+
+      ctx.restore();
     });
   });
 }
@@ -1734,7 +1805,7 @@ function initLabShot() {
   updateFrameAutoInfo();
   renderFramePreview();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
-  console.log('LabShot v33 loaded. Tema + Template One Piece aktif.');
+  console.log('LabShot v37 loaded. Tema One Piece, Expo, FT, dan TI UMY aktif.');
 }
 
 if (document.readyState === 'loading') {

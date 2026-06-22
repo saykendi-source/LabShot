@@ -396,9 +396,3 @@ Perubahan:
 - Ditambahkan inner shadow pada area foto Expo supaya lebih natural menyatu dengan frame.
 - Pilihan kamera dibuat selalu tersedia untuk memilih webcam eksternal.
 - Tombol refresh kamera (↻) ditambahkan untuk membaca ulang daftar kamera setelah webcam eksternal dipasang/diizinkan browser.
-
-
-## v36 - Perbaikan Kedalaman Foto SIE Expo
-- Foto pada template SIE Expo kini dirender dalam mode recess/inset.
-- Foto tidak lagi memenuhi seluruh area transparan sampai tepi frame; ada sedikit ruang gelap dan inner shadow agar terlihat berada di belakang template.
-- Preview frame dan hasil akhir memakai logika yang sama untuk tema Expo.
