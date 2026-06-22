@@ -876,20 +876,14 @@ async function renderFramePreview() {
   ctx.clearRect(0, 0, STORY_W, STORY_H);
   fillBase(ctx, frameKey);
 
-  // If we already have at least one captured photo, use it as blurred background
-  // so the preview matches the final composite output.
-  if (capturedPhotoImgs.length > 0) {
-    drawFullBleedPhotoBackground(ctx, capturedPhotoImgs[0]);
-  } else {
-    // No photo yet – soft neutral gradient so frame transparency is visible.
-    ctx.save();
-    const g = ctx.createLinearGradient(0, 0, 0, STORY_H);
-    g.addColorStop(0, '#fcfaf5');
-    g.addColorStop(1, '#f5f7fb');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, STORY_W, STORY_H);
-    ctx.restore();
-  }
+  // Background lembut agar frame transparan tetap nyaman dilihat.
+  ctx.save();
+  const g = ctx.createLinearGradient(0, 0, 0, STORY_H);
+  g.addColorStop(0, '#fcfaf5');
+  g.addColorStop(1, '#f5f7fb');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, STORY_W, STORY_H);
+  ctx.restore();
 
   const liveIndex = getLivePreviewSlotIndex(total);
   const canShowLive = !!stream && els.video && els.video.readyState >= 2;
@@ -1506,13 +1500,12 @@ function isExpoFrame(frameKey) {
 }
 
 function usesTopOverlayLook(frameKey) {
-  // All frames use the same compositing model: photo drawn first, frame PNG drawn on top.
-  // The recess overlay (inner shadow) applies to all templates so photos look embedded.
-  return true;
+  return /^(expo|ft|tiNews)/.test(String(frameKey || ''));
 }
 
 function drawPhotoRecessOverlay(ctx, slots, frameKey) {
-  if (!usesTopOverlayLook(frameKey)) return;
+  return;
+  if (!isExpoFrame(frameKey)) return;
 
   slots.forEach(slot => {
     withSlotTransform(ctx, slot, (x, y, w, h) => {
@@ -1522,31 +1515,27 @@ function drawPhotoRecessOverlay(ctx, slots, frameKey) {
       ctx.clip();
 
       // Inner shadow around the photo window so the photo reads as being under the frame/template.
-      // Intensity is kept subtle so it works for both dark (expo) and light (campus/city) templates.
-      const shadowAlpha = /^(expo|ft|tiNews)/.test(String(frameKey || '')) ? 0.34 : 0.18;
-      const shadowAlphaB = /^(expo|ft|tiNews)/.test(String(frameKey || '')) ? 0.28 : 0.14;
-
       const top = ctx.createLinearGradient(x, y, x, y + Math.min(90, h * 0.18));
-      top.addColorStop(0, `rgba(0,0,0,${shadowAlpha})`);
+      top.addColorStop(0, 'rgba(0,0,0,.34)');
       top.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = top;
       ctx.fillRect(x, y, w, Math.min(110, h * 0.2));
 
       const bottom = ctx.createLinearGradient(x, y + h - Math.min(90, h * 0.18), x, y + h);
       bottom.addColorStop(0, 'rgba(0,0,0,0)');
-      bottom.addColorStop(1, `rgba(0,0,0,${shadowAlphaB})`);
+      bottom.addColorStop(1, 'rgba(0,0,0,.28)');
       ctx.fillStyle = bottom;
       ctx.fillRect(x, y + h - Math.min(110, h * 0.2), w, Math.min(110, h * 0.2));
 
       const left = ctx.createLinearGradient(x, y, x + Math.min(70, w * 0.14), y);
-      left.addColorStop(0, `rgba(0,0,0,${shadowAlphaB})`);
+      left.addColorStop(0, 'rgba(0,0,0,.28)');
       left.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = left;
       ctx.fillRect(x, y, Math.min(90, w * 0.16), h);
 
       const right = ctx.createLinearGradient(x + w - Math.min(70, w * 0.14), y, x + w, y);
       right.addColorStop(0, 'rgba(0,0,0,0)');
-      right.addColorStop(1, `rgba(0,0,0,${shadowAlphaB * 0.85})`);
+      right.addColorStop(1, 'rgba(0,0,0,.24)');
       ctx.fillStyle = right;
       ctx.fillRect(x + w - Math.min(90, w * 0.16), y, Math.min(90, w * 0.16), h);
 
@@ -1623,15 +1612,15 @@ async function renderFinalImage() {
   const ctx     = canvas.getContext('2d');
 
   /*
-    Layer order (bottom → top):
-    1. fillBase  – solid/gradient background
-    2. drawFullBleedPhotoBackground – blurred photo fill so the canvas never looks bare
-    3. drawPhotosBehindFrame – photos clipped to slot regions
-    4. Frame PNG overlay (drawn on top, transparent slots show photos through)
-    5. drawPhotoRecessOverlay – inner-shadow on each slot so photo looks recessed/behind
+    1. Base
+    2. Full-bleed foto pertama sebagai background bawah template
+    3. Foto utama di slot transparan
+    4. Frame overlay paling atas
   */
   fillBase(ctx, frameKey);
-  drawFullBleedPhotoBackground(ctx, images[0]);
+  if (!isExpoFrame(frameKey)) {
+    drawFullBleedPhotoBackground(ctx, images[0]);
+  }
   drawPhotosBehindFrame(ctx, images, slots, frameKey);
 
   const frame = await getFrameImage(frameKey);
