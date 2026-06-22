@@ -375,3 +375,14 @@ Perubahan:
 Catatan:
 - Template `Pirate Memory Board` dan `Grand Line Journal` memiliki 2 slot foto.
 - Template lain memiliki 1 slot foto.
+
+
+## Update v34 – Tema SIE Expo 2026
+
+Perubahan:
+- Menambahkan tema baru: `SIE Expo 2026`.
+- Menambahkan 11 template dari `Expo.zip`.
+- Alur tetap: pilih Tema → pilih Template → pilih Filter → Aktifkan Kamera → Mulai Foto.
+- Semua template Expo menggunakan 1 foto otomatis.
+- Area foto pada template Expo sudah dibuat transparan otomatis.
+- Template tersimpan di `assets/frames/expo/`.

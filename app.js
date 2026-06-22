@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────
-   LabShot v33 – app.js
+   LabShot v34 – app.js
    Perbaikan utama:
    - Preview frame mengikuti ukuran story IG secara proporsional.
    - Saat kamera aktif, preview live muncul langsung di slot foto.
@@ -301,6 +301,105 @@ const FRAME_CONFIGS = {
       2: [{"x": 205, "y": 478, "w": 630, "h": 575, "radius": 12}, {"x": 266, "y": 1140, "w": 665, "h": 506, "radius": 12}]
     },
   },
+  expo1: {
+    label: 'SIE Expo - Neon Agenda',
+    path: 'assets/frames/expo/01-neon-agenda.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 95, y: 676, w: 904, h: 677, radius: 12 }]
+    },
+  },
+
+  expo2: {
+    label: 'SIE Expo - Neon Bulb',
+    path: 'assets/frames/expo/02-neon-bulb.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 82, y: 860, w: 920, h: 845, radius: 12 }]
+    },
+  },
+
+  expo3: {
+    label: 'SIE Expo - Spotlight Frame',
+    path: 'assets/frames/expo/03-spotlight-frame.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 69, y: 472, w: 937, h: 1079, radius: 12 }]
+    },
+  },
+
+  expo4: {
+    label: 'SIE Expo - City Future',
+    path: 'assets/frames/expo/04-city-future.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 57, y: 524, w: 967, h: 1102, radius: 12 }]
+    },
+  },
+
+  expo6: {
+    label: 'SIE Expo - Innovation Times',
+    path: 'assets/frames/expo/05-innovation-times.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 228, y: 610, w: 621, h: 894, radius: 12 }]
+    },
+  },
+
+  expo7: {
+    label: 'SIE Expo - The Innovation Times',
+    path: 'assets/frames/expo/06-the-innovation-times.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 248, y: 620, w: 585, h: 1008, radius: 12 }]
+    },
+  },
+
+  expo8: {
+    label: 'SIE Expo - Innovation Daily',
+    path: 'assets/frames/expo/07-innovation-daily.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 255, y: 621, w: 787, h: 811, radius: 12 }]
+    },
+  },
+
+  expo9: {
+    label: 'SIE Expo - SIE Times',
+    path: 'assets/frames/expo/08-sie-times.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 271, y: 617, w: 540, h: 929, radius: 12 }]
+    },
+  },
+
+  expo11: {
+    label: 'SIE Expo - SIE Daily',
+    path: 'assets/frames/expo/09-sie-daily.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 43, y: 641, w: 994, h: 797, radius: 12 }]
+    },
+  },
+
+  expo13: {
+    label: 'SIE Expo - Daily Innovation',
+    path: 'assets/frames/expo/10-daily-innovation.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 52, y: 785, w: 767, h: 737, radius: 12 }]
+    },
+  },
+
+  expo15: {
+    label: 'SIE Expo - Collaboration Daily',
+    path: 'assets/frames/expo/11-collaboration-daily.png',
+    defaultCount: 1,
+    slotsByCount: {
+      1: [{ x: 46, y: 760, w: 988, h: 748, radius: 12 }]
+    },
+  },
+
 };
 
 
@@ -314,7 +413,13 @@ const THEME_CONFIGS = [
     value: 'onePiece',
     label: 'One Piece / Anime Pirate',
     frames: ['onePieceOp24', 'onePieceOp31', 'onePieceOp29', 'onePieceOp25', 'onePieceOp28', 'onePieceOp8', 'onePieceOp4', 'onePieceOp7', 'onePieceOp11']
+  },
+  {
+    value: 'expo',
+    label: 'SIE Expo 2026',
+    frames: ['expo1', 'expo2', 'expo3', 'expo4', 'expo6', 'expo7', 'expo8', 'expo9', 'expo11', 'expo13', 'expo15']
   }
+
 ];
 
 function populateThemeOptions() {
