@@ -309,7 +309,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/01-neon-agenda.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 106, y: 688, w: 878, h: 648, radius: 12 }]
+      1: [{ x: 98, y: 684, w: 898, h: 664, radius: 12 }]
     },
   },
 
@@ -327,7 +327,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/03-spotlight-frame.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 73, y: 473, w: 930, h: 1075, radius: 12 }]
+      1: [{ x: 73, y: 473, w: 930, h: 1077, radius: 12 }]
     },
   },
 
@@ -336,7 +336,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/04-city-future.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 63, y: 529, w: 952, h: 1011, radius: 12 }]
+      1: [{ x: 57, y: 524, w: 965, h: 1110, radius: 12 }]
     },
   },
 
@@ -345,7 +345,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/05-innovation-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 241, y: 622, w: 593, h: 866, radius: 12 }]
+      1: [{ x: 238, y: 620, w: 599, h: 872, radius: 12 }]
     },
   },
 
@@ -390,7 +390,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/expo/10-daily-innovation.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 64, y: 790, w: 740, h: 725, radius: 12 }]
+      1: [{ x: 53, y: 785, w: 763, h: 733, radius: 12 }]
     },
   },
 
@@ -415,7 +415,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/fakultas-teknik/02-ft-engineering-times.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 55, y: 744, w: 495, h: 883, radius: 10 }]
+      1: [{ x: 52, y: 745, w: 625, h: 885, radius: 10 }]
     },
   },
   ft3: {
@@ -495,7 +495,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/02-ti-press.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 276, y: 359, w: 572, h: 1081, radius: 10 }]
+      1: [{ x: 276, y: 359, w: 571, h: 1081, radius: 10 }]
     },
   },
   tiNews3: {
@@ -519,7 +519,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/05-ti-post.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 39, y: 937, w: 996, h: 941, radius: 10 }]
+      1: [{ x: 65, y: 406, w: 949, h: 547, radius: 10 }]
     },
   },
   tiNews6: {
@@ -527,7 +527,7 @@ const FRAME_CONFIGS = {
     path: 'assets/frames/ti-umy-news/06-ti-newsroom.png',
     defaultCount: 1,
     slotsByCount: {
-      1: [{ x: 214, y: 392, w: 638, h: 1013, radius: 10 }]
+      1: [{ x: 213, y: 390, w: 642, h: 1111, radius: 10 }]
     },
   },
   tiNews7: {
