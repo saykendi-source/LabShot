@@ -1196,3 +1196,20 @@ body {
     height:64px;
   }
 }
+
+
+/* ───────────────────────────────────────────
+   v35 – Camera selector visible
+─────────────────────────────────────────── */
+.camera-field { margin-top: 12px; }
+.camera-select-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.camera-refresh-btn {
+  padding: 11px 13px;
+  min-width: 44px;
+  border-radius: 14px;
+}

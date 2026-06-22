@@ -121,10 +121,16 @@
         <small id="framePreviewNote">Preview frame diperbesar agar template mudah dibaca. Pilih filter, lalu klik Mulai Foto.</small>
       </section>
 
-      <!-- Pilih kamera (auto-show if multiple) -->
-      <label class="field hidden" id="cameraSelectWrap">
+      <!-- Pilih kamera -->
+      <label class="field camera-field" id="cameraSelectWrap">
         <span>Pilih Kamera</span>
-        <select id="cameraSelect"></select>
+        <div class="camera-select-row">
+          <select id="cameraSelect">
+            <option value="">Kamera default</option>
+          </select>
+          <button type="button" id="refreshCameraBtn" class="btn btn-ghost camera-refresh-btn">↻</button>
+        </div>
+        <small>Pilih webcam eksternal jika tersedia. Jika nama kamera belum muncul, klik Aktifkan Kamera dulu lalu tekan ↻.</small>
       </label>
 
       <!-- Toggles -->

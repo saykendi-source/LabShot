@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────
-   LabShot v34 – app.js
+   LabShot v35 – app.js
    Perbaikan utama:
    - Preview frame mengikuti ukuran story IG secara proporsional.
    - Saat kamera aktif, preview live muncul langsung di slot foto.
@@ -7,6 +7,8 @@
      lalu klik Finish untuk membuat hasil akhir dan QR.
    - Preview frame dan hasil foto mengikuti area yang benar-benar terlihat
      pada kamera utama, agar framing lebih konsisten.
+   - Perbaikan tema Expo: foto diposisikan lebih terasa di belakang template.
+   - Pilihan kamera dibuat selalu tersedia untuk webcam eksternal.
 ───────────────────────────────────────────── */
 
 const els = {
@@ -37,6 +39,7 @@ const els = {
   soundToggle:     document.getElementById('soundToggle'),
   cameraSelect:    document.getElementById('cameraSelect'),
   cameraSelectWrap:document.getElementById('cameraSelectWrap'),
+  refreshCameraBtn: document.getElementById('refreshCameraBtn'),
   progressBar:       document.getElementById('progressBar'),
   statusText:        document.getElementById('statusText'),
   frameAutoCount:    document.getElementById('frameAutoCount'),
@@ -765,6 +768,7 @@ async function renderFramePreview() {
   if (frame) {
     ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
   }
+  drawPhotoRecessOverlay(ctx, slots, frameKey);
 
   const currentStep = Math.min(capturedPhotoImgs.length + 1, total);
   if (els.framePreviewNote) {
@@ -835,21 +839,36 @@ function setBusy(busy) {
 /* ── Camera ───────────────────────────────────────────── */
 async function enumerateCameras() {
   try {
+    if (!navigator.mediaDevices?.enumerateDevices || !els.cameraSelect) return;
+
+    const currentValue = els.cameraSelect.value || '';
     const devices = await navigator.mediaDevices.enumerateDevices();
     const cams = devices.filter(d => d.kind === 'videoinput');
-    if (!els.cameraSelect || !els.cameraSelectWrap) return;
-    if (cams.length <= 1) { els.cameraSelectWrap.classList.add('hidden'); return; }
-    els.cameraSelectWrap.classList.remove('hidden');
+
+    if (els.cameraSelectWrap) els.cameraSelectWrap.classList.remove('hidden');
     els.cameraSelect.innerHTML = '';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Kamera default / bawaan';
+    els.cameraSelect.appendChild(defaultOpt);
+
     cams.forEach((c, i) => {
       const o = document.createElement('option');
       o.value = c.deviceId;
-      o.textContent = c.label || `Kamera ${i+1}`;
+      o.textContent = c.label || `Kamera ${i + 1}${i === 0 ? ' (default)' : ''}`;
       els.cameraSelect.appendChild(o);
     });
+
     const active = stream?.getVideoTracks()[0]?.getSettings()?.deviceId;
-    if (active) els.cameraSelect.value = active;
-  } catch(_) {}
+    if (active && [...els.cameraSelect.options].some(o => o.value === active)) {
+      els.cameraSelect.value = active;
+    } else if ([...els.cameraSelect.options].some(o => o.value === currentValue)) {
+      els.cameraSelect.value = currentValue;
+    }
+  } catch(err) {
+    console.warn('Gagal membaca daftar kamera:', err);
+  }
 }
 
 async function startCamera(deviceId = null) {
@@ -867,10 +886,16 @@ async function startCamera(deviceId = null) {
   setStatus('Menghubungkan kamera…');
 
   try {
+    const selectedDeviceId = deviceId || els.cameraSelect?.value || '';
+    const videoBase = {
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      frameRate: { ideal: 30, max: 30 }
+    };
     const constraints = {
-      video: deviceId
-        ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-        : { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      video: selectedDeviceId
+        ? { ...videoBase, deviceId: { exact: selectedDeviceId } }
+        : { ...videoBase, facingMode: 'user' },
       audio: false,
     };
 
@@ -1324,6 +1349,50 @@ function fillBase(ctx, frameKey) {
   ctx.fillRect(0, 0, STORY_W, STORY_H);
 }
 
+function isExpoFrame(frameKey) {
+  return /^expo/.test(String(frameKey || ''));
+}
+
+function drawPhotoRecessOverlay(ctx, slots, frameKey) {
+  if (!isExpoFrame(frameKey)) return;
+
+  slots.forEach(slot => {
+    withSlotTransform(ctx, slot, (x, y, w, h) => {
+      const r = slot.radius || 0;
+      ctx.save();
+      roundedRect(ctx, x, y, w, h, r);
+      ctx.clip();
+
+      // Inner shadow around the photo window so the photo reads as being under the frame/template.
+      const top = ctx.createLinearGradient(x, y, x, y + Math.min(90, h * 0.18));
+      top.addColorStop(0, 'rgba(0,0,0,.34)');
+      top.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = top;
+      ctx.fillRect(x, y, w, Math.min(110, h * 0.2));
+
+      const bottom = ctx.createLinearGradient(x, y + h - Math.min(90, h * 0.18), x, y + h);
+      bottom.addColorStop(0, 'rgba(0,0,0,0)');
+      bottom.addColorStop(1, 'rgba(0,0,0,.28)');
+      ctx.fillStyle = bottom;
+      ctx.fillRect(x, y + h - Math.min(110, h * 0.2), w, Math.min(110, h * 0.2));
+
+      const left = ctx.createLinearGradient(x, y, x + Math.min(70, w * 0.14), y);
+      left.addColorStop(0, 'rgba(0,0,0,.28)');
+      left.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = left;
+      ctx.fillRect(x, y, Math.min(90, w * 0.16), h);
+
+      const right = ctx.createLinearGradient(x + w - Math.min(70, w * 0.14), y, x + w, y);
+      right.addColorStop(0, 'rgba(0,0,0,0)');
+      right.addColorStop(1, 'rgba(0,0,0,.24)');
+      ctx.fillStyle = right;
+      ctx.fillRect(x + w - Math.min(90, w * 0.16), y, Math.min(90, w * 0.16), h);
+
+      ctx.restore();
+    });
+  });
+}
+
 
 async function createDriveUploadBlobFromCanvas(sourceCanvas) {
   const uploadCanvas = document.createElement('canvas');
@@ -1398,11 +1467,14 @@ async function renderFinalImage() {
     4. Frame overlay paling atas
   */
   fillBase(ctx, frameKey);
-  drawFullBleedPhotoBackground(ctx, images[0]);
+  if (!isExpoFrame(frameKey)) {
+    drawFullBleedPhotoBackground(ctx, images[0]);
+  }
   drawPhotosBehindFrame(ctx, images, slots);
 
   const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
+  drawPhotoRecessOverlay(ctx, slots, frameKey);
 
   const dataUrl = canvas.toDataURL('image/png');
   els.finalPreview.src = dataUrl;
@@ -1526,7 +1598,7 @@ function initLabShot() {
     return;
   }
 
-  els.startCameraBtn.addEventListener('click', () => startCamera());
+  els.startCameraBtn.addEventListener('click', () => startCamera(els.cameraSelect?.value || null));
   els.startSessionBtn?.addEventListener('click', startSession);
   els.retakeBtn?.addEventListener('click', () => {
     resetResult(true);
@@ -1546,7 +1618,8 @@ function initLabShot() {
     renderFramePreview();
   });
   els.soundToggle?.addEventListener('change', () => { soundEnabled = els.soundToggle.checked; });
-  els.cameraSelect?.addEventListener('change', () => startCamera(els.cameraSelect.value));
+  els.cameraSelect?.addEventListener('change', () => { if (stream) startCamera(els.cameraSelect.value || null); });
+  els.refreshCameraBtn?.addEventListener('click', enumerateCameras);
 
   [els.eventName, els.layoutMode].filter(Boolean).forEach(el =>
     el.addEventListener('change', () => { if (capturedPhotos.length) renderFinalImage(); })
@@ -1575,6 +1648,7 @@ function initLabShot() {
 
   applyVideoMirror();
   initThemeTemplateMenus();
+  enumerateCameras();
   updateFrameAutoInfo();
   resetResult(true);
   updateFrameAutoInfo();

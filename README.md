@@ -386,3 +386,13 @@ Perubahan:
 - Semua template Expo menggunakan 1 foto otomatis.
 - Area foto pada template Expo sudah dibuat transparan otomatis.
 - Template tersimpan di `assets/frames/expo/`.
+
+
+## Update v35 – Expo Photo Layer + Pilihan Kamera
+
+Perubahan:
+- Tema SIE Expo diperbaiki agar foto terasa berada di belakang template, bukan seperti ditempel di depan.
+- Background blur full-bleed dinonaktifkan khusus template Expo agar foto hanya muncul pada lubang foto template.
+- Ditambahkan inner shadow pada area foto Expo supaya lebih natural menyatu dengan frame.
+- Pilihan kamera dibuat selalu tersedia untuk memilih webcam eksternal.
+- Tombol refresh kamera (↻) ditambahkan untuk membaca ulang daftar kamera setelah webcam eksternal dipasang/diizinkan browser.
