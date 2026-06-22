@@ -360,3 +360,18 @@ Perubahan:
   - membersihkan thumbnail/review
   - mempertahankan kamera tetap aktif
   - menyiapkan sesi untuk orang berikutnya
+
+
+## Update v33 – Menu Tema + Template One Piece
+
+Perubahan:
+- Menambahkan dropdown `Tema` sebelum `Template`.
+- Tema baru: `One Piece / Anime Pirate`.
+- Menambahkan 9 template dari file `one piece.zip`.
+- Area foto pada template baru sudah dibuat transparan otomatis dari area checkerboard.
+- Template baru disimpan di `assets/frames/one-piece/`.
+- Jumlah take foto otomatis mengikuti jumlah slot foto pada template.
+
+Catatan:
+- Template `Pirate Memory Board` dan `Grand Line Journal` memiliki 2 slot foto.
+- Template lain memiliki 1 slot foto.
