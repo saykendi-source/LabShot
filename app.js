@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────
-   LabShot v35 – app.js
+   LabShot v36 – app.js
    Perbaikan utama:
    - Preview frame mengikuti ukuran story IG secara proporsional.
    - Saat kamera aktif, preview live muncul langsung di slot foto.
@@ -7,7 +7,7 @@
      lalu klik Finish untuk membuat hasil akhir dan QR.
    - Preview frame dan hasil foto mengikuti area yang benar-benar terlihat
      pada kamera utama, agar framing lebih konsisten.
-   - Perbaikan tema Expo: foto diposisikan lebih terasa di belakang template.
+   - Perbaikan tema Expo: foto dibuat masuk ke dalam frame/recess, bukan rata seperti tempelan.
    - Pilihan kamera dibuat selalu tersedia untuk webcam eksternal.
 ───────────────────────────────────────────── */
 
@@ -633,6 +633,128 @@ function drawMediaCover(ctx, media, x, y, w, h, r = 0, opts = {}) {
   ctx.restore();
 }
 
+
+function getExpoPhotoInset(w, h) {
+  // Khusus Expo: foto tidak dibuat memenuhi seluruh lubang transparan.
+  // Disisakan sedikit bibir/margin gelap agar terlihat berada DI BELAKANG template.
+  return Math.max(18, Math.min(36, Math.round(Math.min(w, h) * 0.045)));
+}
+
+function drawExpoPhotoWell(ctx, x, y, w, h, r) {
+  ctx.save();
+  roundedRect(ctx, x, y, w, h, r);
+  ctx.clip();
+
+  const bg = ctx.createLinearGradient(x, y, x, y + h);
+  bg.addColorStop(0, '#020617');
+  bg.addColorStop(0.5, '#08111f');
+  bg.addColorStop(1, '#020617');
+  ctx.fillStyle = bg;
+  ctx.fillRect(x, y, w, h);
+
+  // Glow tipis di belakang, supaya mengikuti nuansa neon Expo.
+  const glow = ctx.createRadialGradient(x + w * .5, y + h * .45, 10, x + w * .5, y + h * .45, Math.max(w, h) * .7);
+  glow.addColorStop(0, 'rgba(56,189,248,.18)');
+  glow.addColorStop(0.45, 'rgba(59,130,246,.08)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+}
+
+function drawExpoInsetShadow(ctx, x, y, w, h, r) {
+  ctx.save();
+  roundedRect(ctx, x, y, w, h, r);
+  ctx.clip();
+
+  // Bayangan di atas foto. Ini digambar SETELAH template, sehingga memberi efek foto masuk ke dalam frame.
+  const edge = Math.max(24, Math.min(70, Math.round(Math.min(w, h) * 0.09)));
+
+  let grad = ctx.createLinearGradient(x, y, x, y + edge);
+  grad.addColorStop(0, 'rgba(0,0,0,.58)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, w, edge);
+
+  grad = ctx.createLinearGradient(x, y + h - edge, x, y + h);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(0,0,0,.48)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y + h - edge, w, edge);
+
+  grad = ctx.createLinearGradient(x, y, x + edge, y);
+  grad.addColorStop(0, 'rgba(0,0,0,.50)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, y, edge, h);
+
+  grad = ctx.createLinearGradient(x + w - edge, y, x + w, y);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(0,0,0,.44)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x + w - edge, y, edge, h);
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)';
+  ctx.lineWidth = 5;
+  roundedRect(ctx, x + 2, y + 2, w - 4, h - 4, Math.max(0, r - 2));
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 1.5;
+  roundedRect(ctx, x + 10, y + 10, w - 20, h - 20, Math.max(0, r - 7));
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawImageInFrameSlot(ctx, img, slot, frameKey) {
+  const expo = isExpoFrame(frameKey);
+  withSlotTransform(ctx, slot, (x, y, w, h) => {
+    const r = slot.radius || 0;
+    if (expo) {
+      drawExpoPhotoWell(ctx, x, y, w, h, r);
+      const inset = getExpoPhotoInset(w, h);
+      const ix = x + inset;
+      const iy = y + inset;
+      const iw = Math.max(1, w - inset * 2);
+      const ih = Math.max(1, h - inset * 2);
+      drawImageCover(ctx, img, ix, iy, iw, ih, Math.max(0, r - 7));
+      addDepth(ctx, ix, iy, iw, ih, Math.max(0, r - 7));
+    } else {
+      drawImageCover(ctx, img, x, y, w, h, r);
+      addDepth(ctx, x, y, w, h, r);
+    }
+  });
+}
+
+function drawVideoInFrameSlot(ctx, video, slot, frameKey) {
+  const expo = isExpoFrame(frameKey);
+  withSlotTransform(ctx, slot, (x, y, w, h) => {
+    const r = slot.radius || 0;
+    if (expo) {
+      drawExpoPhotoWell(ctx, x, y, w, h, r);
+      const inset = getExpoPhotoInset(w, h);
+      const ix = x + inset;
+      const iy = y + inset;
+      const iw = Math.max(1, w - inset * 2);
+      const ih = Math.max(1, h - inset * 2);
+      drawMediaFromMainView(ctx, video, ix, iy, iw, ih, Math.max(0, r - 7), {
+        mirror: mirrorMode,
+        filter: getFilterValue()
+      });
+      addDepth(ctx, ix, iy, iw, ih, Math.max(0, r - 7));
+    } else {
+      drawMediaFromMainView(ctx, video, x, y, w, h, r, {
+        mirror: mirrorMode,
+        filter: getFilterValue()
+      });
+      addDepth(ctx, x, y, w, h, r);
+    }
+  });
+}
+
 function drawPreviewSlotPlaceholder(ctx, slot, index, state = 'idle') {
   withSlotTransform(ctx, slot, (x, y, w, h) => {
     ctx.save();
@@ -746,18 +868,9 @@ async function renderFramePreview() {
     const saved = capturedPhotoImgs[i];
     const isRetakingThisSlot = retakeSlotIndex === i;
     if (saved && !isRetakingThisSlot) {
-      withSlotTransform(ctx, slot, (x, y, w, h) => {
-        drawImageCover(ctx, saved, x, y, w, h, slot.radius || 0);
-        addDepth(ctx, x, y, w, h, slot.radius || 0);
-      });
+      drawImageInFrameSlot(ctx, saved, slot, frameKey);
     } else if (canShowLive && i === liveIndex) {
-      withSlotTransform(ctx, slot, (x, y, w, h) => {
-        drawMediaFromMainView(ctx, els.video, x, y, w, h, slot.radius || 0, {
-          mirror: mirrorMode,
-          filter: getFilterValue()
-        });
-        addDepth(ctx, x, y, w, h, slot.radius || 0);
-      });
+      drawVideoInFrameSlot(ctx, els.video, slot, frameKey);
       drawPreviewSlotPlaceholder(ctx, slot, i, 'active');
     } else {
       drawPreviewSlotPlaceholder(ctx, slot, i, 'idle');
@@ -1322,16 +1435,11 @@ function getSlotsForFrame(frameKey, count) {
   - Untuk scrapbook: sesuai transparent window masing-masing template.
   - Untuk frame standar: split otomatis 1/2/3/4 di baseSlot.
 */
-function drawPhotosBehindFrame(ctx, images, slots) {
+function drawPhotosBehindFrame(ctx, images, slots, frameKey) {
   slots.forEach((slot, i) => {
     const img = images[i % images.length];
-    const r = slot.radius || 0;
-
-    withSlotTransform(ctx, slot, (x, y, w, h) => {
-      // Cover agar ruang penuh terisi foto, bukan seperti gambar kecil ditempel.
-      drawImageCover(ctx, img, x, y, w, h, r);
-      addDepth(ctx, x, y, w, h, r);
-    });
+    // Expo memakai mode recess/inset agar foto terlihat berada di belakang template.
+    drawImageInFrameSlot(ctx, img, slot, frameKey);
   });
 }
 
@@ -1359,36 +1467,8 @@ function drawPhotoRecessOverlay(ctx, slots, frameKey) {
   slots.forEach(slot => {
     withSlotTransform(ctx, slot, (x, y, w, h) => {
       const r = slot.radius || 0;
-      ctx.save();
-      roundedRect(ctx, x, y, w, h, r);
-      ctx.clip();
-
-      // Inner shadow around the photo window so the photo reads as being under the frame/template.
-      const top = ctx.createLinearGradient(x, y, x, y + Math.min(90, h * 0.18));
-      top.addColorStop(0, 'rgba(0,0,0,.34)');
-      top.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = top;
-      ctx.fillRect(x, y, w, Math.min(110, h * 0.2));
-
-      const bottom = ctx.createLinearGradient(x, y + h - Math.min(90, h * 0.18), x, y + h);
-      bottom.addColorStop(0, 'rgba(0,0,0,0)');
-      bottom.addColorStop(1, 'rgba(0,0,0,.28)');
-      ctx.fillStyle = bottom;
-      ctx.fillRect(x, y + h - Math.min(110, h * 0.2), w, Math.min(110, h * 0.2));
-
-      const left = ctx.createLinearGradient(x, y, x + Math.min(70, w * 0.14), y);
-      left.addColorStop(0, 'rgba(0,0,0,.28)');
-      left.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = left;
-      ctx.fillRect(x, y, Math.min(90, w * 0.16), h);
-
-      const right = ctx.createLinearGradient(x + w - Math.min(70, w * 0.14), y, x + w, y);
-      right.addColorStop(0, 'rgba(0,0,0,0)');
-      right.addColorStop(1, 'rgba(0,0,0,.24)');
-      ctx.fillStyle = right;
-      ctx.fillRect(x + w - Math.min(90, w * 0.16), y, Math.min(90, w * 0.16), h);
-
-      ctx.restore();
+      // Lapisan shadow/outline paling atas agar foto tidak terlihat menempel di depan.
+      drawExpoInsetShadow(ctx, x, y, w, h, r);
     });
   });
 }
@@ -1470,7 +1550,7 @@ async function renderFinalImage() {
   if (!isExpoFrame(frameKey)) {
     drawFullBleedPhotoBackground(ctx, images[0]);
   }
-  drawPhotosBehindFrame(ctx, images, slots);
+  drawPhotosBehindFrame(ctx, images, slots, frameKey);
 
   const frame = await getFrameImage(frameKey);
   if (frame) ctx.drawImage(frame, 0, 0, STORY_W, STORY_H);
