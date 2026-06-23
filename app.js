@@ -48,7 +48,6 @@ const els = {
   framePreviewCount: document.getElementById('framePreviewCount'),
   framePreviewNote:  document.getElementById('framePreviewNote'),
   framePreviewCanvas:document.getElementById('framePreviewCanvas'),
-  liveOverlayCanvas: document.getElementById('liveOverlayCanvas'),
   reviewControls:  document.getElementById('reviewControls'),
   selectedPhotoLabel: document.getElementById('selectedPhotoLabel'),
   moveLeftBtn:     document.getElementById('moveLeftBtn'),
@@ -677,9 +676,6 @@ let mirrorMode        = true;
 let soundEnabled      = true;
 let sessionRunning    = false;
 let previewTimer      = null;
-let liveOverlayRafId      = null;
-let liveOverlayCachedImg = null;
-let liveOverlayFrameKey  = null;
 let selectedPhotoIndex = -1;
 let retakeSlotIndex    = -1;
 let reviewReady        = false;
@@ -837,74 +833,6 @@ function drawPreviewSlotPlaceholder(ctx, slot, index, state = 'idle') {
     }
     ctx.restore();
   });
-}
-
-/* ── Live overlay on main camera view ─────────────────── */
-function stopLiveOverlay() {
-  if (liveOverlayRafId) {
-    cancelAnimationFrame(liveOverlayRafId);
-    liveOverlayRafId = null;
-  }
-  const oc = els.liveOverlayCanvas;
-  if (oc) {
-    const ctx = oc.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, oc.width, oc.height);
-  }
-}
-
-function _drawOverlaySync() {
-  const oc = els.liveOverlayCanvas;
-  if (!oc || !stream) { stopLiveOverlay(); return; }
-
-  const parent = oc.parentElement;
-  const dispW  = Math.max(1, parent ? parent.clientWidth  : (oc.clientWidth  || 360));
-  const dispH  = Math.max(1, parent ? parent.clientHeight : (oc.clientHeight || 640));
-
-  if (oc.width !== dispW || oc.height !== dispH) {
-    oc.width  = dispW;
-    oc.height = dispH;
-  }
-
-  const ctx = oc.getContext('2d');
-  ctx.clearRect(0, 0, dispW, dispH);
-
-  const frameImg = liveOverlayCachedImg;
-  if (!frameImg) { liveOverlayRafId = requestAnimationFrame(_drawOverlaySync); return; }
-
-  const storyAspect = STORY_W / STORY_H;
-  const viewAspect  = dispW  / dispH;
-
-  let srcX, srcY, srcW, srcH;
-  if (viewAspect > storyAspect) {
-    srcW = STORY_W;
-    srcH = Math.round(STORY_W / viewAspect);
-    srcX = 0;
-    srcY = Math.round((STORY_H - srcH) / 2);
-  } else {
-    srcH = STORY_H;
-    srcW = Math.round(STORY_H * viewAspect);
-    srcX = Math.round((STORY_W - srcW) / 2);
-    srcY = 0;
-  }
-
-  ctx.drawImage(frameImg, srcX, srcY, srcW, srcH, 0, 0, dispW, dispH);
-  liveOverlayRafId = requestAnimationFrame(_drawOverlaySync);
-}
-
-async function startLiveOverlay() {
-  stopLiveOverlay();
-  const oc = els.liveOverlayCanvas;
-  if (!oc) return;
-
-  const frameKey = resolveFrameKey();
-  if (liveOverlayFrameKey !== frameKey || !liveOverlayCachedImg) {
-    liveOverlayCachedImg = null;
-    liveOverlayFrameKey  = frameKey;
-    try { liveOverlayCachedImg = await getFrameImage(frameKey); } catch(e) {}
-  }
-
-  oc.classList.remove('hidden');
-  liveOverlayRafId = requestAnimationFrame(_drawOverlaySync);
 }
 
 function stopPreviewLoop() {
@@ -1134,7 +1062,6 @@ async function startCamera(deviceId = null) {
     applyLiveFilter();
     await enumerateCameras();
     startPreviewLoop();
-    startLiveOverlay();
 
   } catch(err) {
     console.error('Camera error:', err);
@@ -1144,7 +1071,6 @@ async function startCamera(deviceId = null) {
         ? 'Kamera tidak ditemukan. Pastikan webcam terpasang dan tidak sedang dipakai aplikasi lain.'
         : 'Kamera tidak bisa diakses. Pastikan halaman dibuka via HTTPS/localhost dan izin kamera diberikan.';
     stopPreviewLoop();
-    stopLiveOverlay();
     renderFramePreview();
     setStatus(msg);
     alert(msg);
@@ -1221,9 +1147,6 @@ async function startSession() {
   retakeSlotIndex = -1;
   reviewReady = false;
   updatePhotoGrid([]);
-
-  // Sembunyikan overlay selama sesi pengambilan foto
-  stopLiveOverlay();
 
   const frameKey = resolveFrameKey();
   const total = getAutoPhotoCount(frameKey);
@@ -1794,7 +1717,6 @@ function sharePhoto() {
   resetResult(true);
   if (stream) {
     startPreviewLoop();
-    startLiveOverlay();
     els.startSessionBtn.disabled = false;
     setStatus('Siap untuk pengunjung berikutnya. Atur frame dan filter, lalu klik Mulai Foto.');
   } else {
@@ -1833,7 +1755,6 @@ function initLabShot() {
     resetResult(true);
     els.retakeBtn.disabled = true;
     startPreviewLoop();
-    if (stream) startLiveOverlay();
   });
   els.moveLeftBtn?.addEventListener('click', () => moveSelectedPhoto(-1));
   els.moveRightBtn?.addEventListener('click', () => moveSelectedPhoto(1));
@@ -1859,14 +1780,12 @@ function initLabShot() {
     populateFrameOptions(els.themeSelect.value);
     updateFrameAutoInfo();
     resetResult(true);
-    if (stream) startLiveOverlay();
     setStatus(stream ? 'Tema diganti. Pilih template lalu lanjutkan foto.' : 'Tema diganti. Pilih template lalu aktifkan kamera.');
   });
 
   els.frameTheme?.addEventListener('change', () => {
     updateFrameAutoInfo();
     resetResult(true);
-    if (stream) startLiveOverlay();
     setStatus(stream ? 'Frame diganti. Preview sudah diperbarui.' : 'Frame diganti. Aktifkan kamera untuk preview live.');
   });
 
