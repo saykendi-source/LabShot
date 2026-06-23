@@ -677,7 +677,9 @@ let mirrorMode        = true;
 let soundEnabled      = true;
 let sessionRunning    = false;
 let previewTimer      = null;
-let liveOverlayRafId  = null;
+let liveOverlayRafId      = null;
+let liveOverlayCachedImg = null;
+let liveOverlayFrameKey  = null;
 let selectedPhotoIndex = -1;
 let retakeSlotIndex    = -1;
 let reviewReady        = false;
@@ -844,65 +846,65 @@ function stopLiveOverlay() {
     liveOverlayRafId = null;
   }
   const oc = els.liveOverlayCanvas;
-  if (oc) oc.classList.add('hidden');
+  if (oc) {
+    const ctx = oc.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, oc.width, oc.height);
+  }
 }
 
-async function renderLiveOverlayFrame() {
+function _drawOverlaySync() {
   const oc = els.liveOverlayCanvas;
   if (!oc || !stream) { stopLiveOverlay(); return; }
 
-  const cameraCard = document.querySelector('.camera-card');
-  const dispW = Math.max(1, Math.round(oc.clientWidth  || cameraCard?.clientWidth  || 360));
-  const dispH = Math.max(1, Math.round(oc.clientHeight || cameraCard?.clientHeight || 640));
+  const parent = oc.parentElement;
+  const dispW  = Math.max(1, parent ? parent.clientWidth  : (oc.clientWidth  || 360));
+  const dispH  = Math.max(1, parent ? parent.clientHeight : (oc.clientHeight || 640));
 
-  // Resize canvas backing store to match display size (pixel-perfect)
   if (oc.width !== dispW || oc.height !== dispH) {
     oc.width  = dispW;
     oc.height = dispH;
   }
 
-  const frameKey = resolveFrameKey();
-  const frameImg = await getFrameImage(frameKey);
-
   const ctx = oc.getContext('2d');
   ctx.clearRect(0, 0, dispW, dispH);
 
-  if (frameImg) {
-    // The story canvas is 1080×1920 (portrait 9:16).
-    // The camera-card shows video with object-fit:cover.
-    // We want to render the frame so its visible portion exactly matches
-    // what the camera sees — i.e., use the same cover crop that the video uses.
+  const frameImg = liveOverlayCachedImg;
+  if (!frameImg) { liveOverlayRafId = requestAnimationFrame(_drawOverlaySync); return; }
 
-    const storyAspect = STORY_W / STORY_H;       // 9/16 ≈ 0.5625
-    const viewAspect  = dispW  / dispH;
+  const storyAspect = STORY_W / STORY_H;
+  const viewAspect  = dispW  / dispH;
 
-    let srcX, srcY, srcW, srcH;
-    if (viewAspect > storyAspect) {
-      // viewport is wider → crop top/bottom of story
-      srcW = STORY_W;
-      srcH = Math.round(STORY_W / viewAspect);
-      srcX = 0;
-      srcY = Math.round((STORY_H - srcH) / 2);
-    } else {
-      // viewport is taller → crop left/right of story
-      srcH = STORY_H;
-      srcW = Math.round(STORY_H * viewAspect);
-      srcX = Math.round((STORY_W - srcW) / 2);
-      srcY = 0;
-    }
-
-    ctx.drawImage(frameImg, srcX, srcY, srcW, srcH, 0, 0, dispW, dispH);
+  let srcX, srcY, srcW, srcH;
+  if (viewAspect > storyAspect) {
+    srcW = STORY_W;
+    srcH = Math.round(STORY_W / viewAspect);
+    srcX = 0;
+    srcY = Math.round((STORY_H - srcH) / 2);
+  } else {
+    srcH = STORY_H;
+    srcW = Math.round(STORY_H * viewAspect);
+    srcX = Math.round((STORY_W - srcW) / 2);
+    srcY = 0;
   }
 
-  liveOverlayRafId = requestAnimationFrame(renderLiveOverlayFrame);
+  ctx.drawImage(frameImg, srcX, srcY, srcW, srcH, 0, 0, dispW, dispH);
+  liveOverlayRafId = requestAnimationFrame(_drawOverlaySync);
 }
 
-function startLiveOverlay() {
+async function startLiveOverlay() {
   stopLiveOverlay();
   const oc = els.liveOverlayCanvas;
   if (!oc) return;
+
+  const frameKey = resolveFrameKey();
+  if (liveOverlayFrameKey !== frameKey || !liveOverlayCachedImg) {
+    liveOverlayCachedImg = null;
+    liveOverlayFrameKey  = frameKey;
+    try { liveOverlayCachedImg = await getFrameImage(frameKey); } catch(e) {}
+  }
+
   oc.classList.remove('hidden');
-  liveOverlayRafId = requestAnimationFrame(renderLiveOverlayFrame);
+  liveOverlayRafId = requestAnimationFrame(_drawOverlaySync);
 }
 
 function stopPreviewLoop() {
