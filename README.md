@@ -396,3 +396,10 @@ Perubahan:
 - Ditambahkan inner shadow pada area foto Expo supaya lebih natural menyatu dengan frame.
 - Pilihan kamera dibuat selalu tersedia untuk memilih webcam eksternal.
 - Tombol refresh kamera (↻) ditambahkan untuk membaca ulang daftar kamera setelah webcam eksternal dipasang/diizinkan browser.
+
+
+## Update 4K QR Output
+- Hasil akhir download dirender 4K portrait: 2160 × 3840 px.
+- File yang dikirim ke Google Drive dan dibuka melalui QR juga memakai resolusi 2160 × 3840 px.
+- Preview aplikasi tetap ringan memakai basis 1080 × 1920 agar laptop tidak terbebani sebelum klik Finish.
+- Catatan: proses upload QR bisa sedikit lebih lama karena ukuran gambar lebih besar.

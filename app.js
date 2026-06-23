@@ -59,11 +59,19 @@ const els = {
 const STORY_W = 1080;
 const STORY_H = 1920;
 
+// Final output 4K portrait untuk hasil download dan hasil yang dibuka lewat QR.
+// Koordinat frame tetap memakai desain 1080 × 1920, lalu saat final dirender 2× menjadi 2160 × 3840.
+const FINAL_OUTPUT_SCALE = 2;
+const FINAL_W = STORY_W * FINAL_OUTPUT_SCALE;
+const FINAL_H = STORY_H * FINAL_OUTPUT_SCALE;
+
+
 // Google Drive Gallery Upload
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyo7rb9TPvHjp6NJNphJfgirDSpkkiAWo_srxlpi1qsPQWbAQGGAIzW3t3lLxt6tq4QLw/exec";
 const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1HLXr6Y-mX1EqveyV-KPtAQp-5Pt0e6GJ";
-const DRIVE_UPLOAD_W = 720;
-const DRIVE_UPLOAD_H = 1280;
+const DRIVE_UPLOAD_W = FINAL_W;
+const DRIVE_UPLOAD_H = FINAL_H;
+const DRIVE_UPLOAD_QUALITY = 0.92;
 
 /*
   Semua frame harus berada di assets/frames.
@@ -1305,13 +1313,13 @@ async function finishPhotoSession() {
   setBusy(true);
   reviewReady = false;
   refreshReviewControls();
-  setStatus('Membuat hasil akhir dan QR…');
+  setStatus('Membuat hasil akhir 4K dan QR…');
   setProgress(80);
 
   await renderFinalImage();
 
   setProgress(100);
-  setStatus('Selesai! QR dan tombol download sudah tersedia. Gunakan tombol Foto Baru untuk pengunjung berikutnya.');
+  setStatus('Selesai! QR dan tombol download sudah tersedia dalam kualitas 4K. Gunakan tombol Foto Baru untuk pengunjung berikutnya.');
   setBusy(false);
   refreshReviewControls();
 }
@@ -1550,8 +1558,12 @@ async function createDriveUploadBlobFromCanvas(sourceCanvas) {
   uploadCanvas.width = DRIVE_UPLOAD_W;
   uploadCanvas.height = DRIVE_UPLOAD_H;
   const uploadCtx = uploadCanvas.getContext('2d');
+  uploadCtx.imageSmoothingEnabled = true;
+  uploadCtx.imageSmoothingQuality = 'high';
+
+  // Yang diupload ke Drive/QR adalah versi 4K portrait, bukan versi kecil 720 × 1280.
   uploadCtx.drawImage(sourceCanvas, 0, 0, DRIVE_UPLOAD_W, DRIVE_UPLOAD_H);
-  return await new Promise(resolve => uploadCanvas.toBlob(resolve, 'image/jpeg', 0.62));
+  return await new Promise(resolve => uploadCanvas.toBlob(resolve, 'image/jpeg', DRIVE_UPLOAD_QUALITY));
 }
 
 function blobToBase64(blob) {
@@ -1575,7 +1587,7 @@ function makeDriveFileName() {
   const mi = String(now.getMinutes()).padStart(2, '0');
   const ss = String(now.getSeconds()).padStart(2, '0');
   const rand = Math.random().toString(36).slice(2, 5);
-  return `ls-${yy}${mm}${dd}-${hh}${mi}${ss}-${rand}.jpg`;
+  return `ls-${yy}${mm}${dd}-${hh}${mi}${ss}-4k-${rand}.jpg`;
 }
 
 function makePhotoPageUrl(fileName) {
@@ -1607,9 +1619,15 @@ async function renderFinalImage() {
   const slots = getSlotsForFrame(frameKey, total);
 
   const canvas  = document.createElement('canvas');
-  canvas.width  = STORY_W;
-  canvas.height = STORY_H;
+  canvas.width  = FINAL_W;
+  canvas.height = FINAL_H;
   const ctx     = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // Semua koordinat slot/frame tetap mengikuti desain 1080 × 1920.
+  // Transform ini membuat hasil akhir menjadi 2160 × 3840 tanpa mengubah konfigurasi slot.
+  ctx.setTransform(FINAL_OUTPUT_SCALE, 0, 0, FINAL_OUTPUT_SCALE, 0, 0);
 
   /*
     1. Base
@@ -1640,7 +1658,7 @@ async function renderFinalImage() {
     .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
   els.downloadBtn.href     = finalObjectUrl;
-  els.downloadBtn.download = `${safeEvent}-story-${Date.now()}.png`;
+  els.downloadBtn.download = `${safeEvent}-story-4k-${Date.now()}.png`;
   els.downloadBtn.classList.remove('disabled');
   els.shareBtn.disabled    = false;
   els.retakeBtn.disabled   = false;
@@ -1656,7 +1674,7 @@ async function renderFinalImage() {
   const driveUploadBlob = await createDriveUploadBlobFromCanvas(canvas);
   uploadPhotoToGoogleDrive(driveUploadBlob, currentUploadFileName)
     .then(() => {
-      els.qrNote.innerHTML = `Foto sesi ini sudah dikirim. Scan QR untuk membuka hanya foto Anda. Jika sulit terbaca, klik <a class="qr-note-link" href="${currentShareUrl}" target="_blank" rel="noopener">buka link foto</a>.`;
+      els.qrNote.innerHTML = `Foto sesi ini sudah dikirim dalam kualitas 4K. Scan QR untuk membuka hanya foto Anda. Jika sulit terbaca, klik <a class="qr-note-link" href="${currentShareUrl}" target="_blank" rel="noopener">buka link foto</a>.`;
     })
     .catch((error) => {
       console.error('Upload Google Drive gagal:', error);
@@ -1805,7 +1823,7 @@ function initLabShot() {
   updateFrameAutoInfo();
   renderFramePreview();
   setStatus('Kamera belum aktif. Klik Aktifkan Kamera.');
-  console.log('LabShot v37 loaded. Tema One Piece, Expo, FT, dan TI UMY aktif.');
+  console.log('LabShot v38 loaded. Output final dan QR 4K aktif.');
 }
 
 if (document.readyState === 'loading') {
